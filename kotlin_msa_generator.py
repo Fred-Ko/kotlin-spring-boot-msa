@@ -136,27 +136,28 @@ subprojects {{
         build_file_path = os.path.join(self.root_dir, "shared", module_name, "build.gradle.kts")
         if os.path.exists(build_file_path):
             return
-        content = """\
-plugins {
+        content = f"""\
+plugins {{
     id("org.jetbrains.kotlin.jvm")
-}
+}}
 
-dependencies {
+dependencies {{
     // 필요시 의존성 추가
-}
+}}
 """
         with open(build_file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"[INFO] shared 모듈 빌드파일 생성: {module_name}")
 
-    def create_domain_build_gradle(self, domain_name: str, layer_name: str):
-        """도메인 내 각 layer용 build.gradle.kts 생성"""
-        base_domain_path = os.path.join(self.root_dir, "domains", domain_name, layer_name)
-        build_file_path = os.path.join(base_domain_path, "build.gradle.kts")
+    def create_domain_build_gradle(self, base_path: str):
+        """도메인 또는 인프라스트럭처 모듈용 build.gradle.kts 생성"""
+        build_file_path = os.path.join(base_path, "build.gradle.kts")
         if os.path.exists(build_file_path):
+            print(f"[INFO] {build_file_path} 이미 존재합니다.")
             return
 
-        content = f"""\
+        with open(build_file_path, "w", encoding="utf-8") as f:
+            content = f"""\
 plugins {{
     id("org.jetbrains.kotlin.jvm")
     // Spring Boot를 사용하는 계층이라면 추가
@@ -169,12 +170,8 @@ dependencies {{
     implementation(project(":shared:shared-utils"))
 }}
 """
-        with open(build_file_path, "w", encoding="utf-8") as f:
             f.write(content)
-
-        # settings.gradle.kts에 include 추가
-        self.append_to_settings_gradle(f'include("domains:{domain_name}:{layer_name}")')
-        print(f"[INFO] 도메인 {domain_name}의 {layer_name} 모듈 빌드파일 생성 완료.")
+        print(f"[INFO] {build_file_path} 생성 완료.")
 
     def create_library_build_gradle(self, library_name: str):
         """라이브러리용 build.gradle.kts 생성"""
@@ -248,6 +245,64 @@ class SharedModuleCreator:
         for sdir in sub_dirs:
             self.ds.make_dir(os.path.join(base_path, sdir))
 
+        # 공통 모듈 파일 생성
+        if module_name == "shared-common":
+            self._create_common_files(base_path)
+        elif module_name == "shared-events":
+            self._create_events_files(base_path)
+        elif module_name == "shared-utils":
+            self._create_utils_files(base_path)
+
+    def _create_common_files(self, base_path):
+        """shared-common 모듈의 주요 파일들 생성"""
+        exception_path = os.path.join(base_path, "src", "main", "kotlin",
+                                    *self.ds.group_id_to_path_list(), "common", "exception",
+                                    "GlobalExceptionHandler.kt")
+        if not os.path.exists(exception_path):
+            content = f"""\
+package {self.context.group_id}.common.exception
+
+class GlobalExceptionHandler {{
+    // TODO: Implement global exception handling
+}}
+"""
+            with open(exception_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+    def _create_events_files(self, base_path):
+        """shared-events 모듈의 주요 파일들 생성"""
+        # 이벤트 기본 인터페이스
+        event_path = os.path.join(base_path, "src", "main", "kotlin",
+                                *self.ds.group_id_to_path_list(), "events",
+                                "DomainEvent.kt")
+        if not os.path.exists(event_path):
+            content = f"""\
+package {self.context.group_id}.events
+
+interface DomainEvent {{
+    // TODO: Define common event properties
+}}
+"""
+            with open(event_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+    def _create_utils_files(self, base_path):
+        """shared-utils 모듈의 주요 파일들 생성"""
+        # 코루틴 유틸리티
+        coroutine_path = os.path.join(base_path, "src", "main", "kotlin",
+                                    *self.ds.group_id_to_path_list(), "utils", "coroutine",
+                                    "CoroutineDispatcherProvider.kt")
+        if not os.path.exists(coroutine_path):
+            content = f"""\
+package {self.context.group_id}.utils.coroutine
+
+class CoroutineDispatcherProvider {{
+    // TODO: Implement coroutine utilities
+}}
+"""
+            with open(coroutine_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
 ########################################################################
 # 5) 도메인 모듈(계층 구조) 생성 책임: DomainModuleCreator
 ########################################################################
@@ -262,99 +317,190 @@ class DomainModuleCreator:
         """새로운 도메인 모듈을 추가"""
         print(f"[INFO] 새 도메인 모듈을 추가합니다: {domain_name}")
 
-        base_domain_path = os.path.join(self.context.project_name, "domains", domain_name)
+        # 각 모듈 별 기본 경로 설정
+        presentation_base_path = os.path.join(self.context.project_name, "domains", domain_name, "presentation")
+        application_base_path = os.path.join(self.context.project_name, "domains", domain_name, "core", "application")
+        domain_base_path = os.path.join(self.context.project_name, "domains", domain_name, "core", "domain")
+        infrastructure_base_path = os.path.join(self.context.project_name, "domains", domain_name, "infrastructure")
 
         # 1) presentation 모듈
-        self._create_presentation_module(base_domain_path, domain_name)
+        self._create_presentation_module(presentation_base_path, domain_name)
 
         # 2) application 모듈
-        self._create_application_module(base_domain_path, domain_name)
+        self._create_application_module(application_base_path, domain_name)
 
         # 3) domain 모듈
-        self._create_domain_module(base_domain_path, domain_name)
+        self._create_domain_module(domain_base_path, domain_name)
 
         # 4) infrastructure 모듈
-        self._create_infrastructure_module(base_domain_path, domain_name)
+        self._create_infrastructure_module(infrastructure_base_path, domain_name)
 
         print(f"[INFO] 도메인 {domain_name} 모듈 생성 완료.")
 
     def _create_presentation_module(self, base_path, domain_name):
-        presentation_path = os.path.join(base_path, "presentation")
-        self.ds.make_dir(presentation_path)
-        self.gs.create_domain_build_gradle(domain_name, "presentation")
+        self.ds.make_dir(base_path)
+        self.gs.create_domain_build_gradle(base_path)
 
         kotlin_presentation_path = os.path.join(
-            presentation_path, "src", "main", "kotlin",
+            base_path, "src", "main", "kotlin",
             *self.ds.group_id_to_path_list(), domain_name, "presentation"
         )
         self.ds.make_dir(kotlin_presentation_path)
 
-        # 예시 하위 디렉토리
-        self.ds.make_dir(os.path.join(kotlin_presentation_path, "controller", "command"))
-        self.ds.make_dir(os.path.join(kotlin_presentation_path, "controller", "query"))
-        self.ds.make_dir(os.path.join(kotlin_presentation_path, "dto", "request"))
-        self.ds.make_dir(os.path.join(kotlin_presentation_path, "dto", "response"))
-        self.ds.make_dir(os.path.join(kotlin_presentation_path, "config"))
+        # 주요 파일 생성
+        self._create_presentation_files(kotlin_presentation_path, domain_name)
+
+    def _create_presentation_files(self, base_path, domain_name):
+        """presentation 계층의 주요 파일들 생성"""
+        # Command Controller
+        command_controller_dir = os.path.join(base_path, "controller", "command")
+        self.ds.make_dir(command_controller_dir)
+        command_controller_path = os.path.join(command_controller_dir, f"{domain_name.capitalize()}CommandController.kt")
+        if not os.path.exists(command_controller_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.presentation.controller.command
+
+class {domain_name.capitalize()}CommandController {{
+    // TODO: Implement command endpoints
+}}
+"""
+            with open(command_controller_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        # Query Controller
+        query_controller_dir = os.path.join(base_path, "controller", "query")
+        self.ds.make_dir(query_controller_dir)
+        query_controller_path = os.path.join(query_controller_dir, f"{domain_name.capitalize()}QueryController.kt")
+        if not os.path.exists(query_controller_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.presentation.controller.query
+
+class {domain_name.capitalize()}QueryController {{
+    // TODO: Implement query endpoints
+}}
+"""
+            with open(query_controller_path, "w", encoding="utf-8") as f:
+                f.write(content)
 
     def _create_application_module(self, base_path, domain_name):
-        application_path = os.path.join(base_path, "application")
-        self.ds.make_dir(application_path)
-        self.gs.create_domain_build_gradle(domain_name, "application")
+        self.ds.make_dir(base_path)
+        self.gs.create_domain_build_gradle(base_path)
 
         kotlin_application_path = os.path.join(
-            application_path, "src", "main", "kotlin",
+            base_path, "src", "main", "kotlin",
             *self.ds.group_id_to_path_list(), domain_name, "application"
         )
         self.ds.make_dir(kotlin_application_path)
 
-        # 예시 하위 디렉토리
-        self.ds.make_dir(os.path.join(kotlin_application_path, "command", "handler"))
-        self.ds.make_dir(os.path.join(kotlin_application_path, "command", "service"))
-        self.ds.make_dir(os.path.join(kotlin_application_path, "command", "dto"))
-        self.ds.make_dir(os.path.join(kotlin_application_path, "query", "handler"))
-        self.ds.make_dir(os.path.join(kotlin_application_path, "query", "service"))
-        self.ds.make_dir(os.path.join(kotlin_application_path, "query", "dto"))
-        self.ds.make_dir(os.path.join(kotlin_application_path, "port"))
+        # 주요 파일 생성
+        self._create_application_files(kotlin_application_path, domain_name)
+
+    def _create_application_files(self, base_path, domain_name):
+        """application 계층의 주요 파일들 생성"""
+        # Port 인터페이스
+        port_dir = os.path.join(base_path, "port")
+        self.ds.make_dir(port_dir)
+        repository_port_path = os.path.join(port_dir, f"{domain_name.capitalize()}RepositoryPort.kt")
+        if not os.path.exists(repository_port_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.application.port
+
+interface {domain_name.capitalize()}RepositoryPort {{
+    // TODO: Define repository methods
+}}
+"""
+            with open(repository_port_path, "w", encoding="utf-8") as f:
+                f.write(content)
 
     def _create_domain_module(self, base_path, domain_name):
-        domain_layer_path = os.path.join(base_path, "domain")
-        self.ds.make_dir(domain_layer_path)
-        self.gs.create_domain_build_gradle(domain_name, "domain")
+        self.ds.make_dir(base_path)
+        self.gs.create_domain_build_gradle(base_path)
 
         kotlin_domain_path = os.path.join(
-            domain_layer_path, "src", "main", "kotlin",
+            base_path, "src", "main", "kotlin",
             *self.ds.group_id_to_path_list(), domain_name, "domain"
         )
         self.ds.make_dir(kotlin_domain_path)
 
-        # 예시 하위 디렉토리
-        self.ds.make_dir(os.path.join(kotlin_domain_path, "model"))
-        self.ds.make_dir(os.path.join(kotlin_domain_path, "vo"))
-        self.ds.make_dir(os.path.join(kotlin_domain_path, "event"))
-        self.ds.make_dir(os.path.join(kotlin_domain_path, "exception"))
+        # 주요 파일 생성
+        self._create_domain_files(kotlin_domain_path, domain_name)
+
+    def _create_domain_files(self, base_path, domain_name):
+        """domain 계층의 주요 파일들 생성"""
+        # Aggregate Root
+        model_dir = os.path.join(base_path, "model")
+        self.ds.make_dir(model_dir)
+        model_path = os.path.join(model_dir, f"{domain_name.capitalize()}.kt")
+        if not os.path.exists(model_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.domain.model
+
+class {domain_name.capitalize()} {{
+    // TODO: Implement domain model
+}}
+"""
+            with open(model_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        # Domain Event
+        event_dir = os.path.join(base_path, "event")
+        self.ds.make_dir(event_dir)
+        event_path = os.path.join(event_dir, f"{domain_name.capitalize()}CreatedEvent.kt")
+        if not os.path.exists(event_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.domain.event
+
+class {domain_name.capitalize()}CreatedEvent {{
+    // TODO: Implement event properties
+}}
+"""
+            with open(event_path, "w", encoding="utf-8") as f:
+                f.write(content)
 
     def _create_infrastructure_module(self, base_path, domain_name):
-        infrastructure_path = os.path.join(base_path, "infrastructure")
-        self.ds.make_dir(infrastructure_path)
-        self.gs.create_domain_build_gradle(domain_name, "infrastructure")
+        self.ds.make_dir(base_path)
+        self.gs.create_domain_build_gradle(base_path)
 
         kotlin_infra_path = os.path.join(
-            infrastructure_path, "src", "main", "kotlin",
+            base_path, "src", "main", "kotlin",
             *self.ds.group_id_to_path_list(), domain_name, "infrastructure"
         )
         self.ds.make_dir(kotlin_infra_path)
 
-        # 예시 하위 디렉토리
-        adapter_path = os.path.join(kotlin_infra_path, "adapter")
-        self.ds.make_dir(adapter_path)
-        self.ds.make_dir(os.path.join(adapter_path, "persistence", "entity"))
-        self.ds.make_dir(os.path.join(adapter_path, "messaging"))
+        # 주요 파일 생성
+        self._create_infrastructure_files(kotlin_infra_path, domain_name)
 
-        config_path = os.path.join(kotlin_infra_path, "config")
-        self.ds.make_dir(config_path)
+    def _create_infrastructure_files(self, base_path, domain_name):
+        """infrastructure 계층의 주요 파일들 생성"""
+        # JPA Entity
+        entity_dir = os.path.join(base_path, "adapter", "persistence", "entity")
+        self.ds.make_dir(entity_dir)
+        entity_path = os.path.join(entity_dir, f"{domain_name.capitalize()}Entity.kt")
+        if not os.path.exists(entity_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.infrastructure.adapter.persistence.entity
 
-        repository_path = os.path.join(kotlin_infra_path, "repository")
-        self.ds.make_dir(repository_path)
+class {domain_name.capitalize()}Entity {{
+    // TODO: Implement JPA entity
+}}
+"""
+            with open(entity_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        # Repository Implementation
+        repo_dir = os.path.join(base_path, "repository")
+        self.ds.make_dir(repo_dir)
+        repo_impl_path = os.path.join(repo_dir, f"{domain_name.capitalize()}RepositoryImpl.kt")
+        if not os.path.exists(repo_impl_path):
+            content = f"""\
+package {self.context.group_id}.{domain_name}.infrastructure.repository
+
+class {domain_name.capitalize()}RepositoryImpl {{
+    // TODO: Implement repository
+}}
+"""
+            with open(repo_impl_path, "w", encoding="utf-8") as f:
+                f.write(content)
 
 ########################################################################
 # 6) 라이브러리 모듈 생성 책임: LibraryModuleCreator
@@ -451,7 +597,7 @@ def main():
         "spring_boot_version": "3.4.1",
         "java_version": "21"
     }
-    group_id = "com.fredko.restaurant"
+    group_id = "com.ddd.restaurant"
     project_name = "restaurant-msa"
     project_version = "1.0.0-SNAPSHOT"  # 프로젝트 버전 추가
 
