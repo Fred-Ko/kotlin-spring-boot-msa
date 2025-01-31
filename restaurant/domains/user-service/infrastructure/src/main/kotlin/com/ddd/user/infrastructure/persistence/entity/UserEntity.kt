@@ -11,9 +11,7 @@ import org.hibernate.annotations.UuidGenerator
 @Table(name = "users")
 class UserEntity(
         @Id
-        @GeneratedValue
-        @UuidGenerator
-        @Column(columnDefinition = "BINARY(16)")
+        @Column(columnDefinition = "UUID")
         override var id: UUID? = null,
         @Column(nullable = false) var name: String,
         @Column(nullable = false, unique = true) var email: String,

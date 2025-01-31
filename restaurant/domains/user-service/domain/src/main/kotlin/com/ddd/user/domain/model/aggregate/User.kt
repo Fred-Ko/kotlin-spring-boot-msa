@@ -18,7 +18,7 @@ private constructor(
         var address: Address,
         val createdAt: LocalDateTime,
         var updatedAt: LocalDateTime,
-        var status: String,
+        var status: UserStatus,
         var version: Long = 0
 ) : AbstractAggregateRoot<User>() {
 
@@ -37,7 +37,7 @@ private constructor(
                                         address = address,
                                         createdAt = LocalDateTime.now(),
                                         updatedAt = LocalDateTime.now(),
-                                        status = UserStatus.ACTIVE.toString()
+                                        status = UserStatus.ACTIVE
                                 )
                                 .apply {
                                         registerEvent(

@@ -1,0 +1,101 @@
+domains:
+  user:
+    apps:
+      build.gradle.kts: true
+      "src/main/kotlin/{base_package}/user/apps":
+        - UserApplication.kt
+    presentation:
+      build.gradle.kts: true
+      "src/main/kotlin/{base_package}/user/presentation":
+        api:
+          v1:
+            command:
+              - UserCommandController.kt
+            query:
+              - UserQueryController.kt
+          dto:
+            request:
+              - UserRequest.kt
+            response:
+              - UserResponse.kt
+        config:
+          - WebConfig.kt
+          - SecurityConfig.kt
+
+    application:
+      build.gradle.kts: true
+      "src/main/kotlin/{base_package}/user/application":
+        command:
+          - UserCommandHandler.kt
+        query:
+          - UserQueryHandler.kt
+        service:
+          - UserApplicationService.kt
+        saga:
+          - UserSaga.kt
+        event:
+          - UserEventHandler.kt
+
+    domain:
+      build.gradle.kts: true
+      "src/main/kotlin/{base_package}/user/domain":
+        model:
+          aggregate:
+            - User.kt
+          vo:
+            - Email.kt
+            - UserStatus.kt
+          event:
+            - UserEvent.kt
+        repository:
+          - UserRepository.kt
+        service:
+          - UserDomainService.kt
+
+    infra:
+      build.gradle.kts: true
+      "src/main/kotlin/{base_package}/user/infra":
+        persistence:
+          entity:
+            - UserJpaEntity.kt
+          repository:
+            - UserJpaRepository.kt
+            - UserKotlinJdslRepository.kt
+            - UserRepository.kt            
+
+
+libs:
+  outbox:
+    build.gradle.kts: true
+    "src/main/kotlin/{base_package}/libs/outbox":
+      config:
+        - OutboxAutoConfiguration.kt
+      entity:
+        - OutboxEventJpaEntity.kt
+      model:
+        - OutboxEvent.kt
+      publisher:
+        - OutboxEventPublisher.kt
+      implementation:
+        - KafkaOutboxEventPublisherImpl.kt
+
+support:
+  common-response:
+    build.gradle.kts: true
+    "src/main/kotlin/{base_package}/support/response":
+      - CommonResult.kt
+  common-exception:
+    build.gradle.kts: true
+    "src/main/kotlin/{base_package}/support/exception":
+      - GlobalExceptionHandler.kt
+      - ErrorCode.kt
+
+config:
+  "src/main/resources":
+    - application.yml
+    - application-local.yml
+    - application-prod.yml
+
+docker:
+  compose:
+    - docker-compose.yml

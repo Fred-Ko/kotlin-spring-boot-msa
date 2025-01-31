@@ -1,0 +1,593 @@
+domains:
+  user:
+    adapter:
+      "src/main/kotlin/{base_package}/user/adapter":
+        - build.gradle.kts
+        inbound:
+          api:
+            v1:
+              command:
+                - UserCommandController.kt
+              query:
+                - UserQueryController.kt
+        dto:
+          request:
+            - UserRequest.kt
+          response:
+            - UserResponse.kt
+        config:
+          - WebSecurityConfig.kt
+        outbound:
+          persistence:
+            - UserJpaRepository.kt
+          entity:
+            - UserEntity.kt
+          messaging:
+            - KafkaEventPublisher.kt
+          config:
+            - JpaConfig.kt
+            - KafkaConfig.kt
+          repository:
+            - UserRepositoryImpl.kt
+    core:
+      "src/main/kotlin/{base_package}/user/core":
+        - build.gradle.kts
+        application:
+          "src/main/kotlin/{base_package}/user/application":
+            - build.gradle.kts
+            - UserCommandDto.kt
+            - UserHandler.kt
+            - UserCommandService.kt
+            - UserCommandDto.kt
+            command:
+              handler:
+                - UserHandler.kt
+              service:
+                - UserCommandService.kt
+              dto:
+                - UserCommandDto.kt
+            query:
+              handler:
+                - GetUserHandler.kt
+              service:
+                - UserQueryService.kt
+              dto:
+                - UserQueryDto.kt
+            port:
+              inbound:
+                - UserCommandPort.kt
+              outbound:
+                - UserRepositoryPort.kt
+                - EventPublisherPort.kt
+            mapper:
+              - UserDtoMapper.kt
+            saga:
+              - UserSagaParticipant.kt
+              - compensation:
+                  - UserCompensationHandler.kt
+        domain:
+          "src/main/kotlin/{base_package}/user/domain":
+            - build.gradle.kts
+            model:
+              - User.kt
+            value:
+              - UserId.kt
+              - Email.kt
+            event:
+              internal:
+                - UserCreatedEvent.kt
+              external:
+                - UserDomainEvent.kt
+            exception:
+              - UserValidationException.kt
+            repository:
+              - UserRepository.kt
+            service:
+              - UserRegistrationService.kt
+              - UserValidationService.kt
+    application:
+      "src/main/kotlin/{base_package}/user/application":
+        - build.gradle.kts
+        - UserApplication.kt
+
+  restaurant:
+    adapter:
+      "src/main/kotlin/{base_package}/restaurant/adapter":
+        - build.gradle.kts
+        inbound:
+          api:
+            v1:
+              command:
+                - RestaurantCommandController.kt
+              query:
+                - RestaurantQueryController.kt
+        dto:
+          request:
+            - RestaurantRegistrationRequest.kt
+            - MenuUpdateRequest.kt
+          response:
+            - RestaurantDetailResponse.kt
+        config:
+          - RestaurantApiConfig.kt
+        outbound:
+          persistence:
+            - RestaurantJpaRepository.kt
+          entity:
+            - RestaurantEntity.kt
+            - MenuItemEntity.kt
+          messaging:
+            - RestaurantEventPublisher.kt
+          config:
+            - RestaurantPersistenceConfig.kt
+          repository:
+            - RestaurantRepositoryImpl.kt
+    core:
+      "src/main/kotlin/{base_package}/restaurant/core":
+        - build.gradle.kts
+        application:
+          "src/main/kotlin/{base_package}/restaurant/application":
+            - build.gradle.kts
+            - RestaurantCommandDto.kt
+            - RestaurantRegistrationHandler.kt
+            - RestaurantCommandService.kt
+            command:
+              handler:
+                - RestaurantRegistrationHandler.kt
+              service:
+                - RestaurantCommandService.kt
+              dto:
+                - RestaurantCommandDto.kt
+            query:
+              handler:
+                - GetRestaurantHandler.kt
+              service:
+                - RestaurantQueryService.kt
+              dto:
+                - RestaurantQueryDto.kt
+            port:
+              inbound:
+                - RestaurantCommandPort.kt
+              outbound:
+                - RestaurantRepositoryPort.kt
+                - RestaurantEventPort.kt
+            mapper:
+              - RestaurantMapper.kt
+            saga:
+              - RestaurantSagaParticipant.kt
+        domain:
+          "src/main/kotlin/{base_package}/restaurant/domain":
+            - build.gradle.kts
+            model:
+              - Restaurant.kt
+              - RestaurantId.kt
+              - MenuItem.kt
+            value:
+              - Address.kt
+              - BusinessHours.kt
+              - Price.kt
+            event:
+              internal:
+                - RestaurantRegisteredEvent.kt
+                - MenuUpdatedEvent.kt
+              external:
+                - RestaurantDomainEvent.kt
+            exception:
+              - RestaurantValidationException.kt
+            repository:
+              - RestaurantRepository.kt
+            service:
+              - RestaurantRegistrationService.kt
+              - MenuManagementService.kt
+    application:
+      "src/main/kotlin/{base_package}/restaurant/application":
+        - build.gradle.kts
+        - RestaurantApplication.kt
+
+  order:
+    adapter:
+      "src/main/kotlin/{base_package}/order/adapter":
+        - build.gradle.kts
+        inbound:
+          api:
+            v1:
+              command:
+                - OrderCommandController.kt
+              query:
+                - OrderQueryController.kt
+        dto:
+          request:
+            - OrderCreateRequest.kt
+          response:
+            - OrderStatusResponse.kt
+        config:
+          - OrderApiConfig.kt
+        outbound:
+          persistence:
+            - OrderJpaRepository.kt
+          entity:
+            - OrderEntity.kt
+          messaging:
+            - OrderEventPublisher.kt
+          config:
+            - OrderPersistenceConfig.kt
+          repository:
+            - OrderRepositoryImpl.kt
+    core:
+      "src/main/kotlin/{base_package}/order/core":
+        - build.gradle.kts
+        application:
+          "src/main/kotlin/{base_package}/order/application":
+            - build.gradle.kts
+            - OrderCommandDto.kt
+            - OrderHandler.kt
+            - OrderCommandService.kt
+            command:
+              handler:
+                - OrderHandler.kt
+              service:
+                - OrderCommandService.kt
+              dto:
+                - OrderCommandDto.kt
+            query:
+              handler:
+                - GetOrderHandler.kt
+              service:
+                - OrderQueryService.kt
+              dto:
+                - OrderQueryDto.kt
+            port:
+              inbound:
+                - OrderCommandPort.kt
+              outbound:
+                - OrderRepositoryPort.kt
+                - OrderEventPort.kt
+            mapper:
+              - OrderMapper.kt
+            saga:
+              - OrderSagaOrchestrator.kt
+              - steps:
+                  - PaymentStep.kt
+                  - InventoryStep.kt
+                  - CompensationStep.kt
+        domain:
+          "src/main/kotlin/{base_package}/order/domain":
+            - build.gradle.kts
+            model:
+              - Order.kt
+              - OrderId.kt
+            value:
+              - OrderStatus.kt
+            event:
+              internal:
+                - OrderCreatedEvent.kt
+              external:
+                - OrderDomainEvent.kt
+            exception:
+              - OrderProcessingException.kt
+            repository:
+              - OrderRepository.kt
+            service:
+              - OrderProcessingService.kt
+    application:
+      "src/main/kotlin/{base_package}/order/application":
+        - build.gradle.kts
+        - OrderApplication.kt
+
+  delivery:
+    adapter:
+      "src/main/kotlin/{base_package}/delivery/adapter":
+        - build.gradle.kts
+        inbound:
+          api:
+            v1:
+              command:
+                - DeliveryCommandController.kt
+              query:
+                - DeliveryQueryController.kt
+        dto:
+          request:
+            - DeliveryStartRequest.kt
+          response:
+            - DeliveryTrackingResponse.kt
+        config:
+          - DeliveryApiConfig.kt
+        outbound:
+          persistence:
+            - DeliveryJpaRepository.kt
+          entity:
+            - DeliveryEntity.kt
+          messaging:
+            - DeliveryStatusPublisher.kt
+          config:
+            - DeliveryPersistenceConfig.kt
+          repository:
+            - DeliveryRepositoryImpl.kt
+    core:
+      "src/main/kotlin/{base_package}/delivery/core":
+        - build.gradle.kts
+        application:
+          "src/main/kotlin/{base_package}/delivery/application":
+            - build.gradle.kts
+            - DeliveryCommandDto.kt
+            - DeliveryHandler.kt
+            - DeliveryCommandService.kt
+            command:
+              handler:
+                - DeliveryHandler.kt
+              service:
+                - DeliveryCommandService.kt
+              dto:
+                - DeliveryCommandDto.kt
+            query:
+              handler:
+                - GetDeliveryHandler.kt
+              service:
+                - DeliveryQueryService.kt
+              dto:
+                - DeliveryQueryDto.kt
+            port:
+              inbound:
+                - DeliveryCommandPort.kt
+              outbound:
+                - DeliveryRepositoryPort.kt
+                - DeliveryStatusPort.kt
+            mapper:
+              - DeliveryMapper.kt
+        domain:
+          "src/main/kotlin/{base_package}/delivery/domain":
+            - build.gradle.kts
+            model:
+              - Delivery.kt
+              - DeliveryId.kt
+            value:
+              - Location.kt
+              - DeliveryStatus.kt
+            event:
+              internal:
+                - DeliveryStartedEvent.kt
+                - DeliveryCompletedEvent.kt
+              external:
+                - DeliveryDomainEvent.kt
+            exception:
+              - DeliveryException.kt
+            repository:
+              - DeliveryRepository.kt
+            service:
+              - DeliveryManagementService.kt
+    application:
+      "src/main/kotlin/{base_package}/delivery/application":
+        - build.gradle.kts
+        - DeliveryApplication.kt
+
+  payment:
+    adapter:
+      "src/main/kotlin/{base_package}/payment/adapter":
+        - build.gradle.kts
+        inbound:
+          api:
+            v1:
+              command:
+                - PaymentCommandController.kt
+              query:
+                - PaymentQueryController.kt
+        dto:
+          request:
+            - PaymentRequest.kt
+            - RefundRequest.kt
+          response:
+            - PaymentStatusResponse.kt
+        config:
+          - PaymentApiConfig.kt
+        outbound:
+          persistence:
+            - PaymentJpaRepository.kt
+          entity:
+            - PaymentEntity.kt
+          messaging:
+            - PaymentEventPublisher.kt
+          external:
+            pg:
+              - PgAdapter.kt  # PG사 연동 어댑터
+          config:
+            - PaymentPersistenceConfig.kt
+          repository:
+            - PaymentRepositoryImpl.kt
+    core:
+      "src/main/kotlin/{base_package}/payment/core":
+        - build.gradle.kts
+        application:
+          "src/main/kotlin/{base_package}/payment/application":
+            - build.gradle.kts
+            - PaymentCommandDto.kt
+            - ProcessPaymentHandler.kt
+            - RefundPaymentHandler.kt
+            - PaymentCommandService.kt
+            command:
+              handler:
+                - ProcessPaymentHandler.kt
+                - RefundPaymentHandler.kt
+              service:
+                - PaymentCommandService.kt
+              dto:
+                - PaymentCommandDto.kt
+            query:
+              handler:
+                - GetPaymentStatusHandler.kt
+              service:
+                - PaymentQueryService.kt
+              dto:
+                - PaymentQueryDto.kt
+            port:
+              inbound:
+                - PaymentCommandPort.kt
+              outbound:
+                - PaymentRepositoryPort.kt
+                - PgPort.kt  # 외부 PG사 포트
+            mapper:
+              - PaymentMapper.kt
+        domain:
+          "src/main/kotlin/{base_package}/payment/domain":
+            - build.gradle.kts
+            model:
+              - Payment.kt
+              - PaymentId.kt
+            value:
+              - PaymentMethod.kt  # 신용카드, 계좌이체 등
+              - PaymentStatus.kt  # PENDING, COMPLETED, FAILED, REFUNDED
+            event:
+              internal:
+                - PaymentCompletedEvent.kt
+                - PaymentFailedEvent.kt
+                - PaymentRefundedEvent.kt
+              external:
+                - PaymentDomainEvent.kt
+            exception:
+              - PaymentProcessingException.kt
+            repository:
+              - PaymentRepository.kt
+            service:
+              - PaymentValidationService.kt
+              - PgGatewayService.kt  # PG사 연동 서비스
+    application:
+      "src/main/kotlin/{base_package}/payment/application":
+        - build.gradle.kts
+        - PaymentApplication.kt
+
+libraries:
+  outbox:
+    "src/main/kotlin/{base_package}/outbox":
+      - build.gradle.kts
+      config:
+        - OutboxAutoConfiguration.kt
+        - OutboxProperties.kt
+      domain:
+        - OutboxEvent.kt
+      scheduler:
+        - OutboxScheduler.kt
+      repository:
+        - OutboxEventRepository.kt
+      port:
+        - OutboxPort.kt
+      adapter:
+        kafka:
+          - KafkaOutboxAdapter.kt
+      saga:
+        - SagaOutboxEvent.kt
+        - SagaOutboxHandler.kt
+
+  kafka-commons:
+    "src/main/kotlin/{base_package}/kafka":
+      - build.gradle.kts
+      config:
+        - KafkaProducerConfig.kt
+        - KafkaConsumerConfig.kt
+      serializer:
+        - AvroSerializer.kt
+      error:
+        - DeadLetterProducer.kt
+
+shared:
+  shared-common:
+    "src/main/kotlin/{base_package}/common":
+      - build.gradle.kts
+      base:
+        entity:
+          - BaseEntity.kt
+        domain:
+          - AggregateRoot.kt
+      exception:
+        - GlobalExceptionHandler.kt
+      util:
+        - DateTimeUtils.kt
+      resilience4j:
+        config:
+          - CircuitBreakerConfig.kt
+          - WebClientConfig.kt
+        annotation:
+          - CircuitBreaker.kt
+        handler:
+          - CircuitBreakerExceptionHandler.kt
+        properties:
+          - CircuitBreakerProperties.kt
+        aspect:
+          - CircuitBreakerAspect.kt
+        fallback:
+          - FallbackHandler.kt
+      cqrs:
+        command:
+          - Command.kt
+          - CommandBus.kt
+          - CommandHandler.kt
+          - CommandDispatcher.kt
+          - CommandValidator.kt
+        annotation:
+          - CommandHandler.kt
+        exception:
+          - CommandException.kt
+          - NoCommandHandlerException.kt
+        config:
+          - CommandBusConfig.kt
+        interceptor:
+          - CommandLoggingInterceptor.kt
+          - CommandValidationInterceptor.kt
+          - CommandTransactionInterceptor.kt
+
+  shared-saga:
+    "src/main/kotlin/{base_package}/saga":
+      - build.gradle.kts
+      core:
+        - SagaManager.kt
+        - SagaStep.kt
+        - SagaExecutionException.kt
+      config:
+        - SagaThreadPoolConfig.kt
+      repository:
+        - SagaStateJpaRepository.kt
+      serializer:
+        - SagaEventSerializer.kt
+
+  shared-events:
+    "src/main/avro":
+      - build.gradle.kts
+      - user_created.avsc
+      - order_saga_initiated.avsc
+      - payment_processed.avsc
+      - shipping_failed.avsc
+      - restaurant_registered.avsc
+      - menu_updated.avsc
+    "src/generated/kotlin":
+      - build.gradle.kts
+      - UserCreatedEvent.kt
+      - OrderSagaEvent.kt
+      - RestaurantEvent.kt
+      - MenuEvent.kt
+      - DeliveryEvent.kt
+
+  shared-utils:
+    "src/main/kotlin/{base_package}/utils":
+      - build.gradle.kts
+      extension:
+        - StringExtensions.kt
+        - DateTimeExtensions.kt
+      coroutine:
+        - CoroutineDispatcherProvider.kt
+        - CoroutineScopeFactory.kt
+      validation:
+        - ValidatorUtils.kt
+
+  shared-observability:
+    "src/main/kotlin/{base_package}/observability":
+      - build.gradle.kts
+      metrics:
+        - CustomMetrics.kt
+      tracing:
+        - TracingAspect.kt
+      log:
+        - StructuredLogger.kt
+
+config:
+  "src/main/resources":
+    - build.gradle.kts
+    - application.yml
+    - application-dev.yml
+    - application-prod.yml

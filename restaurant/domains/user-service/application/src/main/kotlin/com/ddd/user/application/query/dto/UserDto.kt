@@ -25,7 +25,7 @@ data class UserDto(
                         city = user.address.city,
                         state = user.address.state,
                         zipCode = user.address.zipCode,
-                        status = user.status
+                        status = user.status.toString()
                 )
     }
 }
