@@ -1,0 +1,10 @@
+rootProject.name = 'restaurant'
+
+include ':domains:user-service:application'
+include ':domains:user-service:apps'
+include ':domains:user-service:domain'
+include ':domains:user-service:infrastructure'
+include ':domains:user-service:presentation'
+
+include 'libs:outbox'
+include 'support:common'

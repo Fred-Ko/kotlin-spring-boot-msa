@@ -1,0 +1,11 @@
+---
+description: 
+globs: *.kt,*.kts
+---
+
+# Composer Rules
+
+- 가능하다면 관련있는 파일이 어디에 위치해있고 상위 폴더구조를 파악한 후 작업을 진행하라.
+- 폴더구조를 파악할때는 꼭 tree 명령어를 사용하라
+- 파일 내용의 확인이 필요한경우는 꼭 파일내용을 확인하도록 하여라.
+- "How can I resolve this? If you propose a fix, please make it concise." 같은 질문을 하면 코드를 보고 질문의 의도를 파악한수 단계별로 생각하며 대답한다. 단순히 고치라는 의미가 아니라 더 좋은 구조로 제안을 해주기도 해야한다.
