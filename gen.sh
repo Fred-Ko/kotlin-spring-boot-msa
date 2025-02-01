@@ -53,6 +53,10 @@ touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/
 touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/command/handler/Create${DOMAIN_NAME_CAMEL}UseCaseImpl.kt"
 touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/command/result/Create${DOMAIN_NAME_CAMEL}Result.kt"
 touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/command/usecase/Create${DOMAIN_NAME_CAMEL}UseCase.kt"
+touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/query/query/Get${DOMAIN_NAME_CAMEL}Query.kt"
+touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/query/handler/Get${DOMAIN_NAME_CAMEL}UseCaseImpl.kt"
+touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/query/result/Get${DOMAIN_NAME_CAMEL}Result.kt"
+touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/query/usecase/Get${DOMAIN_NAME_CAMEL}UseCase.kt"
 touch "$BASE_DIR/$DOMAIN_NAME-service/application/src/main/kotlin/$PACKAGE_PATH/${DOMAIN_NAME}/application/event/handler/${DOMAIN_NAME_CAMEL}EventHandler.kt"
 
 # domain 모듈 생성
