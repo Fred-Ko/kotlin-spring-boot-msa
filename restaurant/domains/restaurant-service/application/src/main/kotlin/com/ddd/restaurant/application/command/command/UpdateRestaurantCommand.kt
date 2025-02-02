@@ -1,20 +1,15 @@
 package com.ddd.restaurant.application.command.command
 
-import com.ddd.restaurant.domain.model.vo.Location
-import com.ddd.restaurant.domain.model.vo.OperatingHours
-import com.ddd.restaurant.domain.model.vo.RestaurantName
-import java.util.UUID
-
 data class UpdateRestaurantCommand(
-    val restaurantId: UUID,
-    val name: RestaurantName? = null,
-    val operatingHours: OperatingHours? = null,
-    val location: Location? = null,
-    val menus: List<MenuCommand>? = null
+        val restaurantId: String,
+        val name: String?,
+        val operatingHours: OperatingHoursDto?,
+        val location: LocationDto?,
+        val menus: List<MenuCommand>?
 ) {
-    data class MenuCommand(
-        val id: UUID? = null,
-        val name: String? = null,
-        val price: Double? = null
-    )
-} 
+    data class OperatingHoursDto(val openTime: String, val closeTime: String)
+
+    data class LocationDto(val address: String, val latitude: Double, val longitude: Double)
+
+    data class MenuCommand(val name: String, val price: Double)
+}

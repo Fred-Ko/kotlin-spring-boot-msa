@@ -8,4 +8,4 @@ sealed class GetRestaurantsResult {
     sealed class Failure : GetRestaurantsResult() {
         data class ValidationError(val message: String) : Failure()
     }
-} 
+}

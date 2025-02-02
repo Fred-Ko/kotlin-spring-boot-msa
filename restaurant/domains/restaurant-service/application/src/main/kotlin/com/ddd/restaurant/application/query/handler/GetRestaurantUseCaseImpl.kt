@@ -10,14 +10,16 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class GetRestaurantUseCaseImpl(private val restaurantRepository: RestaurantRepository) :
-    GetRestaurantUseCase {
+        GetRestaurantUseCase {
 
     @Transactional(readOnly = true)
     override fun execute(query: GetRestaurantQuery): GetRestaurantResult {
         return try {
             val restaurant =
-                restaurantRepository.findById(query.restaurantId)
-                    ?: return GetRestaurantResult.Failure.RestaurantNotFound(query.restaurantId.toString())
+                    restaurantRepository.findById(query.restaurantId)
+                            ?: return GetRestaurantResult.Failure.RestaurantNotFound(
+                                    query.restaurantId.toString()
+                            )
 
             GetRestaurantResult.Success(RestaurantDto.from(restaurant))
         } catch (e: Exception) {

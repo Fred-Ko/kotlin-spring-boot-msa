@@ -4,7 +4,11 @@ import com.ddd.restaurant.application.command.command.CreateRestaurantCommand
 import com.ddd.restaurant.application.command.result.CreateRestaurantResult
 import com.ddd.restaurant.application.command.usecase.CreateRestaurantUseCase
 import com.ddd.restaurant.domain.model.aggregate.Restaurant
+import com.ddd.restaurant.domain.model.vo.Location
+import com.ddd.restaurant.domain.model.vo.OperatingHours
+import com.ddd.restaurant.domain.model.vo.RestaurantName
 import com.ddd.restaurant.domain.port.repository.RestaurantRepository
+import java.time.LocalTime
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,7 +19,7 @@ class CreateRestaurantUseCaseImpl(private val restaurantRepository: RestaurantRe
     @Transactional
     override fun execute(command: CreateRestaurantCommand): CreateRestaurantResult {
         return try {
-            if (command.name.value.isBlank()) {
+            if (command.name.isBlank()) {
                 return CreateRestaurantResult.Failure.InvalidInput(
                         "Restaurant name cannot be blank"
                 )
@@ -23,9 +27,23 @@ class CreateRestaurantUseCaseImpl(private val restaurantRepository: RestaurantRe
 
             val restaurant: Restaurant =
                     Restaurant.create(
-                            name = command.name,
-                            operatingHours = command.operatingHours,
-                            location = command.location,
+                            name = RestaurantName(command.name),
+                            operatingHours =
+                                    OperatingHours(
+                                            startTime =
+                                                    LocalTime.parse(
+                                                            command.operatingHours.openTime
+                                                    ),
+                                            endTime =
+                                                    LocalTime.parse(
+                                                            command.operatingHours.closeTime
+                                                    )
+                                    ),
+                            location =
+                                    Location(
+                                            latitude = command.location.latitude,
+                                            longitude = command.location.longitude
+                                    ),
                     )
             restaurantRepository.save(restaurant)
             CreateRestaurantResult.Success(restaurant.id)
