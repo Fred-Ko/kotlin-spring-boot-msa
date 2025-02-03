@@ -10,13 +10,13 @@ import org.hibernate.annotations.UuidGenerator
 @Entity
 @Table(name = "users")
 class UserEntity(
-        @Id
-        @Column(columnDefinition = "UUID")
+    @Id
+    @Column(nullable = false, columnDefinition = "UUID")
         override var id: UUID? = null,
-        @Column(nullable = false) var name: String,
-        @Column(nullable = false, unique = true) var email: String,
-        @Column(name = "phone_number", nullable = false) var phoneNumber: String,
-        @Embedded var address: AddressEmbeddable,
+    @Column(nullable = false) var name: String,
+    @Column(nullable = false, unique = true) var email: String,
+    @Column(name = "phone_number", nullable = false) var phoneNumber: String,
+    @Embedded var address: AddressEmbeddable,
 ) : BaseEntity<UUID>() {
 
     fun toDomain(): User {
