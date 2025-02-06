@@ -1,8 +1,7 @@
 package com.ddd.user.presentation.api.v1.command.dto.response
 
 import com.ddd.user.application.query.dto.UserDto
-import com.ddd.user.application.query.result.GetUserResult
-import com.ddd.user.application.query.result.GetUsersResult
+import com.ddd.user.application.query.dto.result.GetUserResult
 import org.springframework.data.domain.Page
 
 data class UserResponse(
@@ -10,26 +9,28 @@ data class UserResponse(
         val email: String,
         val name: String,
 ) {
-    companion object {
-        fun from(result: GetUserResult.Success) =
-                UserResponse(
-                        id = result.user.id.toString(),
-                        email = result.user.email,
-                        name = result.user.name,
-                )
+        data class UserListDto (val users: Page<UserResponse>) {
+                companion object {
+                        fun from(result: ) =
+                                UsersResponse(
+                                        users = result.usersPage.map { UserResponse.from(it) }
+                                )
+                }
+        }
 
-        fun from(userDto: UserDto) =
-                UserResponse(
-                        id = userDto.id.toString(),
-                        email = userDto.email,
-                        name = userDto.name,
-                )
-    }
-}
+        companion object {
+                fun from(result: GetUserResult.Success) =
+                        UserResponse(
+                                id = result.user.id.toString(),
+                                email = result.user.email,
+                                name = result.user.name,
+                        )
 
-data class UsersResponse(val users: Page<UserResponse>) {
-    companion object {
-        fun from(result: GetUsersResult.Success) =
-                UsersResponse(users = result.usersPage.map { UserResponse.from(it) })
-    }
+                fun from(userDto: UserDto) =
+                        UserResponse(
+                                id = userDto.id.toString(),
+                                email = userDto.email,
+                                name = userDto.name,
+                        )
+        }
 }

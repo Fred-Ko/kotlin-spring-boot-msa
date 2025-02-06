@@ -1,9 +1,9 @@
 package com.ddd.user.presentation.api.v1.query
 
-import com.ddd.user.application.query.query.GetUserQuery
-import com.ddd.user.application.query.query.GetUsersQuery
-import com.ddd.user.application.query.result.GetUserResult
-import com.ddd.user.application.query.result.GetUsersResult
+import com.ddd.user.application.query.dto.query.GetUserQuery
+import com.ddd.user.application.query.dto.query.GetUsersQuery
+import com.ddd.user.application.query.dto.result.GetUserResult
+import com.ddd.user.application.query.dto.result.GetUsersResult
 import com.ddd.user.application.query.usecase.GetUserUseCase
 import com.ddd.user.application.query.usecase.GetUsersUseCase
 import com.ddd.user.presentation.api.v1.command.dto.response.UserResponse

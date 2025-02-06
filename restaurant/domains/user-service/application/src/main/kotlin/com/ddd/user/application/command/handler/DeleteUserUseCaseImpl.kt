@@ -1,8 +1,9 @@
 package com.ddd.user.application.command.handler
 
-import com.ddd.user.application.command.command.DeleteUserCommand
-import com.ddd.user.application.command.result.DeleteUserResult
+import com.ddd.user.application.command.dto.command.DeleteUserCommand
+import com.ddd.user.application.command.dto.result.DeleteUserResult
 import com.ddd.user.application.command.usecase.DeleteUserUseCase
+import com.ddd.user.application.exception.UserApplicationException
 import com.ddd.user.domain.port.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,12 +16,14 @@ class DeleteUserUseCaseImpl(private val userRepository: UserRepository) : Delete
         return try {
             val user =
                     userRepository.findById(command.id)
-                            ?: return DeleteUserResult.Failure.UserNotFound(command.id.toString())
+                            ?: throw UserApplicationException.UserNotFound(
+                                    id = command.id.toString()
+                            )
 
             userRepository.delete(user)
-            DeleteUserResult.Success(command.id.toString())
+            return DeleteUserResult.from(id = user.id)
         } catch (e: Exception) {
-            DeleteUserResult.Failure.ValidationError(e.message ?: "Unknown error")
+            throw UserApplicationException.DeleteUserFailed(id = command.id.toString(), e)
         }
     }
 }

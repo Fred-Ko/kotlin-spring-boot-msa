@@ -1,4 +1,4 @@
-package com.ddd.user.application.query.query
+package com.ddd.user.application.query.dto.query
 
 import java.util.UUID
 

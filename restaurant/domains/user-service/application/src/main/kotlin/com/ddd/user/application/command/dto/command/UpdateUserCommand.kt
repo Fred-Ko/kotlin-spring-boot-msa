@@ -1,4 +1,4 @@
-package com.ddd.user.application.command.command
+package com.ddd.user.application.command.dto.command
 
 import com.ddd.user.domain.model.vo.Address
 import java.util.UUID

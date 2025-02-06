@@ -1,7 +1,7 @@
 package com.ddd.user.application.command.handler
 
-import com.ddd.user.application.command.command.CreateUserCommand
-import com.ddd.user.application.command.result.CreateUserResult
+import com.ddd.user.application.command.dto.command.CreateUserCommand
+import com.ddd.user.application.command.dto.result.CreateUserResult
 import com.ddd.user.application.command.usecase.CreateUserUseCase
 import com.ddd.user.application.exception.UserApplicationException
 import com.ddd.user.domain.model.aggregate.User
@@ -20,8 +20,10 @@ class CreateUserUseCaseImpl(private val userRepository: UserRepository) : Create
     @Transactional
     override fun execute(command: CreateUserCommand): CreateUserResult {
         return try {
-            if (userRepository.existsByEmail(Email.of(command.email))) {
-                return CreateUserResult.Failure.EmailAlreadyExists(command.email)
+            Email.of(command.email).takeIf { userRepository.existsByEmail(it) }?.let {
+                throw UserApplicationException.EmailAlreadyExists(
+                        "User with email ${command.email} already exists"
+                )
             }
 
             val user =
@@ -39,10 +41,13 @@ class CreateUserUseCaseImpl(private val userRepository: UserRepository) : Create
                     )
 
             val savedUser = userRepository.save(user)
-            CreateUserResult.Success(savedUser.id.toString())
+            return CreateUserResult.from(savedUser)
         } catch (e: Exception) {
             logger.error("User creation failed: ${e.message}", e)
-            throw UserApplicationException("Failed to create user: ${e.message}", e)
+            throw UserApplicationException.UserCreationFailed(
+                    "Failed to create user: ${e.message}",
+                    e
+            )
         }
     }
 }
