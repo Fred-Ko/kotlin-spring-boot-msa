@@ -1,7 +1,5 @@
 package com.ddd.user.domain.model.aggregate
 
-import com.ddd.user.domain.model.event.UserCreatedEventV1
-import com.ddd.user.domain.model.event.UserUpdatedEventV1
 import com.ddd.user.domain.model.vo.*
 import com.ddd.user.domain.model.vo.UserStatus
 import java.time.LocalDateTime
@@ -12,20 +10,22 @@ import org.springframework.data.domain.AbstractAggregateRoot
 data class User
 private constructor(
         val id: UUID,
-        var name: UserName,
-        var email: Email,
-        var phoneNumber: PhoneNumber,
-        var address: Address,
         val createdAt: LocalDateTime,
-        var updatedAt: LocalDateTime,
-        var status: UserStatus,
-        var version: Long = 0
+        val name: UserName,
+        val email: Email,
+        val password: Password,
+        val phoneNumber: PhoneNumber,
+        val address: Address,
+        val updatedAt: LocalDateTime,
+        val status: UserStatus,
+        val version: Long = 0
 ) : AbstractAggregateRoot<User>() {
 
         companion object {
                 fun create(
                         name: UserName,
                         email: Email,
+                        password: Password,
                         phoneNumber: PhoneNumber,
                         address: Address
                 ): User {
@@ -33,50 +33,34 @@ private constructor(
                                         id = UUID.randomUUID(),
                                         name = name,
                                         email = email,
+                                        password = password,
                                         phoneNumber = phoneNumber,
                                         address = address,
                                         createdAt = LocalDateTime.now(),
                                         updatedAt = LocalDateTime.now(),
                                         status = UserStatus.ACTIVE
                                 )
-                                .apply {
-                                        registerEvent(
-                                                UserCreatedEventV1(
-                                                        aggregateId = id,
-                                                        name = name.value,
-                                                        email = email.value,
-                                                        phoneNumber = phoneNumber.value,
-                                                        address = address.toString(),
-                                                        status = status.toString()
-                                                )
-                                        )
-                                }
+                                .apply {}
                 }
         }
 
-        fun updateProfile(
-                name: UserName? = null,
-                email: Email? = null,
-                phoneNumber: PhoneNumber? = null,
-                address: Address? = null
-        ) {
-                name?.let { this.name = it }
-                email?.let { this.email = it }
-                phoneNumber?.let { this.phoneNumber = it }
-                address?.let { this.address = it }
+        fun isActivate(): Boolean {
+                return status == UserStatus.ACTIVE
+        }
 
-                this.updatedAt = LocalDateTime.now()
-                this.version += 1
+        fun changePassword(newPassword: Password): User {
+                return this.copy(password = newPassword, updatedAt = LocalDateTime.now())
+        }
 
-                registerEvent(
-                        UserUpdatedEventV1(
-                                aggregateId = this.id,
-                                name = name?.value,
-                                email = email?.value,
-                                phoneNumber = phoneNumber?.value,
-                                address = address?.toString(),
-                                status = status.toString()
-                        )
+        fun deactivateUser(): User {
+                return this.copy(status = UserStatus.INACTIVE, updatedAt = LocalDateTime.now())
+        }
+
+        fun modifyUser(newName: UserName?, newAddress: Address?): User {
+                return this.copy(
+                        name = newName ?: this.name,
+                        address = newAddress ?: this.address,
+                        updatedAt = LocalDateTime.now()
                 )
         }
 }

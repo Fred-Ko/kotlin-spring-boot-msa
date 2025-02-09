@@ -5,18 +5,16 @@ import com.ddd.user.domain.model.aggregate.User
 import com.ddd.user.domain.model.vo.*
 import jakarta.persistence.*
 import java.util.UUID
-import org.hibernate.annotations.UuidGenerator
 
 @Entity
 @Table(name = "users")
 class UserEntity(
-    @Id
-    @Column(nullable = false, columnDefinition = "UUID")
-        override var id: UUID? = null,
-    @Column(nullable = false) var name: String,
-    @Column(nullable = false, unique = true) var email: String,
-    @Column(name = "phone_number", nullable = false) var phoneNumber: String,
-    @Embedded var address: AddressEmbeddable,
+        @Id @Column(nullable = false, columnDefinition = "UUID") override var id: UUID? = null,
+        @Column(nullable = false) var name: String,
+        @Column(nullable = false, unique = true) var email: String,
+        @Column(name = "phone_number", nullable = false) var phoneNumber: String,
+        @Column(name = "password", nullable = false) var password: String,
+        @Embedded var address: AddressEmbeddable,
 ) : BaseEntity<UUID>() {
 
     fun toDomain(): User {
@@ -24,7 +22,8 @@ class UserEntity(
                 name = UserName.of(name),
                 email = Email.of(email),
                 phoneNumber = PhoneNumber.of(phoneNumber),
-                address = address.toDomain()
+                address = address.toDomain(),
+                password = Password.of(password)
         )
     }
 
@@ -35,6 +34,7 @@ class UserEntity(
                     name = user.name.value,
                     email = user.email.value,
                     phoneNumber = user.phoneNumber.value,
+                    password = user.password.value,
                     address = AddressEmbeddable.from(user.address)
             )
         }

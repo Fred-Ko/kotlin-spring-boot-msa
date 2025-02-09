@@ -1,31 +1,40 @@
 package com.ddd.user.presentation.api.v1.command.dto.request
 
-data class CreateUserRequest(
-        val email: String,
-        val password: String,
-        val name: String,
-        val phoneNumber: String,
-        val address: AddressRequest
-) {
-        data class AddressRequest(
-                val street: String,
-                val city: String,
-                val state: String,
-                val zipCode: String
-        )
-}
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 
-data class UpdateUserRequest(
-        val email: String?,
-        val password: String?,
-        val name: String?,
-        val phoneNumber: String?,
-        val address: AddressRequest?
-) {
-        data class AddressRequest(
-                val street: String,
-                val city: String,
-                val state: String,
-                val zipCode: String
-        )
-}
+data class RegisterUserRequest(
+        @field:Email @field:NotBlank val email: String,
+        @field:NotBlank @field:Size(min = 8, max = 20) val password: String,
+        @field:NotBlank val name: String,
+        @field:NotBlank val phoneNumber: String,
+        @field:NotBlank val street: String,
+        @field:NotBlank val city: String,
+        @field:NotBlank val state: String,
+        @field:NotBlank val zipCode: String,
+)
+
+data class ModifyUserRequest(
+        val id: String,
+        @field:NotBlank val name: String,
+        @field:NotBlank val phoneNumber: String,
+        @field:NotBlank val street: String,
+        @field:NotBlank val city: String,
+        @field:NotBlank val state: String,
+        @field:NotBlank val zipCode: String,
+)
+
+data class ChangePasswordRequest(
+        val id: String,
+        @field:NotBlank val currentPassword: String,
+        @field:NotBlank @field:Size(min = 8, max = 20) val newPassword: String,
+)
+
+data class DeleteUserRequest(
+        val id: String,
+)
+
+data class DeactivateUserRequest(
+        val id: String,
+)

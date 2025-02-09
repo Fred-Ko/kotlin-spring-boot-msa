@@ -6,7 +6,7 @@ import com.ddd.user.domain.port.repository.UserRepository
 import com.ddd.user.infrastructure.persistence.entity.UserEntity
 import java.util.UUID
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -25,8 +25,8 @@ class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : Use
         return userJpaRepository.findByEmail(email.value)?.toDomain()
     }
 
-    override fun findAll(pageRequest: PageRequest): Page<User> {
-        return userJpaRepository.findAll(pageRequest).map { it.toDomain() }
+    override fun findAll(pageable: Pageable): Page<User> {
+        return userJpaRepository.findAll(pageable).map { it.toDomain() }
     }
 
     override fun existsByEmail(email: Email): Boolean {
