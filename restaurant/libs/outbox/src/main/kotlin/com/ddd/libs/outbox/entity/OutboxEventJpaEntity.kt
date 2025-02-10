@@ -3,13 +3,14 @@ package com.ddd.libs.outbox.entity
 import com.ddd.libs.outbox.model.OutboxEvent
 import jakarta.persistence.*
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "outbox_events")
 class OutboxEventJpaEntity(
-        @Id @Column(length = 36) val id: String = "",
+        @Id @Column(length = 36) val id: UUID = UUID.randomUUID(),
         @Column(nullable = false) val aggregateType: String = "",
-        @Column(nullable = false) val aggregateId: String = "",
+        @Column(nullable = false) val aggregateId: UUID = UUID.randomUUID(),
         @Column(nullable = false) val eventType: String = "",
         @Column(nullable = false, columnDefinition = "TEXT") val payload: String = "",
         @Column(nullable = false) val createdAt: LocalDateTime = LocalDateTime.now(),

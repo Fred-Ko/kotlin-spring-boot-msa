@@ -1,7 +1,9 @@
 package com.ddd.user.application.dto.command
 
+import java.util.UUID
+
 data class ModifyUserCommandDto(
-        val id: String,
+        val id: UUID,
         val name: String,
         val phoneNumber: String,
         val street: String,

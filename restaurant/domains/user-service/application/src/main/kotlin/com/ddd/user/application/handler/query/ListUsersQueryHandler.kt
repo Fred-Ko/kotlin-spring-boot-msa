@@ -2,7 +2,7 @@ package com.ddd.user.application.handler.query
 
 import com.ddd.user.application.dto.result.ListUsersQueryResult
 import com.ddd.user.application.query.ListUsersQuery
-import com.ddd.user.domain.port.repository.UserRepository
+import com.ddd.user.domain.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +17,7 @@ class ListUsersQueryHandler(private val userRepository: UserRepository) : ListUs
                 users =
                         userPage.content.map {
                             ListUsersQueryResult.User(
-                                    id = it.id.toString(),
+                                    id = it.id,
                                     email = it.email.value,
                                     name = it.name.value,
                                     active = it.isActivate()

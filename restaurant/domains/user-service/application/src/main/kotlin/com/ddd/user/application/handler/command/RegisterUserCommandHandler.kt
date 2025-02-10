@@ -1,12 +1,12 @@
 package com.ddd.user.application.handler.command
 
 import com.ddd.user.application.command.RegisterUserCommand
-import com.ddd.user.application.command.dto.result.RegisterUserResult
 import com.ddd.user.application.dto.command.RegisterUserCommandDto
+import com.ddd.user.application.dto.result.RegisterUserResult
 import com.ddd.user.application.exception.UserApplicationException
 import com.ddd.user.domain.model.aggregate.User
 import com.ddd.user.domain.model.vo.*
-import com.ddd.user.domain.port.repository.UserRepository
+import com.ddd.user.domain.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -36,6 +36,6 @@ class RegisterUserCommandHandler(private val userRepository: UserRepository) : R
                 )
 
         val savedUser = userRepository.save(user)
-        return RegisterUserResult(id = savedUser.id.toString())
+        return RegisterUserResult(id = savedUser.id)
     }
 }

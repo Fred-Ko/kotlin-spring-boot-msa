@@ -3,6 +3,7 @@ package com.ddd.user.presentation.api.v1.command.dto.request
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import java.util.UUID
 
 data class RegisterUserRequest(
         @field:Email @field:NotBlank val email: String,
@@ -16,7 +17,7 @@ data class RegisterUserRequest(
 )
 
 data class ModifyUserRequest(
-        val id: String,
+        val id: UUID,
         @field:NotBlank val name: String,
         @field:NotBlank val phoneNumber: String,
         @field:NotBlank val street: String,
@@ -26,15 +27,15 @@ data class ModifyUserRequest(
 )
 
 data class ChangePasswordRequest(
-        val id: String,
+        val id: UUID,
         @field:NotBlank val currentPassword: String,
         @field:NotBlank @field:Size(min = 8, max = 20) val newPassword: String,
 )
 
 data class DeleteUserRequest(
-        val id: String,
+        val id: UUID,
 )
 
 data class DeactivateUserRequest(
-        val id: String,
+        val id: UUID,
 )

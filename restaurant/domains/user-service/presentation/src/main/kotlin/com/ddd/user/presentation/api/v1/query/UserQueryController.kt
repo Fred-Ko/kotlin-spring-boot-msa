@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
+import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -23,7 +24,7 @@ class UserQueryController(
 ) {
     @Operation(summary = "User 조회", description = "ID 로 User 를 조회합니다.")
     @GetMapping("/{id}")
-    fun getUser(@PathVariable id: String): ResponseEntity<GetUserResponse> {
+    fun getUser(@PathVariable id: UUID): ResponseEntity<GetUserResponse> {
         val queryResult = getUserQueryUseCase.getUser(id)
         val response = GetUserResponse.fromQueryResult(queryResult)
         return ResponseEntity.ok(response)

@@ -1,10 +1,11 @@
 package com.ddd.user.presentation.api.v1.query.dto.response
 
-import com.ddd.user.application.dto.query.GetUserQueryResult
+import com.ddd.user.application.dto.result.GetUserQueryResult
 import com.ddd.user.application.dto.result.ListUsersQueryResult
+import java.util.UUID
 
 data class GetUserResponse(
-        val id: String,
+        val id: UUID,
         val email: String,
         val name: String,
         val phoneNumber: String,
@@ -36,7 +37,7 @@ data class ListUsersResponse(
         val totalCount: Long,
         val totalPages: Int,
 ) {
-    data class User(val id: String, val email: String, val name: String, val active: Boolean) {
+    data class User(val id: UUID, val email: String, val name: String, val active: Boolean) {
         companion object {
             fun fromQueryResultUser(queryResultUser: ListUsersQueryResult.User): User {
                 return User(

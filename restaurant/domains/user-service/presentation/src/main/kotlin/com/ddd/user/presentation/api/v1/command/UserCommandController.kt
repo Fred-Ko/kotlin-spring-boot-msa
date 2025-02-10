@@ -8,6 +8,7 @@ import com.ddd.user.presentation.api.v1.command.dto.response.UserResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import java.util.UUID
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -44,7 +45,7 @@ class UserCommandController(
         @Operation(summary = "User 수정", description = "User 를 수정합니다.")
         @PutMapping("/{id}")
         fun modifyUser(
-                @PathVariable id: String,
+                @PathVariable id: UUID,
                 @Valid @RequestBody request: ModifyUserRequest,
         ): ResponseEntity<UserResponse> {
                 val command =
@@ -64,7 +65,7 @@ class UserCommandController(
         @Operation(summary = "User 비밀번호 변경", description = "User 비밀번호를 변경합니다.")
         @PutMapping("/{id}/password")
         fun changePassword(
-                @PathVariable id: String,
+                @PathVariable id: UUID,
                 @Valid @RequestBody request: ChangePasswordRequest,
         ): ResponseEntity<UserResponse> {
                 val command =
@@ -79,7 +80,7 @@ class UserCommandController(
 
         @Operation(summary = "User 삭제", description = "User 를 삭제합니다.")
         @DeleteMapping("/{id}")
-        fun deleteUser(@PathVariable id: String): ResponseEntity<UserResponse> {
+        fun deleteUser(@PathVariable id: UUID): ResponseEntity<UserResponse> {
                 val command =
                         DeleteUserCommandDto(
                                 id = id,
@@ -90,7 +91,7 @@ class UserCommandController(
 
         @Operation(summary = "User 비활성화", description = "User 를 비활성화합니다.")
         @PutMapping("/{id}/deactivate")
-        fun deactivateUser(@PathVariable id: String): ResponseEntity<UserResponse> {
+        fun deactivateUser(@PathVariable id: UUID): ResponseEntity<UserResponse> {
                 val command =
                         DeactivateUserCommandDto(
                                 id = id,

@@ -16,6 +16,6 @@ class KafkaOutboxEventPublisherImpl(
         val topic = "${event.aggregateType}.${event.eventType}".lowercase()
         val message = objectMapper.writeValueAsString(event)
 
-        kafkaTemplate.send(topic, event.aggregateId, message)
+        kafkaTemplate.send(topic, event.aggregateId.toString(), message)
     }
 }

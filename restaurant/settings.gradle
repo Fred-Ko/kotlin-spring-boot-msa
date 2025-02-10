@@ -6,10 +6,10 @@ include ':domains:user-service:domain'
 include ':domains:user-service:infrastructure'
 include ':domains:user-service:presentation'
 
-// include ':domains:restaurant-service:application'
+include ':domains:restaurant-service:application'
 // include ':domains:restaurant-service:apps'
-// include ':domains:restaurant-service:domain'
-// include ':domains:restaurant-service:infrastructure'
+include ':domains:restaurant-service:domain'
+include ':domains:restaurant-service:infrastructure'
 // include ':domains:restaurant-service:presentation'
 
 include 'libs:outbox'
