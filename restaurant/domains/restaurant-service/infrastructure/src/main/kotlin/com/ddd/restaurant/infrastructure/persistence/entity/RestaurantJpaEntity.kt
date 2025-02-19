@@ -2,7 +2,7 @@ package com.ddd.restaurant.infrastructure.persistence.entity
 
 import com.ddd.restaurant.domain.model.aggregate.Restaurant
 import com.ddd.restaurant.domain.model.vo.*
-import com.ddd.support.infrastructure.entity.BaseEntity
+import com.ddd.support.entity.BaseJpaEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalTime
@@ -10,24 +10,25 @@ import java.util.UUID
 
 @Entity
 @Table(name = "restaurants")
-class RestaurantEntity(
-        @Id @Column(nullable = false, columnDefinition = "UUID") override var id: UUID? = null,
-        @Column(nullable = false) var name: String,
-        @Embedded var address: RestaurantAddressEmbeddable,
-        @ElementCollection
+class RestaurantJpaEntity
+private constructor(
+        @Id @Column(nullable = false, columnDefinition = "UUID") override val id: UUID,
+        @Column(nullable = false) val name: String,
+        @Embedded val address: RestaurantAddressEmbeddable,
+        @ElementCollection(fetch = FetchType.LAZY)
         @CollectionTable(
                 name = "restaurant_menu_items",
                 joinColumns = [JoinColumn(name = "restaurant_id")]
         )
-        var menuItems: List<MenuItemEmbeddable>,
-        @Enumerated(EnumType.STRING) @Column(nullable = false) var status: RestaurantStatus,
-        @Embedded var operationHours: RestaurantOperationHoursEmbeddable,
-        @Version var version: Long = 0
-) : BaseEntity<UUID>() {
+        val menuItems: MutableList<MenuItemEmbeddable>,
+        @Enumerated(EnumType.STRING) @Column(nullable = false) val status: RestaurantStatus,
+        @Embedded val operationHours: RestaurantOperationHoursEmbeddable,
+        @Version override var version: Long = 0
+) : BaseJpaEntity<UUID>() {
 
     fun toDomain(): Restaurant {
-        return Restaurant(
-                id = id!!,
+        return Restaurant.create(
+                id = id,
                 createdAt = createdAt,
                 name = name,
                 address = address.toDomain(),
@@ -40,12 +41,16 @@ class RestaurantEntity(
     }
 
     companion object {
-        fun from(restaurant: Restaurant): RestaurantEntity {
-            return RestaurantEntity(
+        fun from(restaurant: Restaurant): RestaurantJpaEntity {
+            return RestaurantJpaEntity(
                     id = restaurant.id,
                     name = restaurant.name,
                     address = RestaurantAddressEmbeddable.from(restaurant.address),
-                    menuItems = restaurant.menuItems.map { MenuItemEmbeddable.from(it) },
+                    menuItems =
+                            restaurant
+                                    .menuItems
+                                    .map { MenuItemEmbeddable.from(it) }
+                                    .toMutableList(),
                     status = restaurant.status,
                     operationHours =
                             RestaurantOperationHoursEmbeddable.from(restaurant.operationHours),
@@ -56,11 +61,17 @@ class RestaurantEntity(
 }
 
 @Embeddable
-class RestaurantAddressEmbeddable(
-        @Column(nullable = false) var street: String,
-        @Column(nullable = false) var city: String,
-        @Column(nullable = false) var zipCode: String
+class RestaurantAddressEmbeddable
+private constructor(
+        @Column(nullable = false) val street: String,
+        @Column(nullable = false) val city: String,
+        @Column(nullable = false) val zipCode: String
 ) {
+    init {
+        require(street.isNotBlank()) { "Street cannot be blank" }
+        require(city.isNotBlank()) { "City cannot be blank" }
+        require(zipCode.isNotBlank()) { "Zip code cannot be blank" }
+    }
     fun toDomain(): RestaurantAddress {
         return RestaurantAddress(street, city, zipCode)
     }
@@ -77,11 +88,17 @@ class RestaurantAddressEmbeddable(
 }
 
 @Embeddable
-class MenuItemEmbeddable(
-        @Column(name = "item_name", nullable = false) var name: String,
-        @Column(name = "item_price", nullable = false) var price: BigDecimal,
-        @Column(name = "item_quantity", nullable = false) var quantity: Int
+class MenuItemEmbeddable
+private constructor(
+        @Column(name = "item_name", nullable = false) val name: String,
+        @Column(name = "item_price", nullable = false) val price: BigDecimal,
+        @Column(name = "item_quantity", nullable = false) val quantity: Int
 ) {
+    init {
+        require(name.isNotBlank()) { "Menu item name cannot be blank" }
+        require(price >= BigDecimal.ZERO) { "Price must be non-negative" }
+        require(quantity >= 0) { "Quantity must be non-negative" }
+    }
     fun toDomain(): MenuItem {
         return MenuItem(name = name, price = price, quantity = quantity)
     }
@@ -98,10 +115,14 @@ class MenuItemEmbeddable(
 }
 
 @Embeddable
-class RestaurantOperationHoursEmbeddable(
-        @Column(nullable = false) var startTime: LocalTime,
-        @Column(nullable = false) var endTime: LocalTime
+class RestaurantOperationHoursEmbeddable
+private constructor(
+        @Column(nullable = false) val startTime: LocalTime,
+        @Column(nullable = false) val endTime: LocalTime
 ) {
+    init {
+        require(startTime.isBefore(endTime)) { "Start time must be before end time" }
+    }
     fun toDomain(): RestaurantOperationHours {
         return RestaurantOperationHours(startTime, endTime)
     }

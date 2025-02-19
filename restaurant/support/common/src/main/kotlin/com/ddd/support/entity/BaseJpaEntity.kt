@@ -1,4 +1,4 @@
-package com.ddd.support.infrastructure.entity
+package com.ddd.support.entity
 
 import jakarta.persistence.*
 import java.io.Serializable
@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 import org.hibernate.proxy.HibernateProxy
 
 @MappedSuperclass
-abstract class BaseEntity<ID : Serializable> : Serializable {
+abstract class BaseJpaEntity<ID : Serializable> : Serializable {
 
     abstract val id: ID?
 
@@ -38,7 +38,7 @@ abstract class BaseEntity<ID : Serializable> : Serializable {
         if (thisEffectiveClass != otherEffectiveClass) return false
 
         // 여기까지 왔다면 클래스 타입이 같다고 봄
-        other as BaseEntity<*>
+        other as BaseJpaEntity<*>
 
         // 이제 ID 비교
         return when {

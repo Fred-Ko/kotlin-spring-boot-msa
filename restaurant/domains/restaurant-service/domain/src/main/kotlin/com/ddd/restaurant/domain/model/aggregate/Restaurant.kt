@@ -4,37 +4,43 @@ import com.ddd.restaurant.domain.exception.MenuItemNotFoundException
 import com.ddd.restaurant.domain.model.vo.*
 import java.time.LocalDateTime
 import java.util.UUID
-import org.springframework.data.domain.AbstractAggregateRoot
 
+@ConsistentCopyVisibility
 data class Restaurant
 private constructor(
         val id: UUID,
-        val createdAt: LocalDateTime,
         val name: String,
         val address: RestaurantAddress,
         val menuItems: List<MenuItem>,
-        val updatedAt: LocalDateTime,
         val status: RestaurantStatus,
         val operationHours: RestaurantOperationHours,
+        val createdAt: LocalDateTime,
+        val updatedAt: LocalDateTime,
         val version: Long = 0
-) : AbstractAggregateRoot<Restaurant>() {
+) {
 
     companion object {
         fun create(
+                id: UUID = UUID.randomUUID(),
                 name: String,
                 address: RestaurantAddress,
                 menuItems: List<MenuItem>,
-                operationHours: RestaurantOperationHours
+                operationHours: RestaurantOperationHours,
+                status: RestaurantStatus = RestaurantStatus.OPEN,
+                createdAt: LocalDateTime = LocalDateTime.now(),
+                updatedAt: LocalDateTime = LocalDateTime.now(),
+                version: Long = 0
         ): Restaurant {
             return Restaurant(
-                    id = UUID.randomUUID(),
+                    id = id,
                     name = name,
                     address = address,
                     menuItems = menuItems,
-                    createdAt = LocalDateTime.now(),
-                    updatedAt = LocalDateTime.now(),
-                    status = RestaurantStatus.OPEN,
-                    operationHours = operationHours
+                    status = status,
+                    operationHours = operationHours,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt,
+                    version = version
             )
         }
     }

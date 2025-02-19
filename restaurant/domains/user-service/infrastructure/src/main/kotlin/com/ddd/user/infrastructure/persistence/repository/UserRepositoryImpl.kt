@@ -3,7 +3,7 @@ package com.ddd.user.infrastructure.persistence.repository
 import com.ddd.user.domain.model.aggregate.User
 import com.ddd.user.domain.model.vo.Email
 import com.ddd.user.domain.repository.UserRepository
-import com.ddd.user.infrastructure.persistence.entity.UserEntity
+import com.ddd.user.infrastructure.persistence.entity.UserJpaEntity
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository
 class UserRepositoryImpl(private val userJpaRepository: UserJpaRepository) : UserRepository {
 
     override fun save(user: User): User {
-        val entity = UserEntity.from(user)
+        val entity = UserJpaEntity.from(user)
         return userJpaRepository.save(entity).toDomain()
     }
 

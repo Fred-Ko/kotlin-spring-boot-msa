@@ -4,7 +4,6 @@ import com.ddd.user.domain.model.vo.*
 import com.ddd.user.domain.model.vo.UserStatus
 import java.time.LocalDateTime
 import java.util.UUID
-import org.springframework.data.domain.AbstractAggregateRoot
 
 @ConsistentCopyVisibility
 data class User
@@ -19,26 +18,32 @@ private constructor(
         val updatedAt: LocalDateTime,
         val status: UserStatus,
         val version: Long = 0
-) : AbstractAggregateRoot<User>() {
+) {
 
         companion object {
                 fun create(
+                        id: UUID = UUID.randomUUID(),
                         name: UserName,
                         email: Email,
                         password: Password,
                         phoneNumber: PhoneNumber,
-                        address: Address
+                        address: Address,
+                        createdAt: LocalDateTime = LocalDateTime.now(),
+                        updatedAt: LocalDateTime = LocalDateTime.now(),
+                        status: UserStatus = UserStatus.ACTIVE,
+                        version: Long = 0
                 ): User {
                         return User(
-                                        id = UUID.randomUUID(),
+                                        id = id,
                                         name = name,
                                         email = email,
                                         password = password,
                                         phoneNumber = phoneNumber,
                                         address = address,
-                                        createdAt = LocalDateTime.now(),
-                                        updatedAt = LocalDateTime.now(),
-                                        status = UserStatus.ACTIVE
+                                        createdAt = createdAt,
+                                        updatedAt = updatedAt,
+                                        status = status,
+                                        version = version
                                 )
                                 .apply {}
                 }
