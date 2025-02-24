@@ -1,12 +1,15 @@
 package com.ddd.restaurant.application.dto.command
 
-import com.ddd.restaurant.domain.model.vo.MenuItem
-import com.ddd.restaurant.domain.model.vo.RestaurantAddress
-import com.ddd.restaurant.domain.model.vo.RestaurantOperationHours
+import java.math.BigDecimal
+import java.time.LocalTime
 
 data class CreateRestaurantCommandDto(
         val name: String,
-        val address: RestaurantAddress,
-        val menuItems: List<MenuItem>,
-        val operationHours: RestaurantOperationHours
-)
+        val address: RestaurantAddressDto,
+        val menuItems: List<MenuItemDto>,
+        val operationHours: RestaurantOperationHoursDto
+) {
+        data class RestaurantAddressDto(val street: String, val city: String, val zipCode: String)
+        data class MenuItemDto(val name: String, val price: BigDecimal, val quantity: Int)
+        data class RestaurantOperationHoursDto(val startTime: LocalTime, val endTime: LocalTime)
+}

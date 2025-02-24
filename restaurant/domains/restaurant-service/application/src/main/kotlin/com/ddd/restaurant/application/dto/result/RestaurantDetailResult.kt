@@ -1,4 +1,4 @@
-package com.ddd.restaurant.application.dto.query
+package com.ddd.restaurant.application.dto.result
 
 import java.math.BigDecimal
 import java.time.LocalTime

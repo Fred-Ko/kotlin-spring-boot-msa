@@ -1,80 +1,204 @@
 package com.ddd.restaurant.presentation.api.v1.command
 
-import com.ddd.restaurant.application.command.*
-import com.ddd.restaurant.application.dto.command.*
-import com.ddd.restaurant.domain.model.vo.RestaurantAddress
-import com.ddd.restaurant.presentation.api.v1.command.dto.request.RestaurantRequest
-import com.ddd.restaurant.presentation.api.v1.command.dto.response.RestaurantResponse
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.tags.Tag
+import com.ddd.restaurant.application.command.AddRestaurantMenuItemCommand
+import com.ddd.restaurant.application.command.ChangeRestaurantInfoCommand
+import com.ddd.restaurant.application.command.ChangeRestaurantMenuCommand
+import com.ddd.restaurant.application.command.ChangeRestaurantOperationHoursCommand
+import com.ddd.restaurant.application.command.CloseRestaurantCommand
+import com.ddd.restaurant.application.command.CreateRestaurantCommand
+import com.ddd.restaurant.application.command.OpenRestaurantCommand
+import com.ddd.restaurant.application.command.RemoveRestaurantMenuItemCommand
+import com.ddd.restaurant.application.dto.command.AddRestaurantMenuItemCommandDto
+import com.ddd.restaurant.application.dto.command.ChangeRestaurantInfoCommandDto
+import com.ddd.restaurant.application.dto.command.ChangeRestaurantMenuCommandDto
+import com.ddd.restaurant.application.dto.command.ChangeRestaurantOperationHoursCommandDto
+import com.ddd.restaurant.application.dto.command.CloseRestaurantCommandDto
+import com.ddd.restaurant.application.dto.command.CreateRestaurantCommandDto
+import com.ddd.restaurant.application.dto.command.OpenRestaurantCommandDto
+import com.ddd.restaurant.application.dto.command.RemoveRestaurantMenuItemCommandDto
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.AddRestaurantMenuItemRequest
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.ChangeRestaurantInfoRequest
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.ChangeRestaurantMenuRequest
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.ChangeRestaurantOperationHoursRequest
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.CloseRestaurantRequest
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.CreateRestaurantRequest
+import com.ddd.restaurant.presentation.api.v1.command.dto.request.OpenRestaurantRequest
 import jakarta.validation.Valid
+import java.util.UUID
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Restaurant Command API", description = "Restaurant Command API 입니다.")
 @RestController
 @RequestMapping("/api/v1/restaurants")
 class RestaurantCommandController(
-        private val createRestaurantUseCase: CreateRestaurantCommand,
-        private val addRestaurantMenuItemUseCase: AddRestaurantMenuItemCommand,
-        private val removeRestaurantMenuItemUseCase: RemoveRestaurantMenuItemCommand,
+        private val createRestaurantCommand: CreateRestaurantCommand,
+        private val changeRestaurantInfoCommand: ChangeRestaurantInfoCommand,
+        private val changeRestaurantMenuCommand: ChangeRestaurantMenuCommand,
+        private val changeRestaurantOperationHoursCommand: ChangeRestaurantOperationHoursCommand,
+        private val addRestaurantMenuItemCommand: AddRestaurantMenuItemCommand,
+        private val removeRestaurantMenuItemCommand: RemoveRestaurantMenuItemCommand,
+        private val openRestaurantCommand: OpenRestaurantCommand,
+        private val closeRestaurantCommand: CloseRestaurantCommand
 ) {
-    @Operation(summary = "Restaurant 생성", description = "Restaurant 를 생성합니다.")
-    @PostMapping
-    fun registerRestaurant(
-            @Valid @RequestBody request: RestaurantRequest.CreateRestaurantRequest,
-    ): ResponseEntity<RestaurantResponse.CreateRestaurantResponse> {
-        val command =
-                CreateRestaurantCommandDto(
-                        name = request.name,
-                        address = RestaurantAddress(request.address, request.city, request.zipCode),
-                        phoneNumber = request.phoneNumber,
-                        operatingHours = request.operatingHours,
+        @PostMapping
+        fun createRestaurant(
+                @RequestBody @Valid request: CreateRestaurantRequest
+        ): ResponseEntity<Void> {
+                createRestaurantCommand.createRestaurant(
+                        CreateRestaurantCommandDto(
+                                name = request.name,
+                                address =
+                                        request.address.let {
+                                                CreateRestaurantCommandDto.RestaurantAddressDto(
+                                                        it.street,
+                                                        it.city,
+                                                        it.zipCode
+                                                )
+                                        },
+                                menuItems =
+                                        request.menuItems.map { menuItemRequest ->
+                                                CreateRestaurantCommandDto.MenuItemDto(
+                                                        menuItemRequest.name,
+                                                        menuItemRequest.price,
+                                                        menuItemRequest.quantity
+                                                )
+                                        },
+                                operationHours =
+                                        request.operationHours.let {
+                                                CreateRestaurantCommandDto
+                                                        .RestaurantOperationHoursDto(
+                                                                it.startTime,
+                                                                it.endTime
+                                                        )
+                                        }
+                        )
                 )
-        createRestaurantUseCase.createRestaurant(command)
-        return ResponseEntity.ok(
-                RestaurantResponse.CreateRestaurantResponse("Restaurant created successfully")
-        )
-    }
+                return ResponseEntity.status(HttpStatus.CREATED).build()
+        }
 
-    @Operation(summary = "Restaurant 메뉴 아이템 추가", description = "Restaurant 메뉴 아이템을 추가합니다.")
-    @PostMapping("/{restaurantId}/menu-items")
-    fun addRestaurantMenuItem(
-            @PathVariable restaurantId: Long,
-            @Valid @RequestBody request: RestaurantRequest.AddRestaurantMenuItemRequest,
-    ): ResponseEntity<RestaurantResponse.AddRestaurantMenuItemResponse> {
-        val command =
-                AddRestaurantMenuItemCommandDto(
-                        restaurantId = restaurantId,
-                        name = request.name,
-                        description = request.description,
-                        price = request.price,
-                        category = request.category,
+        @PatchMapping("/{restaurantId}")
+        fun changeRestaurantInfo(
+                @PathVariable restaurantId: UUID,
+                @RequestBody @Valid request: ChangeRestaurantInfoRequest
+        ): ResponseEntity<Void> {
+                changeRestaurantInfoCommand.changeRestaurantInfo(
+                        ChangeRestaurantInfoCommandDto(
+                                restaurantId = restaurantId,
+                                newName = request.newName,
+                                newAddress =
+                                        request.newAddress?.let { addressRequest ->
+                                                ChangeRestaurantInfoCommandDto.RestaurantAddressDto(
+                                                        addressRequest.street,
+                                                        addressRequest.city,
+                                                        addressRequest.zipCode
+                                                )
+                                        }
+                        )
                 )
-        addRestaurantMenuItemUseCase.addRestaurantMenuItem(command)
-        return ResponseEntity.ok(
-                RestaurantResponse.AddRestaurantMenuItemResponse(
-                        "Restaurant menu item added successfully"
-                )
-        )
-    }
+                return ResponseEntity.ok().build()
+        }
 
-    @Operation(summary = "Restaurant 메뉴 아이템 삭제", description = "Restaurant 메뉴 아이템을 삭제합니다.")
-    @DeleteMapping("/{restaurantId}/menu-items/{menuItemId}")
-    fun removeRestaurantMenuItem(
-            @PathVariable restaurantId: Long,
-            @PathVariable menuItemId: Long,
-    ): ResponseEntity<RestaurantResponse.RemoveRestaurantMenuItemResponse> {
-        val command =
-                RemoveRestaurantMenuItemCommandDto(
-                        restaurantId = restaurantId,
-                        menuItemId = menuItemId,
+        @PatchMapping("/{restaurantId}/menu")
+        fun changeRestaurantMenu(
+                @PathVariable restaurantId: UUID,
+                @RequestBody @Valid request: ChangeRestaurantMenuRequest
+        ): ResponseEntity<Void> {
+                changeRestaurantMenuCommand.changeRestaurantMenu(
+                        ChangeRestaurantMenuCommandDto(
+                                restaurantId = restaurantId,
+                                newMenuItems =
+                                        request.newMenuItems.map { menuItemRequest ->
+                                                ChangeRestaurantMenuCommandDto.MenuItemDto(
+                                                        menuItemRequest.name,
+                                                        menuItemRequest.price,
+                                                        menuItemRequest.quantity
+                                                )
+                                        }
+                        )
                 )
-        removeRestaurantMenuItemUseCase.removeRestaurantMenuItem(command)
-        return ResponseEntity.ok(
-                RestaurantResponse.RemoveRestaurantMenuItemResponse(
-                        "Restaurant menu item removed successfully"
+                return ResponseEntity.ok().build()
+        }
+
+        @PatchMapping("/{restaurantId}/operation-hours")
+        fun changeRestaurantOperationHours(
+                @PathVariable restaurantId: UUID,
+                @RequestBody @Valid request: ChangeRestaurantOperationHoursRequest
+        ): ResponseEntity<Void> {
+                changeRestaurantOperationHoursCommand.changeRestaurantOperationHours(
+                        ChangeRestaurantOperationHoursCommandDto(
+                                restaurantId = restaurantId,
+                                newOperationHours =
+                                        request.newOperationHours.let { operationHoursRequest ->
+                                                ChangeRestaurantOperationHoursCommandDto
+                                                        .RestaurantOperationHoursDto(
+                                                                operationHoursRequest.startTime,
+                                                                operationHoursRequest.endTime
+                                                        )
+                                        }
+                        )
                 )
-        )
-    }
+                return ResponseEntity.ok().build()
+        }
+
+        @PostMapping("/{restaurantId}/menu-items")
+        fun addRestaurantMenuItem(
+                @PathVariable restaurantId: UUID,
+                @RequestBody @Valid request: AddRestaurantMenuItemRequest
+        ): ResponseEntity<Void> {
+                addRestaurantMenuItemCommand.addRestaurantMenuItem(
+                        AddRestaurantMenuItemCommandDto(
+                                restaurantId = restaurantId,
+                                menuItem =
+                                        request.menuItem.let { menuItemRequest ->
+                                                AddRestaurantMenuItemCommandDto.MenuItemDto(
+                                                        menuItemRequest.name,
+                                                        menuItemRequest.price,
+                                                        menuItemRequest.quantity
+                                                )
+                                        }
+                        )
+                )
+                return ResponseEntity.status(HttpStatus.CREATED).build()
+        }
+
+        @DeleteMapping("/{restaurantId}/menu-items/{menuItemId}")
+        fun removeRestaurantMenuItem(
+                @PathVariable restaurantId: UUID,
+                @PathVariable menuItemId: String,
+        ): ResponseEntity<Void> {
+                removeRestaurantMenuItemCommand.removeRestaurantMenuItem(
+                        RemoveRestaurantMenuItemCommandDto(
+                                restaurantId = restaurantId,
+                                menuItemId = menuItemId
+                        )
+                )
+                return ResponseEntity.ok().build()
+        }
+
+        @PostMapping("/{restaurantId}/open")
+        fun openRestaurant(
+                @RequestBody @Valid request: OpenRestaurantRequest
+        ): ResponseEntity<Void> {
+                openRestaurantCommand.openRestaurant(
+                        OpenRestaurantCommandDto(restaurantId = request.restaurantId)
+                )
+                return ResponseEntity.ok().build()
+        }
+
+        @PostMapping("/{restaurantId}/close")
+        fun closeRestaurant(
+                @RequestBody @Valid request: CloseRestaurantRequest
+        ): ResponseEntity<Void> {
+                closeRestaurantCommand.closeRestaurant(
+                        CloseRestaurantCommandDto(restaurantId = request.restaurantId)
+                )
+                return ResponseEntity.ok().build()
+        }
 }

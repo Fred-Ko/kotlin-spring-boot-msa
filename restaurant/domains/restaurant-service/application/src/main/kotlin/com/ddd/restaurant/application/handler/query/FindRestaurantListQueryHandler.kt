@@ -10,18 +10,19 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class FindRestaurantListQueryHandler(private val restaurantRepository: RestaurantRepository) :
         FindRestaurantListQuery {
-    override fun findRestaurantList(page: Int, size: Int): RestaurantListResult {
-        val restaurants = restaurantRepository.findAll(page, size)
-        return RestaurantListResult(
-                restaurants =
-                        restaurants.map {
-                            RestaurantListResult.RestaurantInfo(
-                                    id = it.id,
-                                    name = it.name,
-                                    address = it.address,
-                                    status = it.status,
-                            )
-                        }
-        )
-    }
+        override fun findRestaurantList(page: Int, size: Int): RestaurantListResult {
+                val restaurants = restaurantRepository.findAll(page, size)
+                return RestaurantListResult(
+                        restaurants =
+                                restaurants.map {
+                                        RestaurantListResult.RestaurantInfo(
+                                                id = it.id,
+                                                name = it.name,
+                                                address =
+                                                        it.address.toRestaurantListResultAddress(),
+                                                status = it.status.toRestaurantListResultStatus(),
+                                        )
+                                }
+                )
+        }
 }

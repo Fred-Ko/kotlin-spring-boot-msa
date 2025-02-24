@@ -1,50 +1,39 @@
 package com.ddd.restaurant.presentation.api.v1.query
 
-import com.ddd.restaurant.application.query.GetRestaurantQuery
-import com.ddd.restaurant.application.query.ListRestaurantsQuery
-import com.ddd.restaurant.presentation.api.v1.query.dto.response.RestaurantResponse
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.validation.constraints.Max
-import jakarta.validation.constraints.Min
+import com.ddd.restaurant.application.dto.result.RestaurantDetailResult
+import com.ddd.restaurant.application.dto.result.RestaurantListResult
+import com.ddd.restaurant.application.query.FindRestaurantDetailQuery
+import com.ddd.restaurant.application.query.FindRestaurantListQuery
+import com.ddd.restaurant.presentation.api.v1.query.dto.request.RestaurantDetailRequest
+import com.ddd.restaurant.presentation.api.v1.query.dto.request.RestaurantListRequest
+import java.util.UUID
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Restaurant Query API", description = "Restaurant Query API 입니다.")
-@Validated
 @RestController
 @RequestMapping("/api/v1/restaurants")
 class RestaurantQueryController(
-        private val getRestaurantQueryUseCase: GetRestaurantQuery,
-        private val listRestaurantsQueryUseCase: ListRestaurantsQuery,
+        private val findRestaurantListQuery: FindRestaurantListQuery,
+        private val findRestaurantDetailQuery: FindRestaurantDetailQuery
 ) {
-    @Operation(summary = "Restaurant 조회", description = "ID 로 Restaurant 를 조회합니다.")
-    @GetMapping("/{id}")
-    fun getRestaurant(
-            @PathVariable id: Long
-    ): ResponseEntity<RestaurantResponse.GetRestaurantResponse> {
-        val queryResult = getRestaurantQueryUseCase.getRestaurant(id)
-        val response = RestaurantResponse.GetRestaurantResponse.fromQueryResult(queryResult)
-        return ResponseEntity.ok(response)
+
+    @GetMapping
+    fun getRestaurantList(request: RestaurantListRequest): ResponseEntity<RestaurantListResult> {
+        val result =
+                findRestaurantListQuery.findRestaurantList(page = request.page, size = request.size)
+        return ResponseEntity.ok(result)
     }
 
-    @Operation(summary = "Restaurant 목록 조회", description = "Restaurant 목록을 페이지네이션으로 조회합니다.")
-    @GetMapping
-    fun listRestaurants(
-            @Parameter(description = "페이지 번호 (0부터 시작)")
-            @RequestParam(defaultValue = "0")
-            @Min(0)
-            page: Int,
-            @Parameter(description = "페이지 크기 (최대 100)")
-            @RequestParam(defaultValue = "10")
-            @Min(1)
-            @Max(100)
-            size: Int,
-    ): ResponseEntity<RestaurantResponse.ListRestaurantsResponse> {
-        val queryResult = listRestaurantsQueryUseCase.listRestaurants(page, size)
-        val response = RestaurantResponse.ListRestaurantsResponse.fromQueryResult(queryResult)
-        return ResponseEntity.ok(response)
+    @GetMapping("/{restaurantId}")
+    fun getRestaurantDetail(
+            @PathVariable restaurantId: UUID
+    ): ResponseEntity<RestaurantDetailResult> {
+        val request = RestaurantDetailRequest(restaurantId = restaurantId)
+        val result =
+                findRestaurantDetailQuery.findRestaurantDetail(restaurantId = request.restaurantId)
+        return ResponseEntity.ok(result)
     }
 }
