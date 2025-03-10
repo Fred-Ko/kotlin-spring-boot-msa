@@ -20,7 +20,7 @@ class UserJpaEntity(
 ) : BaseJpaEntity<UUID>() {
 
     fun toDomain(): User {
-        return User.create(
+        return User.fromEntity(
                 id = id!!,
                 name = UserName.of(name),
                 email = Email.of(email),

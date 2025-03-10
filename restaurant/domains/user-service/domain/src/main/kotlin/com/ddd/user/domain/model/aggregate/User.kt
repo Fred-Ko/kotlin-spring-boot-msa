@@ -1,5 +1,6 @@
 package com.ddd.user.domain.model.aggregate
 
+import com.ddd.support.aggregate.AbstractAggregateRoot
 import com.ddd.user.domain.model.vo.*
 import com.ddd.user.domain.model.vo.UserStatus
 import java.time.LocalDateTime
@@ -18,34 +19,54 @@ private constructor(
         val updatedAt: LocalDateTime,
         val status: UserStatus,
         val version: Long = 0
-) {
+) : AbstractAggregateRoot<User>() {
 
         companion object {
                 fun create(
-                        id: UUID = UUID.randomUUID(),
+                        name: UserName,
+                        email: Email,
+                        password: Password,
+                        phoneNumber: PhoneNumber,
+                        address: Address
+                ): User {
+                        return User(
+                                id = UUID.randomUUID(),
+                                name = name,
+                                email = email,
+                                password = password,
+                                phoneNumber = phoneNumber,
+                                address = address,
+                                createdAt = LocalDateTime.now(),
+                                updatedAt = LocalDateTime.now(),
+                                status = UserStatus.ACTIVE,
+                                version = 0
+                        )
+                }
+
+                fun fromEntity(
+                        id: UUID,
+                        createdAt: LocalDateTime,
                         name: UserName,
                         email: Email,
                         password: Password,
                         phoneNumber: PhoneNumber,
                         address: Address,
-                        createdAt: LocalDateTime = LocalDateTime.now(),
-                        updatedAt: LocalDateTime = LocalDateTime.now(),
-                        status: UserStatus = UserStatus.ACTIVE,
+                        updatedAt: LocalDateTime,
+                        status: UserStatus,
                         version: Long = 0
                 ): User {
                         return User(
-                                        id = id,
-                                        name = name,
-                                        email = email,
-                                        password = password,
-                                        phoneNumber = phoneNumber,
-                                        address = address,
-                                        createdAt = createdAt,
-                                        updatedAt = updatedAt,
-                                        status = status,
-                                        version = version
-                                )
-                                .apply {}
+                                id = id,
+                                createdAt = createdAt,
+                                name = name,
+                                email = email,
+                                password = password,
+                                phoneNumber = phoneNumber,
+                                address = address,
+                                updatedAt = updatedAt,
+                                status = status,
+                                version = version
+                        )
                 }
         }
 
