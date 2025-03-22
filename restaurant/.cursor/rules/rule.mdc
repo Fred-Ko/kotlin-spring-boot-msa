@@ -1,0 +1,909 @@
+---
+description: total rule
+globs: *.kt,*.kts
+alwaysApply: false
+---
+아래 나열된 규칙을 절대적으로 따라야한다. 
+
+# 프로젝트 기술 문서
+
+## 1. 프로젝트 개요
+
+### 1.1 기술 스택
+
+- **프레임워크**: Spring Boot  
+- **빌드 도구**: Gradle  
+- **프로그래밍 언어**: Kotlin  
+- **매핑 라이브러리**: MapStruct  
+
+### 1.2 아키텍처 원칙
+
+- **도메인 주도 설계(DDD)**: 핵심 도메인 로직에 집중합니다.  
+- **클린 아키텍처**: 시스템을 Presentation, Application, Domain, Infrastructure의 4개 레이어로 명확히 구분합니다. 이외에 특별한 상위 레이어로 Messaging 레이어를 도입하며 @KafkaListener나 이와 비슷한 책임을 가지는 코드만 존재한다.
+- **이벤트 소싱**: 사용하지 않습니다. 비동기 상태 추적은 별도의 상태 저장소를 통해 구현됩니다.  
+
+---
+
+## 2. 모듈화 전략
+
+### 2.1 멀티모듈 프로젝트
+
+- **레이어별 모듈 분리**: Presentation, Application, Domain, Infrastructure 레이어별로 모듈을 분리하여 관리합니다.  
+- **목적**: 한 영역의 변경이 다른 영역에 미치는 영향을 최소화합니다.  
+
+### 2.2 도메인별 모듈화
+
+- **구성**: 각 도메인은 최상위 폴더로 분리됩니다(예: `domains/user`, `domains/order`).  
+- **목적**: MSA(마이크로서비스 아키텍처) 스타일의 독립적인 구성을 유지합니다.  
+
+### 2.3 공통 모듈 (`common`)
+
+- **내용**: 전역에서 사용하는 순수 유틸리티, 공유 추상 클래스, 인터페이스 등이 포함됩니다.  
+- **주의**: 과도한 의존을 피하여 “공통 모듈 지옥”을 방지합니다.  
+
+---
+
+## 3. CQRS 패턴
+
+### 3.1 Command
+
+- **역할**: 상태 변경이나 특정 기능 실행을 위한 데이터 전송을 담당합니다.  
+- **특징**: 애플리케이션 레이어에서 Command는 데이터(상태 변경 결과)를 반환하지 않습니다.  
+
+### 3.2 Query
+
+- **역할**: 데이터 조회 또는 검색을 위한 요청을 처리합니다.  
+
+---
+
+## 4. DTO 네이밍 규칙
+
+### 4.1 Presentation 레이어
+
+- **Request DTO**: 사용자로부터 입력받은 데이터를 담으며, 이름 뒤에 “Request”를 붙입니다.  
+  - 예: `UserCreateRequest`, `ProductUpdateRequest`, `LoginRequest`  
+- **Response DTO**: API가 응답으로 반환하는 데이터를 담으며, 이름 뒤에 “Response”를 붙입니다.  
+  - 예: `UserInfoResponse`, `ProductDetailResponse`, `AuthTokenResponse`  
+
+### 4.2 Application 레이어
+
+- **Command DTO**: 특정 기능 실행(명령)에 필요한 데이터를 캡슐화하며, 이름 뒤에 “Command”를 붙입니다.  
+  - 예: `CreateUserCommand`, `UpdateProductCommand`  
+- **Query DTO**: 데이터 조회 및 검색 요청에 필요한 정보를 전달하며, 이름 뒤에 “Query”를 붙입니다.  
+  - 예: `GetUserQuery`, `FindProductsQuery`  
+
+### 4.3 DTO 변환 규칙
+
+- **원칙**: Presentation 레이어의 `Request DTO`는 애플리케이션 레이어의 `Command DTO` 또는 `Query DTO`로 변환되어 사용됩니다.  
+- **구현**: MapStruct를 사용하여 객체 간 매핑을 자동화합니다.  
+  - **설명**: 인터페이스를 통해 매핑 규칙을 정의하며, 컴파일 타임에 매핑 코드를 생성하여 런타임 오버헤드를 줄입니다.  
+  - **장점**:  
+    - **생산성**: 반복적인 매핑 코드를 줄여 개발 속도가 빨라집니다.  
+    - **유지보수**: 명시적인 인터페이스로 일관성을 유지하며, 변경이 용이합니다.  
+    - **복잡한 매핑 지원**: 중첩 객체, 컬렉션 매핑 등 복잡한 경우에도 쉽게 처리 가능합니다.  
+  - **단점**:  
+    - **의존성 추가**: MapStruct와 관련 빌드 설정이 프로젝트에 추가됩니다.  
+    - **커스터마이징 한계**: 특정 요구사항에 맞춘 세밀한 조정이 인터페이스 수정으로 제한될 수 있습니다.  
+    - **학습 곡선**: 팀원 모두가 MapStruct 인터페이스 작성법을 익혀야 합니다.  
+- **설정**:  
+  - Gradle에 MapStruct 의존성 추가:  
+
+    ```groovy
+    dependencies {
+        implementation "org.mapstruct:mapstruct:1.5.5.Final"
+        annotationProcessor "org.mapstruct:mapstruct-processor:1.5.5.Final"
+    }
+    ```
+
+  - Spring Boot와 통합 시 `@Mapper(componentModel = "spring")` 사용.  
+- **예시 (MapStruct 사용)**:  
+
+  ```kotlin
+  @Mapper(componentModel = "spring")
+  interface UserMapper {
+      fun toCreateUserCommand(request: UserCreateRequest): CreateUserCommand
+  }
+  ```
+
+  - 사용 예시:  
+
+    ```kotlin
+    @Autowired
+    private lateinit var userMapper: UserMapper
+
+    val command = userMapper.toCreateUserCommand(request)
+    ```
+
+---
+
+## 5. 레이어 간 의존성 및 도메인 규칙
+
+### 5.1 도메인 레이어의 독립성
+
+- **규칙**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조하지 않습니다.  
+- **목적**: 도메인의 순수성을 유지합니다.  
+
+### 5.2 Aggregate의 VO 사용 범위
+
+- **규칙**: 도메인 내 Aggregate(집합체)의 Value Object(VO)는 Domain 레이어 외부에서 사용하지 않습니다.  
+- **목적**: 도메인 경계 내에서만 활용합니다.  
+
+JPA 엔티티를 인프라스트럭처 레이어에 정의하고, Aggregate, Value Object(VO), 그리고 기타 DDD 엔티티를 도메인 레이어에 최대한 순수하게 정의한다는 규칙을 문서에 추가하려면, 기존 구조와 일관성을 유지하면서 명확하고 실용적인 내용을 제안해야 합니다. 아래는 문서에 추가할 수 있는 섹션으로, 기존 "5. 레이어 간 의존성 및 도메인 규칙" 섹션에 하위 항목으로 삽입하거나, 별도의 새로운 섹션으로 추가할 수 있습니다. 제안 내용은 다음과 같습니다:
+
+### 5.3 엔티티 정의 규칙 
+
+#### 5.3.1 JPA 엔티티의 위치
+
+- **규칙**: JPA 엔티티는 `Infrastructure` 레이어에 정의합니다.  
+- **목적**: 데이터베이스와의 매핑을 담당하는 JPA 엔티티를 인프라스트럭처 레이어로 분리하여, 도메인 레이어의 순수성을 유지하고 기술적 의존성을 격리합니다.  
+- **구현**:  
+  - JPA 엔티티는 `@Entity` 어노테이션을 사용하며, 데이터베이스 테이블과 매핑됩니다.  
+  - 도메인 로직은 JPA 엔티티에 포함시키지 않고, 필요 시 도메인 레이어의 Aggregate나 VO로 변환하여 사용합니다.  
+- **예시**:  
+
+  ```kotlin
+  // infrastructure/domains/user/src/main/kotlin/com/example/infrastructure/user/entity/UserEntity.kt
+  @Entity
+  @Table(name = "users")
+  data class UserEntity(
+      @Id
+      @GeneratedValue(strategy = GenerationType.IDENTITY)
+      val id: Long? = null,
+      val name: String,
+      val email: String
+  )
+  ```
+
+#### 5.3.2 Aggregate와 VO의 위치
+
+- **규칙**: Aggregate, Value Object(VO), 그리고 기타 DDD 엔티티는 `Domain` 레이어에 정의하며, 외부 기술 프레임워크(JPA, Spring 등)에 의존하지 않도록 최대한 순수하게 유지합니다.  
+- **목적**: 도메인 로직의 독립성과 재사용성을 보장하며, 비즈니스 규칙을 기술적 세부사항과 분리합니다.  
+- **구현**:  
+  - Aggregate는 도메인 내의 루트 엔티티로, 비즈니스 규칙과 불변성을 관리합니다.  
+  - VO는 불변 객체로, 도메인 내에서 값의 의미를 캡슐화합니다.  
+  - JPA 엔티티와의 매핑은 `Infrastructure` 레이어에서 별도로 처리하며, MapStruct를 활용해 변환합니다.  
+- **예시**:  
+
+  ```kotlin
+  // domains/user/src/main/kotlin/com/example/domain/user/User.kt (Aggregate)
+  data class User(
+      val id: UserId,
+      val name: String,
+      val email: Email
+  ) {
+      fun updateName(newName: String): User {
+          return copy(name = newName)
+      }
+  }
+
+  // domains/user/src/main/kotlin/com/example/domain/user/UserId.kt (VO)
+  @JvmInline
+  value class UserId(val value: Long)
+
+  // domains/user/src/main/kotlin/com/example/domain/user/Email.kt (VO)
+  data class Email(val value: String) {
+      init {
+          require(value.contains("@")) { "유효한 이메일 형식이 아닙니다." }
+      }
+  }
+  ```
+
+#### 5.3.3 JPA 엔티티와 DDD 엔티티 간 매핑
+
+- **규칙**: JPA 엔티티와 도메인 레이어의 Aggregate/VO 간 변환은 `Infrastructure` 또는 `Application` 레이어에서 수행하며, MapStruct를 사용해 매핑 로직을 정의합니다.  
+- **목적**: 도메인 레이어의 순수성을 유지하면서, 데이터 영속성과 도메인 로직을 분리합니다.  
+- **구현**:  
+  - `Infrastructure` 레이어에서 Repository가 JPA 엔티티를 조회/저장하고, 이를 도메인 객체로 변환합니다.  
+  - MapStruct 인터페이스를 통해 명시적이고 컴파일 타임에 검증 가능한 매핑을 제공합니다.  
+- **예시**:  
+
+  ```kotlin
+  // infrastructure/domains/user/src/main/kotlin/com/example/infrastructure/user/mapper/UserEntityMapper.kt
+  @Mapper(componentModel = "spring")
+  interface UserEntityMapper {
+      fun toDomain(entity: UserEntity): User
+      fun toEntity(domain: User): UserEntity
+  }
+
+  // infrastructure/domains/user/src/main/kotlin/com/example/infrastructure/user/repository/UserRepository.kt
+  @Repository
+  class UserRepository(
+      private val jpaRepository: SpringDataJpaUserRepository,
+      private val userEntityMapper: UserEntityMapper
+  ) {
+      fun findById(id: UserId): User? {
+          return jpaRepository.findById(id.value)?.let { userEntityMapper.toDomain(it) }
+      }
+
+      fun save(user: User): User {
+          val entity = userEntityMapper.toEntity(user)
+          return userEntityMapper.toDomain(jpaRepository.save(entity))
+      }
+  }
+  ```
+
+#### 5.3.4 주의사항
+
+- **도메인 레이어의 순수성**: 도메인 객체는 JPA 어노테이션(`@Entity`, `@Id` 등)이나 Spring 관련 의존성을 포함시키지 않습니다.  
+- **성능 고려**: 빈번한 객체 변환으로 인한 오버헤드를 줄이기 위해, 필요한 경우 매핑 로직을 최적화하거나 캐싱을 고려합니다.  
+- **테스트 용이성**: 도메인 레이어는 가능하다면 순수 Kotlin으로 작성되므로, 단위 테스트 시 mocking 없이 독립적으로 테스트 가능합니다.  
+
+---
+
+## 6. 애플리케이션 레이어 구조
+
+### 6.1 예시 디렉터리 구조
+
+```plaintext
+domains:
+	user:
+	  src:
+		main:
+		  kotlin:
+			com:
+			  example:
+				application:
+				  command:
+					- CreateUserCommand.kt
+					- UpdateUserCommand.kt
+					- handler
+						- CreateUserCommandHandler.kt
+						- UpdateUserCommandHandler.kt
+				  query:
+					- GetUserQuery.kt
+					- FindUsersQuery.kt
+					- handler
+						- GetUserQueryHandler.kt
+						- FindUsersQueryHandler.kt
+				  mapper:
+					- UserMapper.kt
+				  common:
+					- UserApplicationException.kt
+	order:
+	  src:
+	    main:
+	      kotlin:
+	        com:
+	          example:
+	            application:
+	              command:
+	                - CreateOrderCommand.kt
+	                - UpdateOrderCommand.kt
+	                - CancelOrderCommand.kt
+	                - handler
+	                  - CreateOrderCommandHandler.kt
+	                  - UpdateOrderCommandHandler.kt
+	                  - CancelOrderCommandHandler.kt
+	              query:
+	                - GetOrderQuery.kt
+	                - FindOrdersQuery.kt
+	                - FindOrdersByCustomerQuery.kt
+	                - handler
+	                  - GetOrderQueryHandler.kt
+	                  - FindOrdersQueryHandler.kt
+	                  - FindOrdersByCustomerQueryHandler.kt
+	              mapper:
+	                - OrderMapper.kt
+	              common:
+	                - OrderApplicationException.kt
+```
+
+---
+
+## 7. 프레젠테이션 레이어 구조
+
+### 7.1 예시 디렉터리 구조
+
+```plaintext
+domains:
+	user:
+	  src:
+		main:
+		  kotlin:
+			com:
+			  example:
+				presentation:
+				  v1:
+					command:
+					  - UserCommandController.kt
+					  dto:
+						request:
+						  - UserCreateRequestV1.kt
+						  - UserUpdateRequestV1.kt
+					query:
+					  - UserQueryController.kt
+					  dto:
+						response:
+						  - UserResponseV1.kt
+						  - UserSearchResponseV1.kt
+				  v2:
+					command:
+					  - UserCommandControllerV2.kt
+					  dto:
+						request:
+						  - UserCreateRequestV2.kt
+					query:
+					  - UserQueryControllerV2.kt
+					  dto:
+						response:
+						  - UserDetailResponseV2.kt
+	order:
+	  src:
+		main:
+		  kotlin:
+			com:
+			  example:
+				presentation:
+				  v1:
+					command:
+					  - OrderCommandController.kt
+					  dto:
+						request:
+						  - OrderCreateRequestV1.kt
+						  - OrderCancelRequestV1.kt
+					query:
+					  - OrderQueryController.kt
+					  dto:
+						response:
+						  - OrderResponseV1.kt
+						  - OrderHistoryResponseV1.kt
+```
+
+---
+
+## 8. Query 전략
+
+### 8.1 페이지네이션
+
+- **규칙**: 다건 조회는 페이지네이션을 적용.
+- **방식**: 결정 시 커서 페이지네이션을 기본.  
+
+---
+
+## 9. Command 요청에 대한 REST 응답 규칙
+
+### 9.1 동기 응답
+
+- **특징**: 프레젠테이션 레이어에서 제공되며, 애플리케이션 레이어의 Command 실행 결과를 기반으로 최소한의 메타데이터를 반환합니다.  
+- **필수 필드**: `status`, `message`, `correlationId` (결과 확인용 식별자)  
+- **예시**:  
+
+  ```json
+  {
+    "status": "success",
+    "message": "요청이 처리되었습니다.",
+    "correlationId": "correlation123"
+  }
+  ```
+
+### 9.2 비동기 응답
+
+- **특징**: 프레젠테이션 레이어에서 제공되며, URL 처리는 프레젠테이션 레이어에서만 수행됩니다. 애플리케이션 레이어는 `jobId`만 제공합니다.  
+- **필수 필드**: `status`, `message`, `jobId`, 상태 조회 및 관리용 링크  
+- **예시**:  
+
+  ```json
+  {
+    "status": "accepted",
+    "message": "요청이 접수되었습니다.",
+    "jobId": "job12345",
+    "links": [
+      {
+        "rel": "job-status-ws",
+        "href": "wss://example.com/ws/job-status/job12345",
+        "type": "ws",
+        "action": "subscribe"
+      },
+      {
+        "rel": "job-none-ws",
+        "href": "/api/v1/jobs/status/job12345",
+        "type": "http",
+        "method": "GET",
+        "action": "get-status"
+      }
+    ]
+  }
+  ```
+
+---
+
+## 10. Command 요청에 대한 REST 실패 응답 규칙
+
+(기존 내용 유지, 생략)
+
+---
+
+## 11. 애플리케이션 레이어에서 Command 리턴 규칙
+
+### 11.1 기본 원칙
+
+- **규칙**: Command 핸들러는 상태 변경만 수행하며, 비즈니스 데이터(예: 생성된 엔티티의 상세 정보)를 반환하지 않습니다.  
+- **참고**: 결과 확인용 `correlationId` 또는 `jobId`는 반환 가능하며, 이는 프레젠테이션 레이어에서 처리됩니다.  
+
+### 11.2 동기 Command 처리
+
+- **리턴 값**: `CommandResult` 객체  
+- **필수 필드**:
+  - `success`: boolean  
+  - `correlationId`: string  
+- **예시**:  
+
+  ```json
+  {
+    "success": true,
+    "correlationId": "corr-456"
+  }
+  ```
+
+### 11.3 비동기 Command 처리
+
+- **리턴 값**: `AsyncCommandResult` 객체  
+- **필수 필드**:
+  - `success`: boolean  
+  - `jobId`: string  
+- **예시**:  
+
+  ```json
+  {
+    "success": true,
+    "jobId": "job-789"
+  }
+  ```
+
+- **참고**: 상태 추적은 데이터베이스 테이블 또는 메시지 큐를 통해 관리되며, 이벤트 소싱은 사용하지 않습니다.  
+
+### 11.4 실패 처리
+
+- **리턴 값**: `CommandResult` 또는 `AsyncCommandResult` 객체에 오류 정보 포함  
+- **필수 필드**:
+  - `success`: false  
+  - `errorCode`: string  
+- **예시**:  
+
+  ```json
+  {
+    "success": false,
+    "errorCode": "VALIDATION_ERROR"
+  }
+  ```
+
+### 11.5 구현 참고
+
+- **동기 Command 핸들러 예시**:  
+
+  ```kotlin
+  class CreateUserCommandHandler {
+      fun handle(command: CreateUserCommand): CommandResult {
+          userRepository.save(User(command.name, command.email))
+          return CommandResult(true, UUID.randomUUID().toString())
+      }
+  }
+  ```
+
+- **프레젠테이션 계층에서의 변환 (MapStruct 사용)**:  
+
+  ```kotlin
+  @RestController
+  @RequestMapping("/api/v1/users")
+  class UserController(
+      private val createUserCommandHandler: CreateUserCommandHandler,
+      private val userMapper: UserMapper
+  ) {
+      @PostMapping
+      fun createUser(@RequestBody request: UserCreateRequest): ResponseEntity<Any> {
+          val command = userMapper.toCreateUserCommand(request)
+          val result = createUserCommandHandler.handle(command)
+          return ResponseEntity.ok(mapOf(
+              "status" to "success",
+              "message" to "요청이 처리되었습니다.",
+              "correlationId" to result.correlationId
+          ))
+      }
+  }
+  ```
+
+- **MapStruct 매퍼 정의**:  
+
+  ```kotlin
+  @Mapper(componentModel = "spring")
+  interface UserMapper {
+      fun toCreateUserCommand(request: UserCreateRequest): CreateUserCommand
+  }
+  ```
+
+---
+
+## 12. 에러 처리
+
+### 12.1 목적
+
+- 시스템의 안정성을 유지하고, 클라이언트에게 명확한 에러 메시지를 제공하기 위해 일관된 에러 처리 전략을 정의합니다.
+- 레이어별로 적절한 에러 처리를 통해 책임을 명확히 하고, 에러의 원인을 쉽게 파악할 수 있도록 합니다.
+
+### 12.2 레이어별 에러 처리
+
+#### 12.2.1 Presentation 레이어
+
+- **역할**: 클라이언트의 요청을 검증하고, 애플리케이션 레이어로 전달하기 전에 유효성 검사를 수행합니다.
+- **에러 유형**: 요청 데이터의 유효성 검사 실패, 인증/인가 실패 등.
+- **처리 방식**: `@Valid` 어노테이션을 사용한 유효성 검사, Spring Security를 통한 인증/인가 처리.
+- **응답**: 표준화된 에러 응답 형식으로 클라이언트에게 반환.
+
+#### 12.2.2 Application 레이어
+
+- **역할**: 비즈니스 로직을 실행하며, 도메인 레이어와 상호작용합니다.
+- **에러 유형**: 비즈니스 규칙 위반, 도메인 로직 에러 등.
+- **처리 방식**: 도메인에서 발생한 예외를 catching하고, 애플리케이션 레이어에서 적절한 에러 응답으로 변환.
+- **응답**: CommandResult 또는 AsyncCommandResult에 에러 정보를 포함하여 반환.
+
+#### 12.2.3 Domain 레이어
+
+- **역할**: 핵심 비즈니스 로직을 포함하며, 도메인 규칙을 준수합니다.
+- **에러 유형**: 도메인 규칙 위반 (예: 무효한 상태 전환).
+- **처리 방식**: 도메인 예외를 throw하여 상위 레이어로 전달.
+- **예외 클래스**: `DomainException`과 같은 커스텀 예외 클래스를 사용.
+
+#### 12.2.4 Infrastructure 레이어
+
+- **역할**: 데이터베이스, 외부 API 등과의 통신을 담당합니다.
+- **에러 유형**: 데이터베이스 연결 실패, 외부 API 응답 지연 등.
+- **처리 방식**: 인프라 관련 예외를 catching하고, 애플리케이션 레이어에서 처리할 수 있는 형태로 변환.
+- **예외 클래스**: `InfrastructureException`과 같은 커스텀 예외 클래스를 사용.
+
+### 12.3 에러 응답 형식
+
+- **형식**: 모든 에러 응답은 JSON 형식으로 반환되며, 다음과 같은 필드를 포함합니다.
+  - `status`: "error"
+  - `message`: 사용자에게 표시할 에러 메시지
+  - `errorCode`: 에러를 식별하기 위한 고유 코드
+  - `timestamp`: 에러 발생 시각
+  - `path`: 에러가 발생한 API 경로
+- **예시**:
+
+  ```json
+  {
+    "status": "error",
+    "message": "사용자를 찾을 수 없습니다.",
+    "errorCode": "USER_NOT_FOUND",
+    "timestamp": "2023-10-01T12:00:00Z",
+    "path": "/api/v1/users/123"
+  }
+  ```
+
+### 12.4 로깅
+
+- **규칙**: 모든 에러는 로깅되며, 로깅 레벨은 에러의 심각도에 따라 다릅니다.
+  - **INFO**: 클라이언트의 잘못된 요청 (예: 유효성 검사 실패)
+  - **WARN**: 시스템의 일부 기능에 영향을 미치는 에러
+  - **ERROR**: 시스템의 주요 기능에 영향을 미치는 심각한 에러
+- **로깅 형식**: 에러 코드, 메시지, 스택 트레이스(필요 시) 포함.
+
+### 12.5 예외 클래스
+
+- **커스텀 예외**: 프로젝트에서는 다음과 같은 커스텀 예외 클래스를 정의합니다.
+  - `DomainException`: 도메인 레이어에서 발생하는 예외
+  - `ApplicationException`: 애플리케이션 레이어에서 발생하는 예외
+  - `InfrastructureException`: 인프라 레이어에서 발생하는 예외
+  - `PresentationException`: 프레젠테이션 레이어에서 발생하는 예외
+- **사용 예시**:
+
+  ```kotlin
+  class UserNotFoundException(message: String) : DomainException(message)
+  ```
+
+### 12.6 에러 코드
+
+- **규칙**: 모든 에러는 고유한 에러 코드를 가지며, 이는 클라이언트가 에러를 식별하고 적절히 대응할 수 있도록 합니다.
+- **형식**: 대문자 스네이크 케이스 (예: `USER_NOT_FOUND`, `INVALID_INPUT`)
+- **문서화**: 에러 코드와 그 의미는 API 문서에 명시됩니다.
+
+### 12.7 글로벌 예외 처리
+
+- **구현**: Spring의 `@ControllerAdvice`를 사용하여 전역적으로 예외를 처리합니다.
+- **예시**:
+
+  ```kotlin
+  @ControllerAdvice
+  class GlobalExceptionHandler {
+      @ExceptionHandler(DomainException::class)
+      fun handleDomainException(ex: DomainException): ResponseEntity<Map<String, Any>> {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
+              "status" to "error",
+              "message" to ex.message,
+              "errorCode" to "DOMAIN_ERROR"
+          ))
+      }
+      // 기타 예외 핸들러...
+  }
+  ```
+
+### 12.8 비동기 에러 처리
+
+- **특징**: 비동기 Command의 경우, 에러가 발생하면 `AsyncCommandResult`에 에러 정보를 포함하여 반환합니다.
+- **응답 형식**:
+
+  ```json
+  {
+    "success": false,
+    "jobId": "job123",
+    "errorCode": "ASYNC_PROCESSING_ERROR"
+  }
+  ```
+
+- **상태 조회**: 클라이언트는 `jobId`를 사용하여 작업의 최종 상태를 조회할 수 있으며, 에러 발생 시 상세 에러 정보를 확인할 수 있습니다.
+
+---
+
+## 13. HATEOAS 및 URI 템플릿 사용 규칙
+
+### 13.1 목적
+
+- RESTful API에서 클라이언트가 하드코딩된 URL에 의존하지 않고, 동적으로 제공되는 링크를 통해 리소스를 탐색할 수 있도록 HATEOAS(Hypermedia as the Engine of Application State)를 적용합니다.  
+- URI 템플릿을 활용하여 경로 변경에 유연하게 대응합니다.
+
+### 13.2 기본 규칙
+
+- **의존성**: Spring HATEOAS(`spring-boot-starter-hateoas`)를 사용합니다.  
+- **링크 포함**: 성공적인 Command 요청(동기/비동기) 응답에는 관련 리소스 상태 확인 또는 다음 작업을 위한 링크를 포함합니다.  
+- **실패 응답**: 링크는 선택 사항이며, 오류 해결을 위한 추가 링크(예: 재시도)가 있다면 포함 권장.
+
+### 13.3 링크 구조
+
+- **필수 필드**: 모든 링크는 `rel`(관계), `href`(URL), `method`(HTTP 메서드)를 포함합니다.  
+- **형식**:  
+
+  ```kotlin
+  mapOf(
+      "rel" to "관계_이름",
+      "href" to "리소스_URL",
+      "method" to "HTTP_메서드"
+  )
+  ```
+
+- **예시**:  
+
+  ```kotlin
+  mapOf(
+      "rel" to "job-status",
+      "href" to "/api/v1/jobs/status/job123",
+      "method" to "GET"
+  )
+  ```
+
+### 13.4 URI 템플릿 사용
+
+- **하드코딩 금지**: 링크 경로는 하드코딩하지 않고, Spring HATEOAS의 `linkTo`와 `methodOn`을 사용해 동적으로 생성합니다.  
+- **형식**:  
+
+  ```kotlin
+  linkTo<컨트롤러_클래스> { 메서드(파라미터) }.withRel("관계_이름")
+  ```
+
+- **예시**:  
+
+  ```kotlin
+  val statusLink = linkTo<JobStatusController> { getJobStatus(jobId) }.withRel("job-status")
+  ```
+
+### 13.5 비동기 Command 규칙
+
+- **필수 링크**: 비동기 응답에는 작업 상태 확인을 위한 `job-status` 링크를 포함하며, `jobId`를 기반으로 생성합니다.  
+- **예시**:  
+
+  ```kotlin
+  val statusLink = linkTo<JobStatusController> { getJobStatus(result.jobId!!) }.withRel("job-status")
+  "links" to listOf(mapOf("rel" to statusLink.rel.value(), "href" to statusLink.href, "method" to "GET"))
+  ```
+
+### 13.6 응답 형식
+
+- **규칙**: 링크는 응답의 `links` 필드에 `List<Map<String, String>>`로 포함됩니다.  
+- **예시**:  
+
+  ```json
+  {
+    "status": "accepted",
+    "message": "요청이 접수되었습니다.",
+    "jobId": "job123",
+    "links": [
+      {
+        "rel": "job-status",
+        "href": "/api/v1/jobs/status/job123",
+        "method": "GET"
+      }
+    ]
+  }
+  ```
+
+### 13.7 구현 참고
+
+- **비동기 Command 예시 (MapStruct 사용)**:  
+
+  ```kotlin
+  @RestController
+  @RequestMapping("/api/v1/users")
+  class UserAsyncCommandController(
+      private val handler: CreateUserAsyncCommandHandler,
+      private val userMapper: UserMapper
+  ) {
+      @PostMapping("/async")
+      fun createUserAsync(@RequestBody request: UserCreateRequest): ResponseEntity<Map<String, Any>> {
+          val command = userMapper.toCreateUserCommand(request)
+          val result = handler.handle(command)
+          return if (result.success) {
+              val statusLink = linkTo<JobStatusController> { getJobStatus(result.jobId!!) }.withRel("job-status")
+              ResponseEntity.accepted().body(mapOf(
+                  "status" to "accepted",
+                  "message" to "요청이 접수되었습니다.",
+                  "jobId" to result.jobId,
+                  "links" to listOf(mapOf("rel" to statusLink.rel.value(), "href" to statusLink.href, "method" to "GET"))
+              ))
+          } else {
+              ResponseEntity.badRequest().body(mapOf(
+                  "status" to "error",
+                  "message" to "비동기 요청 처리에 실패했습니다.",
+                  "jobId" to result.jobId,
+                  "errorCode" to result.errorCode
+              ))
+          }
+      }
+  }
+  ```
+
+- **MapStruct 매퍼 정의**:  
+
+  ```kotlin
+  @Mapper(componentModel = "spring")
+  interface UserMapper {
+      fun toCreateUserCommand(request: UserCreateRequest): CreateUserCommand
+  }
+  ```
+
+### 13.8 준수 사항
+
+- **컨트롤러 메서드 명명**: `linkTo`가 참조하므로 메서드 이름은 명확해야 합니다(예: `getJobStatus`).  
+- **테스트**: `MockMvc`를 사용해 링크 생성을 검증합니다.  
+- **문서화**: Swagger와 통합 시 `links` 필드를 명시적으로 정의합니다.
+
+---
+
+### 14 프로젝트 구조 참고용
+아래는 참고용이고 그대로 하라는건 아니다.
+```
+domains/
+├── common/
+│   ├── src/main/kotlin/com/example/common/
+│   │   ├── dto/
+│   │   │   ├── CommandResult.kt
+│   │   │   └── AsyncCommandResult.kt
+│   │   ├── exception/
+│   │   │   ├── DomainException.kt
+│   │   │   ├── ApplicationException.kt
+│   │   │   ├── InfrastructureException.kt
+│   │   │   └── PresentationException.kt
+│   │   └── config/
+│   │       ├── MapStructConfig.kt
+│   │       └── GlobalExceptionHandler.kt
+│   └── build.gradle.kts
+│
+├── user/
+│   ├── apps/
+│   │   ├── src/main/kotlin/com/example/apps/user/
+│   │   │   └── UserApplication.kt
+│   │   └── build.gradle.kts
+│   ├── domain/
+│   │   ├── src/main/kotlin/com/example/domain/user/
+│   │   │   ├── aggregate/User.kt (Aggregate)
+│   │   │   ├── vo/UserId.kt (VO)
+│   │   │   ├── vo/Email.kt (VO)
+│   │   │   ├── repository/UserRepository.kt (Interface)
+│   │   │   └── exception/UserDomainException.kt
+│   │   └── build.gradle.kts
+│   ├── application/
+│   │   ├── src/main/kotlin/com/example/application/user/
+│   │   │   ├── command/
+│   │   │   │   ├── CreateUserCommand.kt
+│   │   │   │   ├── UpdateUserCommand.kt
+│   │   │   │   └── handler/
+│   │   │   │       ├── CreateUserCommandHandler.kt
+│   │   │   │       └── UpdateUserCommandHandler.kt
+│   │   │   ├── query/
+│   │   │   │   ├── GetUserQuery.kt
+│   │   │   │   ├── FindUsersQuery.kt
+│   │   │   │   └── handler/
+│   │   │   │       ├── GetUserQueryHandler.kt
+│   │   │   │       └── FindUsersQueryHandler.kt
+│   │   │   ├── mapper/UserMapper.kt
+│   │   │   └── common/UserApplicationException.kt
+│   │   └── build.gradle.kts
+│   ├── infrastructure/
+│   │   ├── src/main/kotlin/com/example/infrastructure/user/
+│   │   │   ├── entity/UserEntity.kt
+│   │   │   ├── mapper/UserEntityMapper.kt
+│   │   │   ├── repository/
+│   │   │   │   ├── SpringDataJpaUserRepository.kt
+│   │   │   │   └── UserRepositoryImpl.kt
+│   │   │   └── exception/UserInfrastructureException.kt
+│   │   └── build.gradle.kts
+│   ├── presentation/
+│   │   ├── src/main/kotlin/com/example/presentation/user/
+│   │   │   ├── v1/
+│   │   │   │   ├── command/
+│   │   │   │   │   ├── UserCommandController.kt
+│   │   │   │   │   └── dto/request/
+│   │   │   │   │       ├── UserCreateRequestV1.kt
+│   │   │   │   │       └── UserUpdateRequestV1.kt
+│   │   │   │   └── query/
+│   │   │   │       ├── UserQueryController.kt
+│   │   │   │       └── dto/response/
+│   │   │   │           ├── UserResponseV1.kt
+│   │   │   │           └── UserSearchResponseV1.kt
+│   │   │   └── exception/UserPresentationException.kt
+│   │   └── build.gradle.kts
+│   └── build.gradle.kts
+│
+├── order/
+│   ├── apps/
+│   │   ├── src/main/kotlin/com/example/apps/order/
+│   │   │   └── OrderApplication.kt
+│   │   └── build.gradle.kts
+│   ├── domain/
+│   │   ├── src/main/kotlin/com/example/domain/order/
+│   │   │   ├── aggregate/Order.kt (Aggregate)
+│   │   │   ├── vo/OrderId.kt (VO)
+│   │   │   ├── entity/OrderItem.kt (Entity/VO)
+│   │   │   ├── vo/OrderStatus.kt (Enum)
+│   │   │   ├── repository/OrderRepository.kt (Interface)
+│   │   │   └── exception/OrderDomainException.kt
+│   │   └── build.gradle.kts
+│   ├── application/
+│   │   ├── src/main/kotlin/com/example/application/order/
+│   │   │   ├── command/
+│   │   │   │   ├── CreateOrderCommand.kt
+│   │   │   │   ├── UpdateOrderCommand.kt
+│   │   │   │   ├── CancelOrderCommand.kt
+│   │   │   │   └── handler/
+│   │   │   │       ├── CreateOrderCommandHandler.kt
+│   │   │   │       ├── UpdateOrderCommandHandler.kt
+│   │   │   │       └── CancelOrderCommandHandler.kt
+│   │   │   ├── query/
+│   │   │   │   ├── GetOrderQuery.kt
+│   │   │   │   ├── FindOrdersQuery.kt
+│   │   │   │   ├── FindOrdersByCustomerQuery.kt
+│   │   │   │   └── handler/
+│   │   │   │       ├── GetOrderQueryHandler.kt
+│   │   │   │       ├── FindOrdersQueryHandler.kt
+│   │   │   │       └── FindOrdersByCustomerQueryHandler.kt
+│   │   │   ├── mapper/OrderMapper.kt
+│   │   │   └── common/OrderApplicationException.kt
+│   │   └── build.gradle.kts
+│   ├── infrastructure/
+│   │   ├── src/main/kotlin/com/example/infrastructure/order/
+│   │   │   ├── entity/
+│   │   │   │   ├── OrderEntity.kt
+│   │   │   │   └── OrderItemEntity.kt
+│   │   │   ├── mapper/OrderEntityMapper.kt
+│   │   │   ├── repository/
+│   │   │   │   ├── SpringDataJpaOrderRepository.kt
+│   │   │   │   └── OrderRepositoryImpl.kt
+│   │   │   └── exception/OrderInfrastructureException.kt
+│   │   └── build.gradle.kts
+│   ├── presentation/
+│   │   ├── src/main/kotlin/com/example/presentation/order/
+│   │   │   ├── v1/
+│   │   │   │   ├── command/
+│   │   │   │   │   ├── OrderCommandController.kt
+│   │   │   │   │   └── dto/request/
+│   │   │   │   │       ├── OrderCreateRequestV1.kt
+│   │   │   │   │       └── OrderCancelRequestV1.kt
+│   │   │   │   └── query/
+│   │   │   │       ├── OrderQueryController.kt
+│   │   │   │       └── dto/response/
+│   │   │   │           ├── OrderResponseV1.kt
+│   │   │   │           └── OrderHistoryResponseV1.kt
+│   │   │   └── exception/OrderPresentationException.kt
+│   │   └── build.gradle.kts
+│   └── build.gradle.kts
+│
+└── build.gradle.kts (최상위)
+```
