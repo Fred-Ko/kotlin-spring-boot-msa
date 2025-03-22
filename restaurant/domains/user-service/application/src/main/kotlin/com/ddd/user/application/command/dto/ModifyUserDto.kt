@@ -1,8 +1,9 @@
 package com.ddd.user.application.dto.command
 
-data class RegisterUserCommandDto(
-        val email: String,
-        val password: String,
+import java.util.UUID
+
+data class ModifyUserDto(
+        val id: UUID,
         val name: String,
         val phoneNumber: String,
         val street: String,
