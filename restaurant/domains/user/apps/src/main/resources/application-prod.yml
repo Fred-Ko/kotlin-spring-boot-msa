@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    url: jdbc:mysql://user-db:3306/userdb
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: user_service
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: 80
+
+logging:
+  level:
+    com.restaurant: INFO
+
+app:
+  problem:
+    base-url: https://api.restaurant.com/probs

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: user-service
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.restaurant: DEBUG
+
+app:
+  problem:
+    base-url: https://test-api.restaurant.com/probs
