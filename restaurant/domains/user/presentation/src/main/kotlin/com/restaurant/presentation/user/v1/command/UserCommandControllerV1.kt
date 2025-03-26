@@ -130,8 +130,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -146,8 +145,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -177,8 +175,7 @@ class UserCommandControllerV1(
               listOf(
                 mapOf(
                   "rel" to "logout",
-                  "href" to
-                    "/api/v1/users/logout",
+                  "href" to "/api/v1/users/logout",
                   "method" to "POST",
                 ),
               ),
@@ -222,8 +219,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -238,8 +234,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -314,8 +309,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -330,8 +324,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -397,8 +390,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
@@ -413,8 +405,7 @@ class UserCommandControllerV1(
           content =
             [
               Content(
-                mediaType =
-                  "application/problem+json",
+                mediaType = "application/problem+json",
                 schema =
                   Schema(
                     implementation =
