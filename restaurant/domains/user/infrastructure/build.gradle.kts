@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm")
     kotlin("kapt")
     kotlin("plugin.spring")
+    kotlin("plugin.jpa")
 }
 
 dependencies {
@@ -13,10 +14,10 @@ dependencies {
 
     // MapStruct 어노테이션 프로세서 - Kotlin에서는 kapt 사용
     kapt("org.mapstruct:mapstruct-processor:1.6.3")
-    
+
     // H2 데이터베이스
-    runtimeOnly("com.h2database:h2")
-    
+    runtimeOnly("com.h2database:h2:2.3.232")
+
     // 테스트
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

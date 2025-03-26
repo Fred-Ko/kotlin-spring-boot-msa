@@ -1367,3 +1367,35 @@ domains/
   - 예: `springdoc.group-configs` 설정 사용.  
 - **성능**: 대규모 프로젝트에서는 Swagger 생성 시 성능 영향을 최소화하기 위해 필요한 엔드포인트만 노출하도록 필터링 고려.  
 - **보안**: 운영 환경에서는 Swagger UI 접근을 제한하거나 비활성화합니다(예: `springdoc.swagger-ui.enabled=false`).
+
+---
+
+최신버전 목록
+- `com.h2database:h2` 2.3.232** (2024년 8월 11일 릴리스)
+- `id("io.spring.dependency-management")` 1.1.7** (2024년 12월 17일 릴리스)
+- `id("org.springframework.boot")` 3.4.4** (2025년 3월 21일 릴리스)
+- `io.mockk:mockk` 1.13.17** (2024년 12월 20일 릴리스)
+- `java` - 최신 릴리스 버전은 **JDK 24**, 최신 LTS 버전은 **JDK 21**
+- `kotlin("jvm")` 2.1.20** (2025년 3월 20일 릴리스)
+- `kotlin("kapt")` 2.1.20** (2025년 3월 20일 릴리스)
+- `kotlin("plugin.allopen")` 2.1.20** (2025년 3월 20일 릴리스)
+- `kotlin("plugin.jpa")` 2.1.20** (2025년 3월 20일 릴리스)
+- `kotlin("plugin.noarg")` 2.1.20** (2025년 3월 20일 릴리스)
+- `kotlin("plugin.spring")` 2.1.20** (2025년 3월 20일 릴리스)
+- `org.assertj:assertj-core` - 안정 버전은 **3.27.3** (2025년 1월 18일 릴리스), 마일스톤 버전은 **4.0.0-M1** (2025년 3월 10일 릴리스)
+- `org.jetbrains.kotlin:kotlin-reflect` 2.1.20** (2025년 3월 20일 릴리스)
+- `org.jetbrains.kotlin:kotlin-stdlib-jdk8` 2.1.20** (2025년 3월 20일 릴리스)
+- `org.junit.jupiter:junit-jupiter-api` 5.11.4** (2025년 1월 출시)
+- `org.junit.jupiter:junit-jupiter-engine` 5.11.4** (2025년 1월 출시)
+- `org.mapstruct:mapstruct-processor` 1.6.3** (2024년 11월 9일 릴리스)
+- `org.mapstruct:mapstruct` 1.6.3** (2024년 11월 9일 릴리스)
+- `org.springdoc:springdoc-openapi-starter-webmvc-ui` 2.8.4**
+- `org.springframework:spring-context` 7.0.0-M3** (2025년 3월 13일 릴리스)
+- `org.springframework:spring-tx` 7.0.0-M3**
+- `org.springframework:spring-web` 7.0.0-M3** (2025년 3월 13일 릴리스)
+- `org.springframework.boot:spring-boot-starter-data-jpa` 3.4.4**
+- `org.springframework.boot:spring-boot-starter-hateoas` 3.4.4**
+- `org.springframework.boot:spring-boot-starter-test` 3.4.4**
+- `org.springframework.boot:spring-boot-starter-validation` 3.4.4**
+- `org.springframework.boot:spring-boot-starter-web` 3.4.4**
+- `org.webjars:webjars-locator-core` 0.59**
