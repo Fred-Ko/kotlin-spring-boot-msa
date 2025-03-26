@@ -10,25 +10,23 @@ import org.springframework.stereotype.Component
 
 @Component
 class UserEntityMapper : EntityMapper<User, UserEntity> {
-    override fun toEntity(domain: User): UserEntity {
-        return UserEntity(
-                id = domain.id?.value,
-                email = domain.email.value,
-                password = domain.password.encodedValue,
-                name = domain.name,
-                createdAt = domain.createdAt,
-                updatedAt = domain.updatedAt
-        )
-    }
+  override fun toEntity(domain: User): UserEntity =
+    UserEntity(
+      id = domain.id?.value,
+      email = domain.email.value,
+      password = domain.password.encodedValue,
+      name = domain.name,
+      createdAt = domain.createdAt,
+      updatedAt = domain.updatedAt,
+    )
 
-    override fun toDomain(entity: UserEntity): User {
-        return User.reconstitute(
-                id = UserId(entity.id!!),
-                email = Email(entity.email),
-                password = Password.fromEncoded(entity.password),
-                name = entity.name,
-                createdAt = entity.createdAt,
-                updatedAt = entity.updatedAt
-        )
-    }
+  override fun toDomain(entity: UserEntity): User =
+    User.reconstitute(
+      id = UserId(entity.id!!),
+      email = Email(entity.email),
+      password = Password.fromEncoded(entity.password),
+      name = entity.name,
+      createdAt = entity.createdAt,
+      updatedAt = entity.updatedAt,
+    )
 }

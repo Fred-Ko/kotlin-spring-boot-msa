@@ -17,24 +17,27 @@ import org.mapstruct.Mapping
 
 @Mapper(componentModel = "spring")
 interface UserMapperV1 {
-    fun toRegisterUserCommand(request: UserRegisterRequestV1): RegisterUserCommand
+  fun toRegisterUserCommand(request: UserRegisterRequestV1): RegisterUserCommand
 
-    fun toLoginCommand(request: UserLoginRequestV1): LoginCommand
+  fun toLoginCommand(request: UserLoginRequestV1): LoginCommand
 
-    @Mapping(target = "userId", source = "userId")
-    fun toUpdateProfileCommand(
-            userId: Long,
-            request: UserUpdateProfileRequestV1
-    ): UpdateProfileCommand
+  @Mapping(target = "userId", source = "userId")
+  fun toUpdateProfileCommand(
+    userId: Long,
+    request: UserUpdateProfileRequestV1,
+  ): UpdateProfileCommand
 
-    @Mapping(target = "userId", source = "userId")
-    fun toChangePasswordCommand(
-            userId: Long,
-            request: UserChangePasswordRequestV1
-    ): ChangePasswordCommand
+  @Mapping(target = "userId", source = "userId")
+  fun toChangePasswordCommand(
+    userId: Long,
+    request: UserChangePasswordRequestV1,
+  ): ChangePasswordCommand
 
-    @Mapping(target = "userId", source = "userId")
-    fun toDeleteUserCommand(userId: Long, request: UserDeleteRequestV1): DeleteUserCommand
+  @Mapping(target = "userId", source = "userId")
+  fun toDeleteUserCommand(
+    userId: Long,
+    request: UserDeleteRequestV1,
+  ): DeleteUserCommand
 
-    fun toUserProfileResponseV1(dto: UserProfileDto): UserProfileResponseV1
+  fun toUserProfileResponseV1(dto: UserProfileDto): UserProfileResponseV1
 }

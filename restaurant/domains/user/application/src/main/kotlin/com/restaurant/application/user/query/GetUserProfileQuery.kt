@@ -1,3 +1,5 @@
 package com.restaurant.application.user.query
 
-data class GetUserProfileQuery(val userId: Long)
+data class GetUserProfileQuery(
+  val userId: Long,
+)
