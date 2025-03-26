@@ -3,22 +3,22 @@ description:
 globs: 
 alwaysApply: true
 ---
-# 프로젝트 기술 문서 
+# 프로젝트 기술 문서
 
 ## 1. 프로젝트 개요
 
 ### 1.1 기술 스택
 
-- **프레임워크**: Spring Boot  
-- **빌드 도구**: Gradle  
-- **프로그래밍 언어**: Kotlin  
-- **매핑 라이브러리**: MapStruct  
+- **프레임워크**: Spring Boot
+- **빌드 도구**: Gradle
+- **프로그래밍 언어**: Kotlin
+- **매핑 라이브러리**: MapStruct
 
 ### 1.2 아키텍처 원칙
 
-- **도메인 주도 설계(DDD)**: 핵심 도메인 로직에 집중합니다.  
+- **도메인 주도 설계(DDD)**: 핵심 도메인 로직에 집중합니다.
 - **클린 아키텍처**: 시스템을 Presentation, Application, Domain, Infrastructure의 4개 레이어로 명확히 구분합니다. 이외에 특별한 상위 레이어로 Messaging 레이어를 도입하며 @KafkaListener나 이와 비슷한 책임을 가지는 코드만 존재한다.
-- **이벤트 소싱**: 사용하지 않습니다. 비동기 상태 추적은 별도의 상태 저장소를 통해 구현됩니다.  
+- **이벤트 소싱**: 사용하지 않습니다. 비동기 상태 추적은 별도의 상태 저장소를 통해 구현됩니다.
 
 ---
 
@@ -26,18 +26,18 @@ alwaysApply: true
 
 ### 2.1 멀티모듈 프로젝트
 
-- **레이어별 모듈 분리**: Presentation, Application, Domain, Infrastructure 레이어별로 모듈을 분리하여 관리합니다.  
-- **목적**: 한 영역의 변경이 다른 영역에 미치는 영향을 최소화합니다.  
+- **레이어별 모듈 분리**: Presentation, Application, Domain, Infrastructure 레이어별로 모듈을 분리하여 관리합니다.
+- **목적**: 한 영역의 변경이 다른 영역에 미치는 영향을 최소화합니다.
 
 ### 2.2 도메인별 모듈화
 
-- **구성**: 각 도메인은 최상위 폴더로 분리됩니다(예: `domains/user`, `domains/order`).  
-- **목적**: MSA(마이크로서비스 아키텍처) 스타일의 독립적인 구성을 유지합니다.  
+- **구성**: 각 도메인은 최상위 폴더로 분리됩니다(예: `domains/user`, `domains/order`).
+- **목적**: MSA(마이크로서비스 아키텍처) 스타일의 독립적인 구성을 유지합니다.
 
 ### 2.3 공통 모듈 (`common`)
 
-- **내용**: 전역에서 사용하는 순수 유틸리티, 공유 추상 클래스, 인터페이스 등이 포함됩니다.  
-- **주의**: 과도한 의존을 피하여 “공통 모듈 지옥”을 방지합니다.  
+- **내용**: 전역에서 사용하는 순수 유틸리티, 공유 추상 클래스, 인터페이스 등이 포함됩니다.
+- **주의**: 과도한 의존을 피하여 “공통 모듈 지옥”을 방지합니다.
 
 ---
 
@@ -45,12 +45,12 @@ alwaysApply: true
 
 ### 3.1 Command
 
-- **역할**: 상태 변경이나 특정 기능 실행을 위한 데이터 전송을 담당합니다.  
-- **특징**: 애플리케이션 레이어에서 Command는 데이터(상태 변경 결과)를 반환하지 않습니다.  
+- **역할**: 상태 변경이나 특정 기능 실행을 위한 데이터 전송을 담당합니다.
+- **특징**: 애플리케이션 레이어에서 Command는 데이터(상태 변경 결과)를 반환하지 않습니다.
 
 ### 3.2 Query
 
-- **역할**: 데이터 조회 또는 검색을 위한 요청을 처리합니다.  
+- **역할**: 데이터 조회 또는 검색을 위한 요청을 처리합니다.
 
 ---
 
@@ -58,33 +58,33 @@ alwaysApply: true
 
 ### 4.1 Presentation 레이어
 
-- **Request DTO**: 사용자로부터 입력받은 데이터를 담으며, 이름 뒤에 “Request”를 붙입니다.  
-  - 예: `UserCreateRequest`, `ProductUpdateRequest`, `LoginRequest`  
-- **Response DTO**: API가 응답으로 반환하는 데이터를 담으며, 이름 뒤에 “Response”를 붙입니다.  
-  - 예: `UserInfoResponse`, `ProductDetailResponse`, `AuthTokenResponse`  
+- **Request DTO**: 사용자로부터 입력받은 데이터를 담으며, 이름 뒤에 “Request”를 붙입니다.
+  - 예: `UserCreateRequest`, `ProductUpdateRequest`, `LoginRequest`
+- **Response DTO**: API가 응답으로 반환하는 데이터를 담으며, 이름 뒤에 “Response”를 붙입니다.
+  - 예: `UserInfoResponse`, `ProductDetailResponse`, `AuthTokenResponse`
 
 ### 4.2 Application 레이어
 
-- **Command DTO**: 특정 기능 실행(명령)에 필요한 데이터를 캡슐화하며, 이름 뒤에 “Command”를 붙입니다.  
-  - 예: `CreateUserCommand`, `UpdateProductCommand`  
-- **Query DTO**: 데이터 조회 및 검색 요청에 필요한 정보를 전달하며, 이름 뒤에 “Query”를 붙입니다.  
-  - 예: `GetUserQuery`, `FindProductsQuery`  
+- **Command DTO**: 특정 기능 실행(명령)에 필요한 데이터를 캡슐화하며, 이름 뒤에 “Command”를 붙입니다.
+  - 예: `CreateUserCommand`, `UpdateProductCommand`
+- **Query DTO**: 데이터 조회 및 검색 요청에 필요한 정보를 전달하며, 이름 뒤에 “Query”를 붙입니다.
+  - 예: `GetUserQuery`, `FindProductsQuery`
 
 ### 4.3 DTO 변환 규칙
 
-- **원칙**: Presentation 레이어의 `Request DTO`는 애플리케이션 레이어의 `Command DTO` 또는 `Query DTO`로 변환되어 사용됩니다.  
-- **구현**: MapStruct를 사용하여 객체 간 매핑을 자동화합니다.  
-  - **설명**: 인터페이스를 통해 매핑 규칙을 정의하며, 컴파일 타임에 매핑 코드를 생성하여 런타임 오버헤드를 줄입니다.  
-  - **장점**:  
-    - **생산성**: 반복적인 매핑 코드를 줄여 개발 속도가 빨라집니다.  
-    - **유지보수**: 명시적인 인터페이스로 일관성을 유지하며, 변경이 용이합니다.  
-    - **복잡한 매핑 지원**: 중첩 객체, 컬렉션 매핑 등 복잡한 경우에도 쉽게 처리 가능합니다.  
-  - **단점**:  
-    - **의존성 추가**: MapStruct와 관련 빌드 설정이 프로젝트에 추가됩니다.  
-    - **커스터마이징 한계**: 특정 요구사항에 맞춘 세밀한 조정이 인터페이스 수정으로 제한될 수 있습니다.  
-    - **학습 곡선**: 팀원 모두가 MapStruct 인터페이스 작성법을 익혀야 합니다.  
-- **설정**:  
-  - Gradle에 MapStruct 의존성 추가:  
+- **원칙**: Presentation 레이어의 `Request DTO`는 애플리케이션 레이어의 `Command DTO` 또는 `Query DTO`로 변환되어 사용됩니다.
+- **구현**: MapStruct를 사용하여 객체 간 매핑을 자동화합니다.
+  - **설명**: 인터페이스를 통해 매핑 규칙을 정의하며, 컴파일 타임에 매핑 코드를 생성하여 런타임 오버헤드를 줄입니다.
+  - **장점**:
+    - **생산성**: 반복적인 매핑 코드를 줄여 개발 속도가 빨라집니다.
+    - **유지보수**: 명시적인 인터페이스로 일관성을 유지하며, 변경이 용이합니다.
+    - **복잡한 매핑 지원**: 중첩 객체, 컬렉션 매핑 등 복잡한 경우에도 쉽게 처리 가능합니다.
+  - **단점**:
+    - **의존성 추가**: MapStruct와 관련 빌드 설정이 프로젝트에 추가됩니다.
+    - **커스터마이징 한계**: 특정 요구사항에 맞춘 세밀한 조정이 인터페이스 수정으로 제한될 수 있습니다.
+    - **학습 곡선**: 팀원 모두가 MapStruct 인터페이스 작성법을 익혀야 합니다.
+- **설정**:
+  - Gradle에 MapStruct 의존성 추가:
 
     ```groovy
     dependencies {
@@ -93,8 +93,8 @@ alwaysApply: true
     }
     ```
 
-  - Spring Boot와 통합 시 `@Mapper(componentModel = "spring")` 사용.  
-- **예시 (MapStruct 사용)**:  
+  - Spring Boot와 통합 시 `@Mapper(componentModel = "spring")` 사용.
+- **예시 (MapStruct 사용)**:
 
   ```kotlin
   @Mapper(componentModel = "spring")
@@ -103,7 +103,7 @@ alwaysApply: true
   }
   ```
 
-  - 사용 예시:  
+  - 사용 예시:
 
     ```kotlin
     @Autowired
@@ -118,24 +118,24 @@ alwaysApply: true
 
 ### 5.1 도메인 레이어의 독립성
 
-- **규칙**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조하지 않습니다.  
-- **목적**: 도메인의 순수성을 유지합니다.  
+- **규칙**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조하지 않습니다.
+- **목적**: 도메인의 순수성을 유지합니다.
 
 ### 5.2 Aggregate의 VO 사용 범위
 
-- **규칙**: 도메인 내 Aggregate(집합체)의 Value Object(VO)는 Domain 레이어 외부에서 사용하지 않습니다.  
-- **목적**: 도메인 경계 내에서만 활용합니다.  
+- **규칙**: 도메인 내 Aggregate(집합체)의 Value Object(VO)는 Domain 레이어 외부에서 사용하지 않습니다.
+- **목적**: 도메인 경계 내에서만 활용합니다.
 
-### 5.3 엔티티 정의 규칙 
+### 5.3 엔티티 정의 규칙
 
 #### 5.3.1 JPA 엔티티의 위치
 
-- **규칙**: JPA 엔티티는 `Infrastructure` 레이어에 정의합니다.  
-- **목적**: 데이터베이스와의 매핑을 담당하는 JPA 엔티티를 인프라스트럭처 레이어로 분리하여, 도메인 레이어의 순수성을 유지하고 기술적 의존성을 격리합니다.  
-- **구현**:  
-  - JPA 엔티티는 `@Entity` 어노테이션을 사용하며, 데이터베이스 테이블과 매핑됩니다.  
-  - 도메인 로직은 JPA 엔티티에 포함시키지 않고, 필요 시 도메인 레이어의 Aggregate나 VO로 변환하여 사용합니다.  
-- **예시**:  
+- **규칙**: JPA 엔티티는 `Infrastructure` 레이어에 정의합니다.
+- **목적**: 데이터베이스와의 매핑을 담당하는 JPA 엔티티를 인프라스트럭처 레이어로 분리하여, 도메인 레이어의 순수성을 유지하고 기술적 의존성을 격리합니다.
+- **구현**:
+  - JPA 엔티티는 `@Entity` 어노테이션을 사용하며, 데이터베이스 테이블과 매핑됩니다.
+  - 도메인 로직은 JPA 엔티티에 포함시키지 않고, 필요 시 도메인 레이어의 Aggregate나 VO로 변환하여 사용합니다.
+- **예시**:
 
   ```kotlin
   @Entity
@@ -151,13 +151,13 @@ alwaysApply: true
 
 #### 5.3.2 Aggregate와 VO의 위치
 
-- **규칙**: Aggregate, Value Object(VO), 그리고 기타 DDD 엔티티는 `Domain` 레이어에 정의하며, 외부 기술 프레임워크(JPA, Spring 등)에 의존하지 않도록 최대한 순수하게 유지합니다.  
-- **목적**: 도메인 로직의 독립성과 재사용성을 보장하며, 비즈니스 규칙을 기술적 세부사항과 분리합니다.  
-- **구현**:  
-  - Aggregate는 도메인 내의 루트 엔티티로, 비즈니스 규칙과 불변성을 관리합니다.  
-  - VO는 불변 객체로, 도메인 내에서 값의 의미를 캡슐화합니다.  
-  - JPA 엔티티와의 매핑은 `Infrastructure` 레이어에서 별도로 처리하며, MapStruct를 활용해 변환합니다.  
-- **예시**:  
+- **규칙**: Aggregate, Value Object(VO), 그리고 기타 DDD 엔티티는 `Domain` 레이어에 정의하며, 외부 기술 프레임워크(JPA, Spring 등)에 의존하지 않도록 최대한 순수하게 유지합니다.
+- **목적**: 도메인 로직의 독립성과 재사용성을 보장하며, 비즈니스 규칙을 기술적 세부사항과 분리합니다.
+- **구현**:
+  - Aggregate는 도메인 내의 루트 엔티티로, 비즈니스 규칙과 불변성을 관리합니다.
+  - VO는 불변 객체로, 도메인 내에서 값의 의미를 캡슐화합니다.
+  - JPA 엔티티와의 매핑은 `Infrastructure` 레이어에서 별도로 처리하며, MapStruct를 활용해 변환합니다.
+- **예시**:
 
   ```kotlin
   data class User(
@@ -182,12 +182,12 @@ alwaysApply: true
 
 #### 5.3.3 JPA 엔티티와 DDD 엔티티 간 매핑
 
-- **규칙**: JPA 엔티티와 도메인 레이어의 Aggregate/VO 간 변환은 `Infrastructure` 또는 `Application` 레이어에서 수행하며, MapStruct를 사용하지 않고 직접 매핑 로직을 정의합니다.  
-- **목적**: 도메인 레이어의 순수성을 유지하면서, 데이터 영속성과 도메인 로직을 분리합니다.  
-- **구현**:  
-  - `Infrastructure` 레이어에서 Repository가 JPA 엔티티를 조회/저장하고, 이를 도메인 객체로 변환합니다.  
-  - MapStruct 인터페이스를 통해 명시적이고 컴파일 타임에 검증 가능한 매핑을 제공합니다.  
-- **예시**:  
+- **규칙**: JPA 엔티티와 도메인 레이어의 Aggregate/VO 간 변환은 `Infrastructure` 또는 `Application` 레이어에서 수행하며, MapStruct를 사용하지 않고 직접 매핑 로직을 정의합니다.
+- **목적**: 도메인 레이어의 순수성을 유지하면서, 데이터 영속성과 도메인 로직을 분리합니다.
+- **구현**:
+  - `Infrastructure` 레이어에서 Repository가 JPA 엔티티를 조회/저장하고, 이를 도메인 객체로 변환합니다.
+  - MapStruct 인터페이스를 통해 명시적이고 컴파일 타임에 검증 가능한 매핑을 제공합니다.
+- **예시**:
 
   ```kotlin
   @Component
@@ -227,9 +227,9 @@ alwaysApply: true
 
 #### 5.3.4 주의사항
 
-- **도메인 레이어의 순수성**: 도메인 객체는 JPA 어노테이션(`@Entity`, `@Id` 등)이나 Spring 관련 의존성을 포함시키지 않습니다.  
-- **성능 고려**: 빈번한 객체 변환으로 인한 오버헤드를 줄이기 위해, 필요한 경우 매핑 로직을 최적화하거나 캐싱을 고려합니다.  
-- **테스트 용이성**: 도메인 레이어는 가능하다면 순수 Kotlin으로 작성되므로, 단위 테스트 시 mocking 없이 독립적으로 테스트 가능합니다.  
+- **도메인 레이어의 순수성**: 도메인 객체는 JPA 어노테이션(`@Entity`, `@Id` 등)이나 Spring 관련 의존성을 포함시키지 않습니다.
+- **성능 고려**: 빈번한 객체 변환으로 인한 오버헤드를 줄이기 위해, 필요한 경우 매핑 로직을 최적화하거나 캐싱을 고려합니다.
+- **테스트 용이성**: 도메인 레이어는 가능하다면 순수 Kotlin으로 작성되므로, 단위 테스트 시 mocking 없이 독립적으로 테스트 가능합니다.
 
 ---
 
@@ -239,56 +239,56 @@ alwaysApply: true
 
 ```plaintext
 domains:
-	user:
-	  src:
-		main:
-		  kotlin:
-			com:
-			  example:
-				application:
-				  command:
-					- CreateUserCommand.kt
-					- UpdateUserCommand.kt
-					- handler
-						- CreateUserCommandHandler.kt
-						- UpdateUserCommandHandler.kt
-				  query:
-					- GetUserQuery.kt
-					- FindUsersQuery.kt
-					- handler
-						- GetUserQueryHandler.kt
-						- FindUsersQueryHandler.kt
-				  mapper:
-					- UserMapper.kt
-				  common:
-					- UserApplicationException.kt
-	order:
-	  src:
-	    main:
-	      kotlin:
-	        com:
-	          example:
-	            application:
-	              command:
-	                - CreateOrderCommand.kt
-	                - UpdateOrderCommand.kt
-	                - CancelOrderCommand.kt
-	                - handler
-	                  - CreateOrderCommandHandler.kt
-	                  - UpdateOrderCommandHandler.kt
-	                  - CancelOrderCommandHandler.kt
-	              query:
-	                - GetOrderQuery.kt
-	                - FindOrdersQuery.kt
-	                - FindOrdersByCustomerQuery.kt
-	                - handler
-	                  - GetOrderQueryHandler.kt
-	                  - FindOrdersQueryHandler.kt
-	                  - FindOrdersByCustomerQueryHandler.kt
-	              mapper:
-	                - OrderMapper.kt
-	              common:
-	                - OrderApplicationException.kt
+ user:
+   src:
+  main:
+    kotlin:
+   com:
+     example:
+    application:
+      command:
+     - CreateUserCommand.kt
+     - UpdateUserCommand.kt
+     - handler
+      - CreateUserCommandHandler.kt
+      - UpdateUserCommandHandler.kt
+      query:
+     - GetUserQuery.kt
+     - FindUsersQuery.kt
+     - handler
+      - GetUserQueryHandler.kt
+      - FindUsersQueryHandler.kt
+      mapper:
+     - UserMapper.kt
+      common:
+     - UserApplicationException.kt
+ order:
+   src:
+     main:
+       kotlin:
+         com:
+           example:
+             application:
+               command:
+                 - CreateOrderCommand.kt
+                 - UpdateOrderCommand.kt
+                 - CancelOrderCommand.kt
+                 - handler
+                   - CreateOrderCommandHandler.kt
+                   - UpdateOrderCommandHandler.kt
+                   - CancelOrderCommandHandler.kt
+               query:
+                 - GetOrderQuery.kt
+                 - FindOrdersQuery.kt
+                 - FindOrdersByCustomerQuery.kt
+                 - handler
+                   - GetOrderQueryHandler.kt
+                   - FindOrdersQueryHandler.kt
+                   - FindOrdersByCustomerQueryHandler.kt
+               mapper:
+                 - OrderMapper.kt
+               common:
+                 - OrderApplicationException.kt
 ```
 
 ---
@@ -299,57 +299,57 @@ domains:
 
 ```plaintext
 domains:
-	user:
-	  src:
-		main:
-		  kotlin:
-			com:
-			  example:
-				presentation:
-				  v1:
-					command:
-					  - UserCommandController.kt
-					  dto:
-						request:
-						  - UserCreateRequestV1.kt
-						  - UserUpdateRequestV1.kt
-					query:
-					  - UserQueryController.kt
-					  dto:
-						response:
-						  - UserResponseV1.kt
-						  - UserSearchResponseV1.kt
-				  v2:
-					command:
-					  - UserCommandControllerV2.kt
-					  dto:
-						request:
-						  - UserCreateRequestV2.kt
-					query:
-					  - UserQueryControllerV2.kt
-					  dto:
-						response:
-						  - UserDetailResponseV2.kt
-	order:
-	  src:
-		main:
-		  kotlin:
-			com:
-			  example:
-				presentation:
-				  v1:
-					command:
-					  - OrderCommandController.kt
-					  dto:
-						request:
-						  - OrderCreateRequestV1.kt
-						  - OrderCancelRequestV1.kt
-					query:
-					  - OrderQueryController.kt
-					  dto:
-						response:
-						  - OrderResponseV1.kt
-						  - OrderHistoryResponseV1.kt
+ user:
+   src:
+  main:
+    kotlin:
+   com:
+     example:
+    presentation:
+      v1:
+     command:
+       - UserCommandController.kt
+       dto:
+      request:
+        - UserCreateRequestV1.kt
+        - UserUpdateRequestV1.kt
+     query:
+       - UserQueryController.kt
+       dto:
+      response:
+        - UserResponseV1.kt
+        - UserSearchResponseV1.kt
+      v2:
+     command:
+       - UserCommandControllerV2.kt
+       dto:
+      request:
+        - UserCreateRequestV2.kt
+     query:
+       - UserQueryControllerV2.kt
+       dto:
+      response:
+        - UserDetailResponseV2.kt
+ order:
+   src:
+  main:
+    kotlin:
+   com:
+     example:
+    presentation:
+      v1:
+     command:
+       - OrderCommandController.kt
+       dto:
+      request:
+        - OrderCreateRequestV1.kt
+        - OrderCancelRequestV1.kt
+     query:
+       - OrderQueryController.kt
+       dto:
+      response:
+        - OrderResponseV1.kt
+        - OrderHistoryResponseV1.kt
 ```
 
 ---
@@ -359,7 +359,7 @@ domains:
 ### 8.1 페이지네이션
 
 - **규칙**: 다건 조회는 페이지네이션을 적용.
-- **방식**: 결정 시 커서 페이지네이션을 기본.  
+- **방식**: 결정 시 커서 페이지네이션을 기본.
 
 ---
 
@@ -367,9 +367,9 @@ domains:
 
 ### 9.1 동기 응답
 
-- **특징**: 프레젠테이션 레이어에서 제공되며, 애플리케이션 레이어의 Command 실행 결과를 기반으로 최소한의 메타데이터를 반환합니다.  
-- **필수 필드**: `status`, `message`, `correlationId` (결과 확인용 식별자)  
-- **예시**:  
+- **특징**: 프레젠테이션 레이어에서 제공되며, 애플리케이션 레이어의 Command 실행 결과를 기반으로 최소한의 메타데이터를 반환합니다.
+- **필수 필드**: `status`, `message`, `correlationId` (결과 확인용 식별자)
+- **예시**:
 
   ```json
   {
@@ -381,9 +381,9 @@ domains:
 
 ### 9.2 비동기 응답
 
-- **특징**: 프레젠테이션 레이어에서 제공되며, URL 처리는 프레젠테이션 레이어에서만 수행됩니다. 애플리케이션 레이어는 `jobId`만 제공합니다.  
-- **필수 필드**: `status`, `message`, `jobId`, 상태 조회 및 관리용 링크  
-- **예시**:  
+- **특징**: 프레젠테이션 레이어에서 제공되며, URL 처리는 프레젠테이션 레이어에서만 수행됩니다. 애플리케이션 레이어는 `jobId`만 제공합니다.
+- **필수 필드**: `status`, `message`, `jobId`, 상태 조회 및 관리용 링크
+- **예시**:
 
   ```json
   {
@@ -420,16 +420,16 @@ domains:
 
 ### 11.1 기본 원칙
 
-- **규칙**: Command 핸들러는 상태 변경만 수행하며, 비즈니스 데이터(예: 생성된 엔티티의 상세 정보)를 반환하지 않습니다.  
-- **참고**: 결과 확인용 `correlationId` 또는 `jobId`는 반환 가능하며, 이는 프레젠테이션 레이어에서 처리됩니다.  
+- **규칙**: Command 핸들러는 상태 변경만 수행하며, 비즈니스 데이터(예: 생성된 엔티티의 상세 정보)를 반환하지 않습니다.
+- **참고**: 결과 확인용 `correlationId` 또는 `jobId`는 반환 가능하며, 이는 프레젠테이션 레이어에서 처리됩니다.
 
 ### 11.2 동기 Command 처리
 
-- **리턴 값**: `CommandResult` 객체  
+- **리턴 값**: `CommandResult` 객체
 - **필수 필드**:
-  - `success`: boolean  
-  - `correlationId`: string  
-- **예시**:  
+  - `success`: boolean
+  - `correlationId`: string
+- **예시**:
 
   ```json
   {
@@ -440,11 +440,11 @@ domains:
 
 ### 11.3 비동기 Command 처리
 
-- **리턴 값**: `AsyncCommandResult` 객체  
+- **리턴 값**: `AsyncCommandResult` 객체
 - **필수 필드**:
-  - `success`: boolean  
-  - `jobId`: string  
-- **예시**:  
+  - `success`: boolean
+  - `jobId`: string
+- **예시**:
 
   ```json
   {
@@ -453,15 +453,15 @@ domains:
   }
   ```
 
-- **참고**: 상태 추적은 데이터베이스 테이블 또는 메시지 큐를 통해 관리되며, 이벤트 소싱은 사용하지 않습니다.  
+- **참고**: 상태 추적은 데이터베이스 테이블 또는 메시지 큐를 통해 관리되며, 이벤트 소싱은 사용하지 않습니다.
 
 ### 11.4 실패 처리
 
-- **리턴 값**: `CommandResult` 또는 `AsyncCommandResult` 객체에 오류 정보 포함  
+- **리턴 값**: `CommandResult` 또는 `AsyncCommandResult` 객체에 오류 정보 포함
 - **필수 필드**:
-  - `success`: false  
-  - `errorCode`: string  
-- **예시**:  
+  - `success`: false
+  - `errorCode`: string
+- **예시**:
 
   ```json
   {
@@ -469,11 +469,12 @@ domains:
     "errorCode": "VALIDATION_ERROR"
   }
   ```
+
 - **참고**: 실패 시 프레젠테이션 레이어에서 `ProblemDetail`을 사용해 RFC 7807 형식으로 변환되며, 자세한 내용은 섹션 12. 에러 처리를 참조하세요.
 
 ### 11.5 구현 참고
 
-- **동기 Command 핸들러 예시**:  
+- **동기 Command 핸들러 예시**:
 
   ```kotlin
   class CreateUserCommandHandler {
@@ -484,7 +485,7 @@ domains:
   }
   ```
 
-- **프레젠테이션 계층에서의 변환 (MapStruct 사용)**:  
+- **프레젠테이션 계층에서의 변환 (MapStruct 사용)**:
 
   ```kotlin
   @RestController
@@ -506,7 +507,7 @@ domains:
   }
   ```
 
-- **MapStruct 매퍼 정의**:  
+- **MapStruct 매퍼 정의**:
 
   ```kotlin
   @Mapper(componentModel = "spring")
@@ -564,6 +565,7 @@ domains:
   - `instance`: 문제를 발생시킨 특정 요청을 식별하는 URI (선택적)
   - 확장 필드: `errorCode` (에러 식별용 고유 코드), `timestamp` (에러 발생 시각) 등은 `setProperty` 메서드를 통해 추가됩니다.
 - **예시**:
+
   ```json
   {
     "type": "https://example.com/probs/user-not-found",
@@ -575,7 +577,8 @@ domains:
     "timestamp": "2025-03-24T12:00:00Z"
   }
   ```
-- **구현 참고**: 
+
+- **구현 참고**:
   - `ProblemDetail`은 Spring Boot 3.0 이상에서 기본 제공되며, 별도 의존성 추가 없이 사용 가능합니다. Spring Boot 2.x를 사용하는 경우, `org.zalando:problem-spring-web` 라이브러리를 통해 유사한 기능을 구현할 수 있습니다.
   - `status` 필드는 `UserErrorCode` enum에 정의된 `HttpStatus` 값과 일치해야 하며, 자세한 내용은 섹션 12.6을 참조하세요.
 
@@ -595,6 +598,7 @@ domains:
   - `InfrastructureException`: 인프라 레이어에서 발생하는 예외
   - `PresentationException`: 프레젠테이션 레이어에서 발생하는 예외
 - **사용 예시**:
+
   ```kotlin
   class UserNotFoundException(message: String) : DomainException(message)
   ```
@@ -602,12 +606,13 @@ domains:
 ### 12.6 에러 코드 및 Type URI
 
 - **규칙**: 모든 에러는 고유한 에러 코드를 가지며, `type` URI와 HTTP 상태 코드(`HttpStatus`)와 매핑됩니다. 클라이언트가 문제를 식별하고 대응할 수 있도록 API 문서에 정의됩니다.
-- **형식**: 
+- **형식**:
   - `errorCode`: 대문자 스네이크 케이스 (예: `USER_NOT_FOUND`, `INVALID_INPUT`)
-  - `type`: "https://example.com/probs/{errorCode 소문자}" 형식
+  - `type`: "<https://example.com/probs/{errorCode> 소문자}" 형식
   - `status`: `org.springframework.http.HttpStatus` 열거형 값으로, 각 에러 코드에 적합한 HTTP 상태 코드를 나타냅니다.
 - **구현**: 에러 코드는 `UserErrorCode`와 같은 enum 클래스에 정의되며, `code`, `message`, `status` 필드를 포함합니다.
 - **예시**:
+
   ```kotlin
   enum class UserErrorCode(val code: String, val message: String, val status: HttpStatus) {
       NOT_FOUND("USER_NOT_FOUND", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -621,7 +626,9 @@ domains:
       }
   }
   ```
+
 - **사용 예시**:
+
   ```kotlin
   val error = UserErrorCode.fromCode(result.errorCode)
   val problem = ProblemDetail.forStatus(error.status).apply {
@@ -633,8 +640,9 @@ domains:
       setProperty("timestamp", Instant.now().toString())
   }
   ```
+
 - **문서화**: 에러 코드, `type` URI, 그리고 해당 HTTP 상태 코드는 API 문서(Swagger 등)에 명시되며, `UserErrorCode` enum을 기반으로 자동 생성될 수 있습니다.
-- **주의사항**: 
+- **주의사항**:
   - 새로운 에러 코드를 추가할 때는 적절한 `HttpStatus`를 선택하여 일관성을 유지해야 합니다.
   - `UNKNOWN_ERROR`는 기본값으로 사용되며, 예상치 못한 오류에 대한 fallback으로 활용됩니다.
 
@@ -642,6 +650,7 @@ domains:
 
 - **구현**: Spring의 `@ControllerAdvice`를 사용하여 전역적으로 예외를 처리하며, `ProblemDetail`을 활용해 RFC 7807 형식으로 응답을 반환합니다. `UserErrorCode` enum을 참조하여 적절한 HTTP 상태 코드를 설정합니다.
 - **예시**:
+
   ```kotlin
   import org.springframework.http.HttpStatus
   import org.springframework.http.ProblemDetail
@@ -684,7 +693,8 @@ domains:
 
   class UserCommandException(val errorCode: String?, message: String) : RuntimeException(message)
   ```
-- **참고**: 
+
+- **참고**:
   - `UserErrorCode` enum을 활용하여 `status`, `type`, `title`, `detail`을 동적으로 설정하며, 하드코딩을 최소화합니다.
   - 커스텀 예외 클래스(예: `UserCommandException`)에서 `errorCode`를 전달받아 매핑합니다.
 
@@ -692,6 +702,7 @@ domains:
 
 - **특징**: 비동기 Command의 경우, 에러가 발생하면 `AsyncCommandResult`에 에러 정보를 포함하여 반환합니다. 프레젠테이션 레이어에서 이를 `ProblemDetail`로 변환하여 응답합니다.
 - **응답 형식** (RFC 7807 준수):
+
   ```json
   {
     "type": "https://example.com/probs/async-processing-error",
@@ -704,8 +715,10 @@ domains:
     "jobId": "job123"
   }
   ```
+
 - **상태 조회**: 클라이언트는 `jobId`를 사용하여 작업의 최종 상태를 조회할 수 있으며, 에러 발생 시 상세 에러 정보를 확인할 수 있습니다.
 - **구현 예시**:
+
   ```kotlin
   @RestController
   @RequestMapping("/api/v1/users")
@@ -743,31 +756,32 @@ domains:
 ---
 
 ### 수정 요약
+
 - **12.3**: `status`가 `UserErrorCode`의 `HttpStatus`와 연계됨을 명시.
 - **12.6**: `UserErrorCode`에 `HttpStatus` 필드 추가, `fromCode` 헬퍼 메서드 포함, 사용 예시와 문서화 가이드라인 업데이트.
 - **12.7**: 글로벌 예외 처리에서 `UserErrorCode`를 활용한 동적 `ProblemDetail` 생성 예시 추가.
 - **12.8**: 비동기 에러 처리에서도 `UserErrorCode`를 사용하도록 예시 수정.
 
-이로써 `UserErrorCode` 개선 사항이 **12. 에러 처리** 섹션에 완전히 반영되었습니다. 추가적인 조정이 필요하면 말씀해주세요!
+이로써 `UserErrorCode` 개선 사항이 **12. 에러 처리** 섹션에 완전히 반영되었습니다. 추가적인 조정이 필요하면 말씀해주세요
 ---
 
 ## 13. HATEOAS 및 URI 템플릿 사용 규칙
 
 ### 13.1 목적
 
-- RESTful API에서 클라이언트가 하드코딩된 URL에 의존하지 않고, 동적으로 제공되는 링크를 통해 리소스를 탐색할 수 있도록 HATEOAS(Hypermedia as the Engine of Application State)를 적용합니다.  
+- RESTful API에서 클라이언트가 하드코딩된 URL에 의존하지 않고, 동적으로 제공되는 링크를 통해 리소스를 탐색할 수 있도록 HATEOAS(Hypermedia as the Engine of Application State)를 적용합니다.
 - URI 템플릿을 활용하여 경로 변경에 유연하게 대응합니다.
 
 ### 13.2 기본 규칙
 
-- **의존성**: Spring HATEOAS(`spring-boot-starter-hateoas`)를 사용합니다.  
-- **링크 포함**: 성공적인 Command 요청(동기/비동기) 응답에는 관련 리소스 상태 확인 또는 다음 작업을 위한 링크를 포함합니다.  
+- **의존성**: Spring HATEOAS(`spring-boot-starter-hateoas`)를 사용합니다.
+- **링크 포함**: 성공적인 Command 요청(동기/비동기) 응답에는 관련 리소스 상태 확인 또는 다음 작업을 위한 링크를 포함합니다.
 - **실패 응답**: 링크는 선택 사항이며, 오류 해결을 위한 추가 링크(예: 재시도)가 있다면 포함 권장. 실패 응답은 `ProblemDetail`을 사용하여 처리되며, 섹션 12. 에러 처리를 참조하세요.
 
 ### 13.3 링크 구조
 
-- **필수 필드**: 모든 링크는 `rel`(관계), `href`(URL), `method`(HTTP 메서드)를 포함합니다.  
-- **형식**:  
+- **필수 필드**: 모든 링크는 `rel`(관계), `href`(URL), `method`(HTTP 메서드)를 포함합니다.
+- **형식**:
 
   ```kotlin
   mapOf(
@@ -777,7 +791,7 @@ domains:
   )
   ```
 
-- **예시**:  
+- **예시**:
 
   ```kotlin
   mapOf(
@@ -789,14 +803,14 @@ domains:
 
 ### 13.4 URI 템플릿 사용
 
-- **하드코딩 금지**: 링크 경로는 하드코딩하지 않고, Spring HATEOAS의 `linkTo`와 `methodOn`을 사용해 동적으로 생성합니다.  
-- **형식**:  
+- **하드코딩 금지**: 링크 경로는 하드코딩하지 않고, Spring HATEOAS의 `linkTo`와 `methodOn`을 사용해 동적으로 생성합니다.
+- **형식**:
 
   ```kotlin
   linkTo<컨트롤러_클래스> { 메서드(파라미터) }.withRel("관계_이름")
   ```
 
-- **예시**:  
+- **예시**:
 
   ```kotlin
   val statusLink = linkTo<JobStatusController> { getJobStatus(jobId) }.withRel("job-status")
@@ -804,8 +818,8 @@ domains:
 
 ### 13.5 비동기 Command 규칙
 
-- **필수 링크**: 비동기 응답에는 작업 상태 확인을 위한 `job-status` 링크를 포함하며, `jobId`를 기반으로 생성합니다.  
-- **예시**:  
+- **필수 링크**: 비동기 응답에는 작업 상태 확인을 위한 `job-status` 링크를 포함하며, `jobId`를 기반으로 생성합니다.
+- **예시**:
 
   ```kotlin
   val statusLink = linkTo<JobStatusController> { getJobStatus(result.jobId!!) }.withRel("job-status")
@@ -814,8 +828,8 @@ domains:
 
 ### 13.6 응답 형식
 
-- **규칙**: 링크는 응답의 `links` 필드에 `List<Map<String, String>>`로 포함됩니다.  
-- **예시**:  
+- **규칙**: 링크는 응답의 `links` 필드에 `List<Map<String, String>>`로 포함됩니다.
+- **예시**:
 
   ```json
   {
@@ -834,7 +848,7 @@ domains:
 
 ### 13.7 구현 참고
 
-- **비동기 Command 예시 (MapStruct 사용)**:  
+- **비동기 Command 예시 (MapStruct 사용)**:
 
   ```kotlin
   @RestController
@@ -869,14 +883,16 @@ domains:
 
 ### 13.8 준수 사항
 
-- **컨트롤러 메서드 명명**: `linkTo`가 참조하므로 메서드 이름은 명확해야 합니다(예: `getJobStatus`).  
-- **테스트**: `MockMvc`를 사용해 링크 생성을 검증합니다.  
+- **컨트롤러 메서드 명명**: `linkTo`가 참조하므로 메서드 이름은 명확해야 합니다(예: `getJobStatus`).
+- **테스트**: `MockMvc`를 사용해 링크 생성을 검증합니다.
 - **문서화**: Swagger와 통합 시 `links` 필드를 명시적으로 정의합니다.
 
 ---
 
 ## 14 프로젝트 구조 참고용
+
 아래는 참고용이고 그대로 하라는건 아니다.
+
 ```
 domains/
 ├── common/
@@ -1020,10 +1036,10 @@ domains/
 
 ## 15 Presentation 레이어 validation
 
-- **목적**: 클라이언트로부터 입력받은 데이터의 유효성을 검증하여 잘못된 요청을 조기에 차단하고, 시스템의 안정성과 데이터 무결성을 보장합니다.  
-- **규칙**: Presentation 레이어에서 요청 데이터(`Request DTO`)의 유효성 검사는 `jakarta.validation.constraints` 패키지의 어노테이션을 적극 활용하여 수행합니다.  
-- **의존성**: Spring Boot Starter Validation(`spring-boot-starter-validation`)을 사용하며, Gradle에 추가합니다.  
-  - **설정 예시**:  
+- **목적**: 클라이언트로부터 입력받은 데이터의 유효성을 검증하여 잘못된 요청을 조기에 차단하고, 시스템의 안정성과 데이터 무결성을 보장합니다.
+- **규칙**: Presentation 레이어에서 요청 데이터(`Request DTO`)의 유효성 검사는 `jakarta.validation.constraints` 패키지의 어노테이션을 적극 활용하여 수행합니다.
+- **의존성**: Spring Boot Starter Validation(`spring-boot-starter-validation`)을 사용하며, Gradle에 추가합니다.
+  - **설정 예시**:
 
     ```groovy
     dependencies {
@@ -1031,22 +1047,22 @@ domains/
     }
     ```
 
-- **적용 방식**:  
-  - 모든 `Request DTO` 필드에 대해 적절한 검증 어노테이션을 적용합니다.  
-  - 컨트롤러 메서드에서 `@Valid` 어노테이션을 사용하여 유효성 검사를 트리거합니다.  
-  - 검증 실패 시, Spring의 `MethodArgumentNotValidException`을 통해 `ProblemDetail` 형식으로 에러 응답을 반환합니다(12.7 글로벌 예외 처리 참조).  
+- **적용 방식**:
+  - 모든 `Request DTO` 필드에 대해 적절한 검증 어노테이션을 적용합니다.
+  - 컨트롤러 메서드에서 `@Valid` 어노테이션을 사용하여 유효성 검사를 트리거합니다.
+  - 검증 실패 시, Spring의 `MethodArgumentNotValidException`을 통해 `ProblemDetail` 형식으로 에러 응답을 반환합니다(12.7 글로벌 예외 처리 참조).
 
-- **주요 검증 어노테이션**:  
-  - `@NotNull`: 필수 입력값 검증  
-  - `@NotBlank`: 공백 문자열 방지 (문자열에 적용)  
-  - `@Size`: 문자열 길이 또는 컬렉션 크기 제한  
-  - `@Min` / `@Max`: 숫자 값의 범위 제한  
-  - `@Email`: 이메일 형식 검증  
-  - `@Pattern`: 정규 표현식을 통한 형식 검증  
-  - 기타: 프로젝트 요구사항에 따라 커스텀 어노테이션 정의 가능  
+- **주요 검증 어노테이션**:
+  - `@NotNull`: 필수 입력값 검증
+  - `@NotBlank`: 공백 문자열 방지 (문자열에 적용)
+  - `@Size`: 문자열 길이 또는 컬렉션 크기 제한
+  - `@Min` / `@Max`: 숫자 값의 범위 제한
+  - `@Email`: 이메일 형식 검증
+  - `@Pattern`: 정규 표현식을 통한 형식 검증
+  - 기타: 프로젝트 요구사항에 따라 커스텀 어노테이션 정의 가능
 
-- **예시**:  
-  - **Request DTO 정의**:  
+- **예시**:
+  - **Request DTO 정의**:
 
     ```kotlin
     data class UserCreateRequestV1(
@@ -1068,7 +1084,7 @@ domains/
     )
     ```
 
-  - **컨트롤러에서 사용**:  
+  - **컨트롤러에서 사용**:
 
     ```kotlin
     @RestController
@@ -1090,8 +1106,8 @@ domains/
     }
     ```
 
-- **에러 응답**: 검증 실패 시, `ProblemDetail`을 사용하여 RFC 7807 형식을 따르며, 필드별 에러 메시지를 확장 필드 `invalid-params`로 포함합니다.  
-  - **예시 응답**:  
+- **에러 응답**: 검증 실패 시, `ProblemDetail`을 사용하여 RFC 7807 형식을 따르며, 필드별 에러 메시지를 확장 필드 `invalid-params`로 포함합니다.
+  - **예시 응답**:
 
     ```json
     {
@@ -1120,9 +1136,11 @@ domains/
 ## 16. 도메인 익셉션의 전파
 
 ### 16.1 CommandResult 기반 처리 (예외 없이 결과만 반환)
+
 애플리케이션 레이어에서 도메인 익셉션을 잡아 `CommandResult`로 변환한 경우, 프레젠테이션 레이어는 `CommandResult`의 상태를 확인하여 `ProblemDetail`을 사용해 RFC 7807 형식의 응답을 구성합니다.
 
 - **구현 예시**:
+
   ```kotlin
   @RestController
   @RequestMapping("/api/v1/users")
@@ -1157,6 +1175,7 @@ domains/
   ```
 
 - **Command 핸들러 예시**:
+
   ```kotlin
   class CreateUserCommandHandler(
       private val userRepository: UserRepository
@@ -1174,6 +1193,7 @@ domains/
 
 - **응답 예시**:
   - 성공:
+
     ```json
     {
       "status": "success",
@@ -1181,7 +1201,9 @@ domains/
       "correlationId": "corr-456"
     }
     ```
+
   - 실패:
+
     ```json
     {
       "type": "https://example.com/probs/user-creation-failed",
@@ -1204,8 +1226,8 @@ domains/
 
 ### 17.2 의존성 설정
 
-- **의존성**: Spring Boot 프로젝트에서 Swagger를 사용하기 위해 `springdoc-openapi` 라이브러리를 사용합니다.  
-  - **Gradle 설정 예시**:  
+- **의존성**: Spring Boot 프로젝트에서 Swagger를 사용하기 위해 `springdoc-openapi` 라이브러리를 사용합니다.
+  - **Gradle 설정 예시**:
 
     ```groovy
     dependencies {
@@ -1217,8 +1239,8 @@ domains/
 
 ### 17.3 기본 설정
 
-- **구성**: Spring Boot의 `@Configuration` 클래스를 통해 Swagger 설정을 커스터마이징합니다.  
-- **예시**:  
+- **구성**: Spring Boot의 `@Configuration` 클래스를 통해 Swagger 설정을 커스터마이징합니다.
+- **예시**:
 
   ```kotlin
   import io.swagger.v3.oas.models.OpenAPI
@@ -1245,13 +1267,13 @@ domains/
 
 ### 17.4 API 문서화
 
-- **어노테이션 사용**: Presentation 레이어의 컨트롤러에 OpenAPI 어노테이션(`@Operation`, `@ApiResponse`, `@Parameter` 등)을 적용하여 API를 문서화합니다.  
-- **규칙**:  
-  - 모든 엔드포인트는 `@Operation`으로 설명을 추가합니다.  
-  - 요청/응답 DTO는 스키마로 자동 생성되며, 추가 설명은 `@Schema`로 제공합니다.  
-  - 에러 응답은 RFC 7807(`ProblemDetail`) 형식을 반영하여 정의합니다(섹션 12 참조).  
+- **어노테이션 사용**: Presentation 레이어의 컨트롤러에 OpenAPI 어노테이션(`@Operation`, `@ApiResponse`, `@Parameter` 등)을 적용하여 API를 문서화합니다.
+- **규칙**:
+  - 모든 엔드포인트는 `@Operation`으로 설명을 추가합니다.
+  - 요청/응답 DTO는 스키마로 자동 생성되며, 추가 설명은 `@Schema`로 제공합니다.
+  - 에러 응답은 RFC 7807(`ProblemDetail`) 형식을 반영하여 정의합니다(섹션 12 참조).
 
-- **예시**:  
+- **예시**:
 
   ```kotlin
   import io.swagger.v3.oas.annotations.Operation
@@ -1272,9 +1294,9 @@ domains/
       @PostMapping
       @Operation(summary = "새로운 사용자 생성", description = "사용자 정보를 입력받아 새로운 사용자를 생성합니다.")
       @ApiResponses(
-          ApiResponse(responseCode = "200", description = "사용자 생성 성공", 
+          ApiResponse(responseCode = "200", description = "사용자 생성 성공",
               content = [Content(schema = Schema(implementation = Map::class))]),
-          ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", 
+          ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
               content = [Content(schema = Schema(implementation = ProblemDetail::class))])
       )
       fun createUser(@Valid @RequestBody request: UserCreateRequestV1): ResponseEntity<Map<String, Any>> {
@@ -1289,7 +1311,7 @@ domains/
   }
   ```
 
-- **Request DTO 문서화**:  
+- **Request DTO 문서화**:
 
   ```kotlin
   import io.swagger.v3.oas.annotations.media.Schema
@@ -1309,14 +1331,14 @@ domains/
 
 ### 17.5 HATEOAS 통합
 
-- **규칙**: 섹션 13에서 정의된 HATEOAS 링크(`links` 필드)를 Swagger 문서에 반영합니다.  
-- **구현**: 응답 객체에 `links` 필드를 명시하며, `@Schema`로 설명을 추가합니다.  
-- **예시**:  
+- **규칙**: 섹션 13에서 정의된 HATEOAS 링크(`links` 필드)를 Swagger 문서에 반영합니다.
+- **구현**: 응답 객체에 `links` 필드를 명시하며, `@Schema`로 설명을 추가합니다.
+- **예시**:
 
   ```kotlin
   @Operation(summary = "비동기 사용자 생성", description = "비동기로 사용자 생성 요청을 접수합니다.")
   @ApiResponses(
-      ApiResponse(responseCode = "202", description = "요청 접수 완료", 
+      ApiResponse(responseCode = "202", description = "요청 접수 완료",
           content = [Content(schema = Schema(implementation = Map::class))])
   )
   @PostMapping("/async")
@@ -1339,20 +1361,20 @@ domains/
 
 ### 17.6 에러 응답 문서화
 
-- **규칙**: 섹션 12.3에 정의된 `ProblemDetail` 형식을 Swagger에 반영하며, `UserErrorCode` enum을 기반으로 주요 에러를 문서화합니다.  
-- **예시**:  
+- **규칙**: 섹션 12.3에 정의된 `ProblemDetail` 형식을 Swagger에 반영하며, `UserErrorCode` enum을 기반으로 주요 에러를 문서화합니다.
+- **예시**:
 
   ```kotlin
   @ApiResponses(
-      ApiResponse(responseCode = "400", description = "유효성 검사 실패", 
+      ApiResponse(responseCode = "400", description = "유효성 검사 실패",
           content = [Content(schema = Schema(implementation = ProblemDetail::class))])
   )
   ```
 
 ### 17.7 Swagger UI 커스터마이징
 
-- **설정**: `application.yml` 또는 `application.properties`를 통해 Swagger UI 경로와 옵션을 조정 가능합니다.  
-- **예시**:  
+- **설정**: `application.yml` 또는 `application.properties`를 통해 Swagger UI 경로와 옵션을 조정 가능합니다.
+- **예시**:
 
   ```yaml
   springdoc:
@@ -1363,10 +1385,303 @@ domains/
 
 ### 17.8 주의사항
 
-- **버전 관리**: API 버전(`v1`, `v2` 등)에 따라 별도의 Swagger 그룹을 설정하여 문서를 분리할 수 있습니다.  
-  - 예: `springdoc.group-configs` 설정 사용.  
-- **성능**: 대규모 프로젝트에서는 Swagger 생성 시 성능 영향을 최소화하기 위해 필요한 엔드포인트만 노출하도록 필터링 고려.  
+- **버전 관리**: API 버전(`v1`, `v2` 등)에 따라 별도의 Swagger 그룹을 설정하여 문서를 분리할 수 있습니다.
+  - 예: `springdoc.group-configs` 설정 사용.
+- **성능**: 대규모 프로젝트에서는 Swagger 생성 시 성능 영향을 최소화하기 위해 필요한 엔드포인트만 노출하도록 필터링 고려.
 - **보안**: 운영 환경에서는 Swagger UI 접근을 제한하거나 비활성화합니다(예: `springdoc.swagger-ui.enabled=false`).
+
+---
+
+# 18. 테스트 작성 가이드
+
+유닛 테스트는 개별 단위(모듈, 함수, 클래스 등)의 동작을 검증하여 코드 품질을 보장하고 리팩토링 시 안정성을 유지하는 데 목적이 있습니다. 이 가이드는 Kotest, MockK, Testcontainers를 핵심 도구로 사용하여 프로젝트의 각 레이어(Presentation, Application, Domain, Infrastructure)에 대한 테스트 전략을 설명합니다.
+
+---
+
+## 18.1 유닛 테스트의 목표와 원칙
+- **목표**: 각 레이어와 모듈이 의도대로 동작하는지 확인.
+- **원칙**:
+  - **격리성**: 외부 의존성(예: DB, API)을 모킹하여 독립적으로 실행.
+  - **반복 가능성**: 동일 입력에 대해 항상 동일 결과 반환.
+  - **단일 책임**: 하나의 테스트는 하나의 기능만 검증.
+  - **빠른 실행**: 개발 생산성 향상을 위해 신속히 실행.
+
+문서에서 도메인 레이어는 순수 Kotlin으로 작성되며 외부 프레임워크 의존성을 피하므로(5.3.4), 특히 도메인 테스트는 MockK 없이도 쉽게 작성 가능합니다.
+
+---
+
+## 18.2 기술 스택과 도구
+- **테스트 프레임워크**: Kotest
+  - Kotlin 전용 프레임워크로, 다양한 테스트 스타일(Spec)과 속성 기반 테스트 지원.
+- **모킹 도구**: MockK
+  - Kotlin에 최적화된 모킹 라이브러리로, 코루틴과 `suspend` 함수 모킹 가능.
+- **인프라 테스트**: Testcontainers
+  - Docker 컨테이너를 활용해 실제 DB나 외부 서비스를 테스트 환경에서 실행.
+- **Gradle 의존성 설정**:
+  ```groovy
+  dependencies {
+      testImplementation "io.kotest:kotest-runner-junit5:5.8.0"
+      testImplementation "io.kotest:kotest-assertions-core:5.8.0" // Kotest Assertions
+      testImplementation "io.mockk:mockk:1.13.8"
+      testImplementation "org.testcontainers:testcontainers:1.19.3"
+      testImplementation "org.testcontainers:postgresql:1.19.3" // PostgreSQL 예시
+  }
+  ```
+
+---
+
+## 18.3 레이어별 유닛 테스트 작성 전략
+
+### 18.3.1 Domain 레이어
+- **대상**: Aggregate, Value Object(VO), 도메인 로직
+- **특징**: 외부 의존성 없음(5.3.2). Kotest의 `BehaviorSpec` 또는 `FunSpec`으로 가독성 높게 작성.
+- **작성 방식**:
+  - 객체 생성 및 불변성 검증.
+  - 비즈니스 규칙 테스트.
+  - 예외 발생 시나리오 확인.
+- **예시**: `User` Aggregate 테스트
+  ```kotlin
+  import io.kotest.core.spec.style.FunSpec
+  import io.kotest.matchers.shouldBe
+  import io.kotest.assertions.throwables.shouldThrow
+
+  class UserTest : FunSpec({
+      test("유효한 데이터로 User 생성 성공") {
+          val user = User(UserId(1L), "John Doe", Email("john@example.com"))
+          user.name shouldBe "John Doe"
+          user.email.value shouldBe "john@example.com"
+      }
+
+      test("잘못된 이메일 형식으로 생성 시 예외 발생") {
+          val exception = shouldThrow<IllegalArgumentException> {
+              User(UserId(1L), "John Doe", Email("invalid-email"))
+          }
+          exception.message shouldBe "유효한 이메일 형식이 아닙니다."
+      }
+
+      test("이름 업데이트 성공") {
+          val user = User(UserId(1L), "John Doe", Email("john@example.com"))
+          val updatedUser = user.updateName("Jane Doe")
+          updatedUser.name shouldBe "Jane Doe"
+          updatedUser.id shouldBe user.id // 불변성 확인
+      }
+  })
+  ```
+
+### 18.3.2 Application 레이어
+- **대상**: CommandHandler, QueryHandler
+- **특징**: 도메인과 인프라 의존성을 MockK로 모킹. Command는 데이터 반환 없이 상태만 확인(11.1).
+- **작성 방식**:
+  - Repository 인터페이스 모킹.
+  - Command/Query 결과 검증.
+  - 예외 처리 테스트.
+- **예시**: `CreateUserCommandHandler` 테스트
+  ```kotlin
+  import io.kotest.core.spec.style.BehaviorSpec
+  import io.kotest.matchers.shouldBe
+  import io.mockk.every
+  import io.mockk.mockk
+  import io.mockk.verify
+
+  class CreateUserCommandHandlerTest : BehaviorSpec({
+      val userRepository = mockk<UserRepository>()
+      val handler = CreateUserCommandHandler(userRepository)
+
+      given("유효한 CreateUserCommand가 주어졌을 때") {
+          val command = CreateUserCommand("John Doe", "john@example.com")
+          every { userRepository.save(any()) } returns Unit
+
+          `when`("핸들러를 실행하면") {
+              val result = handler.handle(command)
+
+              then("성공 결과와 correlationId를 반환한다") {
+                  result.success shouldBe true
+                  result.correlationId shouldNotBe null
+                  verify { userRepository.save(any()) }
+              }
+          }
+      }
+
+      given("도메인 예외가 발생하는 경우") {
+          val command = CreateUserCommand("John Doe", "invalid-email")
+          every { userRepository.save(any()) } throws DomainException("이메일 형식 오류")
+
+          `when`("핸들러를 실행하면") {
+              val result = handler.handle(command)
+
+              then("실패 결과를 반환한다") {
+                  result.success shouldBe false
+                  result.errorCode shouldBe "USER_CREATION_FAILED"
+              }
+          }
+      }
+  })
+  ```
+
+### 18.3.3 Infrastructure 레이어
+- **대상**: Repository 구현체, Entity 매핑
+- **특징**: Testcontainers로 실제 DB(PostgreSQL 등)를 띄워 JPA 동작 검증(5.3.1).
+- **작성 방식**:
+  - Testcontainers로 PostgreSQL 컨테이너 설정.
+  - Spring의 `@DataJpaTest`와 통합.
+  - 매핑 로직 검증.
+- **예시**: `UserRepositoryImpl` 테스트
+  ```kotlin
+  import io.kotest.core.spec.style.FunSpec
+  import io.kotest.matchers.shouldBe
+  import org.springframework.beans.factory.annotation.Autowired
+  import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+  import org.testcontainers.containers.PostgreSQLContainer
+  import org.testcontainers.junit.jupiter.Container
+  import org.testcontainers.junit.jupiter.Testcontainers
+
+  @DataJpaTest
+  @Testcontainers
+  class UserRepositoryImplTest : FunSpec() {
+      companion object {
+          @Container
+          val postgres = PostgreSQLContainer("postgres:15").apply {
+              withDatabaseName("testdb")
+              withUsername("test")
+              withPassword("test")
+          }
+      }
+
+      @Autowired
+      private lateinit var jpaRepository: SpringDataJpaUserRepository
+      private val userEntityMapper = UserEntityMapper()
+      private lateinit var repository: UserRepository
+
+      init {
+          beforeSpec {
+              repository = UserRepository(jpaRepository, userEntityMapper)
+          }
+
+          test("사용자 저장 및 조회 성공") {
+              val user = User(UserId(1L), "John Doe", Email("john@example.com"))
+              val savedUser = repository.save(user)
+
+              val foundUser = repository.findById(UserId(1L))
+              foundUser?.name shouldBe "John Doe"
+          }
+      }
+  }
+  ```
+  - **설정 참고**: `application-test.yml`에 Testcontainers의 DB 연결 정보 동적 주입 필요.
+
+### 18.3.4 Presentation 레이어
+- **대상**: Controller, DTO 유효성 검사
+- **특징**: MockK로 Application 레이어 모킹, Kotest로 HTTP 요청/응답 테스트(15. Presentation Validation).
+- **작성 방식**:
+  - Spring의 `MockMvc`와 통합.
+  - `@Valid` 유효성 검사 확인.
+  - HATEOAS 링크 검증(13.3).
+- **예시**: `UserCommandController` 테스트
+  ```kotlin
+  import io.kotest.core.spec.style.FunSpec
+  import io.kotest.matchers.shouldBe
+  import io.mockk.every
+  import io.mockk.mockk
+  import org.springframework.beans.factory.annotation.Autowired
+  import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+  import org.springframework.http.MediaType
+  import org.springframework.test.web.servlet.MockMvc
+  import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+  import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+  import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+  import com.fasterxml.jackson.databind.ObjectMapper
+
+  @WebMvcTest(UserCommandController::class)
+  class UserCommandControllerTest : FunSpec({
+      @Autowired
+      lateinit var mockMvc: MockMvc
+      @Autowired
+      lateinit var objectMapper: ObjectMapper
+
+      val createUserCommandHandler = mockk<CreateUserCommandHandler>()
+      val userMapper = mockk<UserMapper>()
+
+      beforeEach {
+          every { userMapper.toCreateUserCommand(any()) } returns CreateUserCommand("John Doe", "john@example.com")
+      }
+
+      test("유효한 요청으로 사용자 생성 성공") {
+          val request = UserCreateRequestV1("John Doe", "john@example.com", "Password123!")
+          every { createUserCommandHandler.handle(any()) } returns CommandResult(true, "corr-123")
+
+          mockMvc.perform(
+              post("/api/v1/users")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request))
+          )
+              .andExpect(status().isOk)
+              .andExpect(jsonPath("$.status").value("success"))
+              .andExpect(jsonPath("$.correlationId").value("corr-123"))
+      }
+
+      test("유효하지 않은 이메일로 요청 시 400 반환") {
+          val invalidRequest = UserCreateRequestV1("John Doe", "invalid-email", "Password123!")
+
+          mockMvc.perform(
+              post("/api/v1/users")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(invalidRequest))
+          )
+              .andExpect(status().isBadRequest)
+              .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+      }
+  })
+  ```
+
+---
+
+## 18.4 모킹과 의존성 주입
+- **MockK 사용**:
+  - `mockk()`: 모킹 객체 생성.
+  - `every {}`: 동작 정의.
+  - `verify {}`: 호출 검증.
+  - 코루틴 지원: `coEvery {}`로 비동기 Command 테스트(11.3).
+- **예시**: 비동기 Command 모킹
+  ```kotlin
+  test("비동기 Command 핸들러 테스트") {
+      coEvery { handler.handle(any()) } returns AsyncCommandResult(true, "job-123")
+      val result = handler.handle(command)
+      result.jobId shouldBe "job-123"
+  }
+  ```
+
+---
+
+## 18.5 테스트 커버리지와 유지보수
+- **커버리지 목표**: 도메인 및 애플리케이션 레이어 80% 이상.
+- **도구**: Kotest와 JaCoCo 통합
+  ```groovy
+  plugins {
+      id "jacoco"
+  }
+  jacocoTestReport {
+      reports {
+          xml.required = true
+          html.required = true
+      }
+  }
+  ```
+- **유지보수**: 코드 변경 시 테스트 동기화, Kotest의 가독성 높은 Spec으로 리팩토링 용이.
+
+---
+
+## 18.6 주의사항
+- **도메인 순수성**: Kotest로 순수 Kotlin 테스트 유지(5.3.4).
+- **Testcontainers 성능**: 실행 속도가 느리므로 유닛 테스트와 통합 테스트 분리 고려.
+- **Swagger 일치성**: Presentation 테스트에서 응답이 Swagger 명세와 일치하는지 확인(17.4).
+- **코루틴**: MockK의 `coEvery`로 비동기 로직 정확히 모킹(11.3).
+
+---
+
+## 결론
+Kotest는 가독성 높은 테스트 스타일을 제공하며, MockK는 Kotlin과 코루틴에 최적화된 모킹을 지원합니다. Testcontainers는 인프라 레이어에서 실제 DB 환경을 재현하여 JPA 테스트의 신뢰성을 높입니다. 이 조합은 프로젝트의 클린 아키텍처와 DDD 원칙을 준수하며, 안정적이고 유지보수 가능한 테스트를 작성하는 데 적합합니다.
+
+---
 
 ---
 

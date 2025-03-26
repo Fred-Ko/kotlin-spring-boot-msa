@@ -15,6 +15,13 @@ dependencies {
     // MapStruct 어노테이션 프로세서
     kapt("org.mapstruct:mapstruct-processor:1.6.3")
 
+    // Kotest
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
+
+    // MockK
+    testImplementation("io.mockk:mockk:1.13.8")
+
     // 테스트
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.4")
