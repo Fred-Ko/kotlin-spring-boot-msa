@@ -30,7 +30,7 @@ class GetUserProfileQueryHandler(
           UserProfileDto(
             id = user.id?.value ?: 0,
             email = user.email.value,
-            name = user.name,
+            name = user.name.value,
             createdAt = user.createdAt,
             updatedAt = user.updatedAt,
           ),

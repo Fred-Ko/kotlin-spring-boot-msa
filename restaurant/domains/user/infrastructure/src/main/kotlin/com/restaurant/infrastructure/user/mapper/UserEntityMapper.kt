@@ -3,6 +3,7 @@ package com.restaurant.infrastructure.user.mapper
 import com.restaurant.common.infrastructure.mapper.EntityMapper
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.vo.Email
+import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
 import com.restaurant.infrastructure.user.entity.UserEntity
@@ -15,7 +16,7 @@ class UserEntityMapper : EntityMapper<User, UserEntity> {
       id = domain.id?.value,
       email = domain.email.value,
       password = domain.password.encodedValue,
-      name = domain.name,
+      name = domain.name.value,
       createdAt = domain.createdAt,
       updatedAt = domain.updatedAt,
     )
@@ -25,7 +26,7 @@ class UserEntityMapper : EntityMapper<User, UserEntity> {
       id = UserId(entity.id!!),
       email = Email(entity.email),
       password = Password.fromEncoded(entity.password),
-      name = entity.name,
+      name = Name.of(entity.name),
       createdAt = entity.createdAt,
       updatedAt = entity.updatedAt,
     )

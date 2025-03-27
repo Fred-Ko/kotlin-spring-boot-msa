@@ -6,6 +6,7 @@ import com.restaurant.common.core.command.CommandResult
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
+import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +26,8 @@ class RegisterUserCommandHandler(
       }
 
       val password = Password.of(command.password)
-      val user = User.create(email, password, command.name)
+      val name = Name.of(command.name)
+      val user = User.create(email, password, name)
 
       userRepository.save(user)
 

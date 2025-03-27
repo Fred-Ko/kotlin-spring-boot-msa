@@ -1,8 +1,10 @@
 package com.restaurant.domain.user.aggregate
 
 import com.restaurant.domain.user.vo.Email
+import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.nulls.shouldBeNull
@@ -17,7 +19,7 @@ class UserTest :
       // given
       val email = Email("test@example.com")
       val password = Password.of("password123")
-      val name = "테스트유저"
+      val name = Name.of("테스트유저")
 
       // when
       val user = User.create(email, password, name)
@@ -36,7 +38,7 @@ class UserTest :
       val id = UserId(1L)
       val email = Email("test@example.com")
       val password = Password.of("password123")
-      val name = "테스트유저"
+      val name = Name.of("테스트유저")
       val createdAt = LocalDateTime.now().minusDays(1)
       val updatedAt = LocalDateTime.now()
 
@@ -58,9 +60,9 @@ class UserTest :
         User.create(
           Email("test@example.com"),
           Password.of("password123"),
-          "원래이름",
+          Name.of("원래이름"),
         )
-      val newName = "변경된이름"
+      val newName = Name.of("변경된이름")
 
       // when
       val updatedUser = user.updateProfile(newName)
@@ -81,7 +83,7 @@ class UserTest :
         User.create(
           Email("test@example.com"),
           Password.of(originalPassword),
-          "테스트유저",
+          Name.of("테스트유저"),
         )
       val newPassword = "newpassword456"
 
@@ -104,11 +106,40 @@ class UserTest :
         User.create(
           Email("test@example.com"),
           Password.of(rawPassword),
-          "테스트유저",
+          Name.of("테스트유저"),
         )
 
       // when & then
       user.checkPassword(rawPassword) shouldBe true
       user.checkPassword("wrongpassword") shouldBe false
+    }
+
+    // 실패 케이스 추가
+    test("빈 이름으로 사용자 생성 실패") {
+      // given
+      val email = Email("test@example.com")
+      val password = Password.of("password123")
+      val emptyName = ""
+
+      // when & then
+      shouldThrow<IllegalArgumentException> {
+        Name.of(emptyName)
+      }
+    }
+
+    test("너무 짧은 비밀번호로 변경 실패") {
+      // given
+      val user =
+        User.create(
+          Email("test@example.com"),
+          Password.of("validpassword123"),
+          Name.of("테스트유저"),
+        )
+      val tooShortPassword = "123" // 최소 길이보다 짧은 비밀번호
+
+      // when & then
+      shouldThrow<IllegalArgumentException> {
+        user.changePassword(tooShortPassword)
+      }
     }
   })

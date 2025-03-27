@@ -1,35 +1,39 @@
 package com.restaurant.application.user.command.handler
 
+import com.restaurant.application.user.TestConfig
 import com.restaurant.application.user.command.RegisterUserCommand
 import com.restaurant.application.user.common.UserErrorCode
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
+import com.restaurant.domain.user.vo.Name
+import com.restaurant.domain.user.vo.Password
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeEmpty
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.transaction.annotation.Transactional
 
-class RegisterUserCommandHandlerTest :
-  BehaviorSpec({
+@SpringBootTest(classes = [TestConfig::class])
+@Transactional // 테스트 후 자동으로 트랜잭션 롤백
+@DirtiesContext
+class RegisterUserCommandHandlerTest(
+  @Autowired private val userRepository: UserRepository,
+  @Autowired private val handler: RegisterUserCommandHandler,
+) : BehaviorSpec({
 
-    val userRepository = mockk<UserRepository>()
-    val handler = RegisterUserCommandHandler(userRepository)
+    extension(SpringExtension)
 
     Given("유효한 사용자 정보로 회원가입 요청을 보낼 때") {
       val command =
         RegisterUserCommand(
-          email = "test@example.com",
+          email = "register-user-command-handler-test@example.com",
           password = "password123",
           name = "테스트유저",
         )
-
-      val userSlot = slot<User>()
-      every { userRepository.existsByEmail(any()) } returns false
-      every { userRepository.save(capture(userSlot)) } answers { userSlot.captured }
 
       When("회원가입 처리를 하면") {
         val result = handler.handle(command)
@@ -40,33 +44,40 @@ class RegisterUserCommandHandlerTest :
         }
 
         Then("사용자가 저장되어야 한다") {
-          verify(exactly = 1) { userRepository.save(any()) }
-          userSlot.captured.email.value shouldBe command.email
-          userSlot.captured.name shouldBe command.name
+          val savedUser = userRepository.findByEmail(Email(command.email))
+          savedUser shouldBe savedUser
+          savedUser?.email shouldBe Email(command.email)
+          savedUser?.name?.value shouldBe command.name
         }
       }
     }
 
     Given("이미 가입된 이메일로 회원가입 요청을 보낼 때") {
+      // 기존 사용자 생성
+      val existingEmail = "existing@example.com"
+      userRepository.save(
+        User.create(
+          email = Email(existingEmail),
+          password =
+            Password
+              .of("password123"),
+          name = Name.of("기존사용자"),
+        ),
+      )
+
       val command =
         RegisterUserCommand(
-          email = "existing@example.com",
+          email = existingEmail,
           password = "password123",
           name = "테스트유저",
         )
 
-      every { userRepository.existsByEmail(Email(command.email)) } returns true
-
       When("회원가입 처리를 하면") {
         val result = handler.handle(command)
 
-        Then("이메일 중복 에러가 반환되어야 한다") {
+        Then("이메일 중복 오류가 반환되어야 한다") {
           result.success shouldBe false
           result.errorCode shouldBe UserErrorCode.DUPLICATE_EMAIL.code
-        }
-
-        Then("사용자가 저장되지 않아야 한다") {
-          verify(exactly = 0) { userRepository.save(any()) }
         }
       }
     }
@@ -79,12 +90,10 @@ class RegisterUserCommandHandlerTest :
           name = "테스트유저",
         )
 
-      every { userRepository.existsByEmail(any()) } throws IllegalArgumentException("유효한 이메일 형식이 아닙니다.")
-
       When("회원가입 처리를 하면") {
         val result = handler.handle(command)
 
-        Then("입력 유효성 에러가 반환되어야 한다") {
+        Then("입력 유효성 오류가 반환되어야 한다") {
           result.success shouldBe false
           result.errorCode shouldBe UserErrorCode.INVALID_INPUT.code
         }

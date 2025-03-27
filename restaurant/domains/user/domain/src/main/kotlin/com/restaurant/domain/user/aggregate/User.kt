@@ -1,6 +1,7 @@
 package com.restaurant.domain.user.aggregate
 
 import com.restaurant.domain.user.vo.Email
+import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
 import java.time.LocalDateTime
@@ -10,7 +11,7 @@ class User
     val id: UserId? = null,
     val email: Email,
     val password: Password,
-    val name: String,
+    val name: Name,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     val updatedAt: LocalDateTime = LocalDateTime.now(),
   ) {
@@ -18,14 +19,14 @@ class User
       fun create(
         email: Email,
         password: Password,
-        name: String,
+        name: Name,
       ): User = User(email = email, password = password, name = name)
 
       fun reconstitute(
         id: UserId,
         email: Email,
         password: Password,
-        name: String,
+        name: Name,
         createdAt: LocalDateTime,
         updatedAt: LocalDateTime,
       ): User =
@@ -39,7 +40,7 @@ class User
         )
     }
 
-    fun updateProfile(name: String): User =
+    fun updateProfile(name: Name): User =
       User(
         id = this.id,
         email = this.email,

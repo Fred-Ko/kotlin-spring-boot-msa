@@ -25,8 +25,8 @@ class ChangePasswordCommandHandler(
         return CommandResult(false, errorCode = UserErrorCode.INVALID_PASSWORD.code)
       }
 
-      user.changePassword(command.newPassword)
-      userRepository.save(user)
+      val updatedUser = user.changePassword(command.newPassword)
+      userRepository.save(updatedUser)
 
       return CommandResult(true, UUID.randomUUID().toString())
     } catch (e: IllegalArgumentException) {
