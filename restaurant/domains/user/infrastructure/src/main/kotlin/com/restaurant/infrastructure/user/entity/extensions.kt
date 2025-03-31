@@ -1,4 +1,4 @@
-package com.restaurant.infrastructure.user.mapper
+package com.restaurant.infrastructure.user.entity
 
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.entity.Address
@@ -6,8 +6,6 @@ import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
-import com.restaurant.infrastructure.user.entity.AddressEntity
-import com.restaurant.infrastructure.user.entity.UserEntity
 
 // UserEntity -> User 변환
 fun UserEntity.toDomain(): User {
