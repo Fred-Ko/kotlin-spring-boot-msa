@@ -20,6 +20,9 @@ enum class UserErrorCode(
   DELETION_FAILED("USER_DELETION_FAILED", "사용자 삭제에 실패했습니다.", HttpStatus.BAD_REQUEST),
   UPDATE_FAILED("USER_UPDATE_FAILED", "사용자 정보 수정에 실패했습니다.", HttpStatus.BAD_REQUEST),
   SYSTEM_ERROR("USER_SYSTEM_ERROR", "시스템 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+  ADDRESS_NOT_FOUND("ADDRESS_NOT_FOUND", "주소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  MAX_ADDRESS_LIMIT("MAX_ADDRESS_LIMIT", "최대 주소 등록 개수를 초과했습니다.", HttpStatus.BAD_REQUEST),
+  CURRENT_PASSWORD_MISMATCH("CURRENT_PASSWORD_MISMATCH", "현재 비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
   ;
 
   companion object {
