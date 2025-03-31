@@ -20,14 +20,23 @@ class GetUserProfileQueryHandler(
       val user =
         userRepository.findById(userId)
           ?: throw UserNotFoundApplicationException(
-            UserErrorCode.USER_NOT_FOUND.message,
+            UserErrorCode.NOT_FOUND.message,
           )
 
       return UserProfileDto(
         id = user.id!!.value,
         email = user.email.value,
         name = user.name.value,
-        addresses = user.addresses,
+        addresses =
+          user.addresses.map { address ->
+            UserProfileDto.AddressDto(
+              id = address.id,
+              street = address.street,
+              detail = address.detail,
+              zipCode = address.zipCode,
+              isDefault = address.isDefault,
+            )
+          },
         createdAt = user.createdAt,
         updatedAt = user.updatedAt,
       )

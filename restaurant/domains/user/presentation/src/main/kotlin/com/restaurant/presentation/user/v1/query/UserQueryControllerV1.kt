@@ -1,11 +1,11 @@
 package com.restaurant.presentation.user.v1.query
 
 import com.restaurant.application.user.common.UserErrorCode
+import com.restaurant.application.user.exception.UserNotFoundApplicationException
 import com.restaurant.application.user.query.GetUserProfileQuery
-import com.restaurant.application.user.query.dto.UserProfileDto
 import com.restaurant.application.user.query.handler.GetUserProfileQueryHandler
-import com.restaurant.presentation.user.v1.mapper.UserMapperV1
 import com.restaurant.presentation.user.v1.query.dto.response.UserProfileResponseV1
+import com.restaurant.presentation.user.v1.query.dto.response.toResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -27,7 +27,6 @@ import java.time.Instant
 @Tag(name = "사용자 조회", description = "사용자 프로필 조회 API")
 class UserQueryControllerV1(
   private val getUserProfileQueryHandler: GetUserProfileQueryHandler,
-  private val userMapper: UserMapperV1,
   @Value("\${app.problem.base-url}") private val problemBaseUrl: String,
 ) {
   @GetMapping("/{userId}")
@@ -48,18 +47,17 @@ class UserQueryControllerV1(
       ],
   )
   fun getUserProfile(
-    @Parameter(description = "사용자 ID", example = "1") @PathVariable userId: Long,
+    @Parameter(description = "사용자 ID", required = true) @PathVariable userId: Long,
   ): ResponseEntity<Any> {
     val query = GetUserProfileQuery(userId)
-    val result = getUserProfileQueryHandler.handle(query)
-    val data = result.data
 
-    return if (result.success && data is UserProfileDto) {
-      val response = userMapper.toUserProfileResponseV1(data)
+    try {
+      val result = getUserProfileQueryHandler.handle(query)
+      val response = result.toResponse()
       val responseWithLinks = addHateoasLinks(response, userId)
-      ResponseEntity.ok(responseWithLinks)
-    } else {
-      val error = UserErrorCode.fromCode(result.errorCode)
+      return ResponseEntity.ok(responseWithLinks)
+    } catch (e: UserNotFoundApplicationException) {
+      val error = UserErrorCode.NOT_FOUND
       val problem =
         ProblemDetail.forStatus(error.status).apply {
           type =
@@ -76,7 +74,23 @@ class UserQueryControllerV1(
           setProperty("errorCode", error.code)
           setProperty("timestamp", Instant.now().toString())
         }
-      ResponseEntity.status(error.status).body(problem)
+      return ResponseEntity.status(error.status).body(problem)
+    } catch (e: Exception) {
+      val error = UserErrorCode.SYSTEM_ERROR
+      val problem =
+        ProblemDetail.forStatus(error.status).apply {
+          type = URI.create("$problemBaseUrl/${error.code.lowercase()}")
+          title =
+            error.code
+              .replace("_", " ")
+              .lowercase()
+              .replaceFirstChar { it.uppercase() }
+          detail = error.message
+          instance = URI.create("/api/v1/users/$userId")
+          setProperty("errorCode", error.code)
+          setProperty("timestamp", Instant.now().toString())
+        }
+      return ResponseEntity.status(error.status).body(problem)
     }
   }
 

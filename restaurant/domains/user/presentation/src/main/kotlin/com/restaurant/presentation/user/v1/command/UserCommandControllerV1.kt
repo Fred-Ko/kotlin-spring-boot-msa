@@ -11,7 +11,7 @@ import com.restaurant.presentation.user.v1.command.dto.request.UserDeleteRequest
 import com.restaurant.presentation.user.v1.command.dto.request.UserLoginRequestV1
 import com.restaurant.presentation.user.v1.command.dto.request.UserRegisterRequestV1
 import com.restaurant.presentation.user.v1.command.dto.request.UserUpdateProfileRequestV1
-import com.restaurant.presentation.user.v1.mapper.UserMapperV1
+import com.restaurant.presentation.user.v1.command.dto.request.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -42,7 +42,6 @@ class UserCommandControllerV1(
   private val updateProfileCommandHandler: UpdateProfileCommandHandler,
   private val changePasswordCommandHandler: ChangePasswordCommandHandler,
   private val deleteUserCommandHandler: DeleteUserCommandHandler,
-  private val userMapper: UserMapperV1,
   @Value("\${app.problem.base-url}") private val problemBaseUrl: String,
 ) {
   @PostMapping("/register")
@@ -70,7 +69,7 @@ class UserCommandControllerV1(
   fun register(
     @Valid @RequestBody request: UserRegisterRequestV1,
   ): ResponseEntity<Any> {
-    val command = userMapper.toRegisterUserCommand(request)
+    val command = request.toCommand()
     val result = registerUserCommandHandler.handle(command)
 
     return if (result.success) {
@@ -159,7 +158,7 @@ class UserCommandControllerV1(
   fun login(
     @Valid @RequestBody request: UserLoginRequestV1,
   ): ResponseEntity<Any> {
-    val command = userMapper.toLoginCommand(request)
+    val command = request.toCommand()
     val result = loginCommandHandler.handle(command)
 
     return if (result.success) {
@@ -204,71 +203,43 @@ class UserCommandControllerV1(
   }
 
   @PutMapping("/{userId}/profile")
-  @Operation(summary = "사용자 프로필 업데이트", description = "사용자 프로필 정보를 업데이트합니다.")
+  @Operation(summary = "프로필 수정", description = "사용자 프로필 정보를 수정합니다.")
   @ApiResponses(
     value =
       [
         ApiResponse(
           responseCode = "200",
-          description = "프로필 업데이트 성공",
+          description = "프로필 수정 성공",
           content = [Content(mediaType = "application/json")],
         ),
         ApiResponse(
           responseCode = "400",
           description = "잘못된 요청 데이터",
-          content =
-            [
-              Content(
-                mediaType = "application/problem+json",
-                schema =
-                  Schema(
-                    implementation =
-                      ProblemDetail::class,
-                  ),
-              ),
-            ],
+          content = [Content(mediaType = "application/problem+json")],
         ),
         ApiResponse(
           responseCode = "404",
           description = "사용자를 찾을 수 없음",
-          content =
-            [
-              Content(
-                mediaType = "application/problem+json",
-                schema =
-                  Schema(
-                    implementation =
-                      ProblemDetail::class,
-                  ),
-              ),
-            ],
+          content = [Content(mediaType = "application/problem+json")],
         ),
       ],
   )
   fun updateProfile(
-    @Parameter(description = "사용자 ID", example = "1") @PathVariable userId: Long,
+    @Parameter(description = "사용자 ID", required = true)
+    @PathVariable userId: Long,
     @Valid @RequestBody request: UserUpdateProfileRequestV1,
   ): ResponseEntity<Any> {
-    val command = userMapper.toUpdateProfileCommand(userId, request)
+    val command = request.toCommand(userId)
     val result = updateProfileCommandHandler.handle(command)
 
     return if (result.success) {
-      val profileUri = "/api/v1/users/$userId"
       ResponseEntity
         .ok()
         .body(
           mapOf(
             "status" to "success",
-            "message" to "프로필이 업데이트 되었습니다.",
+            "message" to "프로필이 수정되었습니다.",
             "correlationId" to (result.correlationId ?: ""),
-            "links" to
-              listOf(
-                mapOf(
-                  "rel" to "user-profile",
-                  "href" to profileUri,
-                  "method" to "GET",
-                ),
-              ),
           ),
         )
     } else {
@@ -305,41 +276,22 @@ class UserCommandControllerV1(
         ),
         ApiResponse(
           responseCode = "400",
-          description = "잘못된 요청 데이터",
-          content =
-            [
-              Content(
-                mediaType = "application/problem+json",
-                schema =
-                  Schema(
-                    implementation =
-                      ProblemDetail::class,
-                  ),
-              ),
-            ],
+          description = "잘못된 요청 데이터 또는 현재 비밀번호 불일치",
+          content = [Content(mediaType = "application/problem+json")],
         ),
         ApiResponse(
           responseCode = "404",
           description = "사용자를 찾을 수 없음",
-          content =
-            [
-              Content(
-                mediaType = "application/problem+json",
-                schema =
-                  Schema(
-                    implementation =
-                      ProblemDetail::class,
-                  ),
-              ),
-            ],
+          content = [Content(mediaType = "application/problem+json")],
         ),
       ],
   )
   fun changePassword(
-    @Parameter(description = "사용자 ID", example = "1") @PathVariable userId: Long,
+    @Parameter(description = "사용자 ID", required = true)
+    @PathVariable userId: Long,
     @Valid @RequestBody request: UserChangePasswordRequestV1,
   ): ResponseEntity<Any> {
-    val command = userMapper.toChangePasswordCommand(userId, request)
+    val command = request.toCommand(userId)
     val result = changePasswordCommandHandler.handle(command)
 
     return if (result.success) {
@@ -375,52 +327,33 @@ class UserCommandControllerV1(
   }
 
   @DeleteMapping("/{userId}")
-  @Operation(summary = "사용자 삭제", description = "사용자 계정을 삭제합니다.")
+  @Operation(summary = "회원 탈퇴", description = "사용자 계정을 삭제합니다.")
   @ApiResponses(
     value =
       [
         ApiResponse(
           responseCode = "200",
-          description = "사용자 삭제 성공",
+          description = "회원 탈퇴 성공",
           content = [Content(mediaType = "application/json")],
         ),
         ApiResponse(
           responseCode = "400",
-          description = "잘못된 요청 데이터",
-          content =
-            [
-              Content(
-                mediaType = "application/problem+json",
-                schema =
-                  Schema(
-                    implementation =
-                      ProblemDetail::class,
-                  ),
-              ),
-            ],
+          description = "잘못된 요청 데이터 또는 비밀번호 불일치",
+          content = [Content(mediaType = "application/problem+json")],
         ),
         ApiResponse(
           responseCode = "404",
           description = "사용자를 찾을 수 없음",
-          content =
-            [
-              Content(
-                mediaType = "application/problem+json",
-                schema =
-                  Schema(
-                    implementation =
-                      ProblemDetail::class,
-                  ),
-              ),
-            ],
+          content = [Content(mediaType = "application/problem+json")],
         ),
       ],
   )
   fun deleteUser(
-    @Parameter(description = "사용자 ID", example = "1") @PathVariable userId: Long,
+    @Parameter(description = "사용자 ID", required = true)
+    @PathVariable userId: Long,
     @Valid @RequestBody request: UserDeleteRequestV1,
   ): ResponseEntity<Any> {
-    val command = userMapper.toDeleteUserCommand(userId, request)
+    val command = request.toCommand(userId)
     val result = deleteUserCommandHandler.handle(command)
 
     return if (result.success) {
