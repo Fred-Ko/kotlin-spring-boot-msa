@@ -138,7 +138,6 @@ alwaysApply: true
   )
   ```
 
----
 ### 5.3.2 Aggregate와 VO의 위치
 
 - **규칙**: Aggregate, Value Object(VO), 그리고 기타 DDD 엔티티는 `Domain` 레이어에 정의하며, 외부 기술 프레임워크(JPA, Spring 등)에 의존하지 않도록 최대한 순수하게 유지합니다. 또한, 도메인 내 하위 엔티티는 `entity` 폴더에 별도로 정의되며, 이는 `Infrastructure` 레이어의 JPA 엔티티와 구분됩니다.
@@ -171,8 +170,6 @@ alwaysApply: true
   value class ProductId(val value: Long)
   ```
 
----
-
 #### 5.3.3 JPA 엔티티와 DDD 엔티티 간 매핑
 
 - **규칙**: JPA 엔티티와 도메인 레이어의 Aggregate/VO 간 변환은 `Infrastructure` 또는 `Application` 레이어에서 수행하며, 확장 함수를 사용하여 수동으로 매핑 로직을 정의합니다.
@@ -189,13 +186,13 @@ alwaysApply: true
   import com.example.domain.user.vo.Email
 
   fun UserEntity.toDomain(): User = User(
-      id = id?.let { UserId(it) } ?: throw IllegalArgumentException("Entity ID는 null일 수 없습니다."),
+      id = id?.let { UserId(it) },
       name = name,
       email = Email(value = email)
   )
 
   fun User.toEntity(): UserEntity = UserEntity(
-      id = id.value,
+      id = id?.value,
       name = name,
       email = email.value
   )
@@ -336,7 +333,7 @@ domains:
 ### 8.1 페이지네이션
 
 - **규칙**: 다건 조회는 페이지네이션을 적용.
-- **방식**: 결정 시 커서 페이지네이션을 기본.
+- **방식**: 결정 시 커서 페이지네이션을 기본으로 사용하며, Spring Data의 `Pageable`을 활용.
 
 ---
 
@@ -387,7 +384,29 @@ domains:
 
 ## 10. Command 요청에 대한 REST 실패 응답 규칙
 
-(기존 내용이 RFC 7807 준수로 섹션 12에서 통합되었으므로 생략)
+### 10.1 실패 응답 구조
+
+- **규칙**: 실패 응답은 RFC 7807(`Problem Details for HTTP APIs`)에 준수하며, Spring Boot 3.0 이상에서 제공하는 `ProblemDetail` 클래스를 사용합니다.
+- **필수 필드**:
+  - `type`: 문제 유형을 식별하는 URI (기본값: "about:blank")
+  - `title`: 문제 유형에 대한 간단한 설명
+  - `status`: HTTP 상태 코드
+  - `detail`: 문제에 대한 인스턴스별 설명
+- **선택 필드**:
+  - `instance`: 문제를 발생시킨 요청 URI
+  - 확장 필드: `errorCode`, `timestamp` 등
+- **예시**:
+  ```json
+  {
+    "type": "https://example.com/probs/validation-error",
+    "title": "Validation Error",
+    "status": 400,
+    "detail": "입력 데이터가 유효하지 않습니다.",
+    "instance": "/api/v1/users",
+    "errorCode": "VALIDATION_ERROR",
+    "timestamp": "2025-03-24T12:00:00Z"
+  }
+  ```
 
 ---
 
@@ -405,11 +424,12 @@ domains:
   - `success`: boolean
   - `correlationId`: string
 - **예시**:
-  ```json
-  {
-    "success": true,
-    "correlationId": "corr-456"
-  }
+  ```kotlin
+  data class CommandResult(
+      val success: Boolean,
+      val correlationId: String,
+      val errorCode: String? = null
+  )
   ```
 
 ### 11.3 비동기 Command 처리
@@ -419,30 +439,21 @@ domains:
   - `success`: boolean
   - `jobId`: string
 - **예시**:
-  ```json
-  {
-    "success": true,
-    "jobId": "job-789"
-  }
+  ```kotlin
+  data class AsyncCommandResult(
+      val success: Boolean,
+      val jobId: String,
+      val errorCode: String? = null
+  )
   ```
-
-- **참고**: 상태 추적은 데이터베이스 테이블 또는 메시지 큐를 통해 관리되며, 이벤트 소싱은 사용하지 않습니다.
 
 ### 11.4 실패 처리
 
 - **리턴 값**: `CommandResult` 또는 `AsyncCommandResult` 객체에 오류 정보 포함
-- **필수 필드**:
-  - `success`: false
-  - `errorCode`: string
 - **예시**:
-  ```json
-  {
-    "success": false,
-    "errorCode": "VALIDATION_ERROR"
-  }
+  ```kotlin
+  CommandResult(success = false, correlationId = "corr-456", errorCode = "VALIDATION_ERROR")
   ```
-
-- **참고**: 실패 시 프레젠테이션 레이어에서 `ProblemDetail`을 사용해 RFC 7807 형식으로 변환되며, 자세한 내용은 섹션 12. 에러 처리를 참조하세요.
 
 ### 11.5 구현 참고
 
@@ -459,74 +470,43 @@ domains:
   }
   ```
 
-- **프레젠테이션 계층에서의 변환**:
-  ```kotlin
-  @RestController
-  @RequestMapping("/api/v1/users")
-  class UserCommandController(
-      private val createUserCommandHandler: CreateUserCommandHandler
-  ) {
-      @PostMapping
-      fun createUser(@RequestBody request: UserCreateRequestV1): ResponseEntity<Any> {
-          val command = request.toCommand()
-          val result = createUserCommandHandler.handle(command)
-          return ResponseEntity.ok(mapOf(
-              "status" to "success",
-              "message" to "요청이 처리되었습니다.",
-              "correlationId" to result.correlationId
-          ))
-      }
-  }
-  ```
-
 ---
 
 ## 12. 에러 처리
 
 ### 12.1 목적
 
-- 시스템의 안정성을 유지하고, 클라이언트에게 RFC 7807("Problem Details for HTTP APIs")에 준수하는 명확한 에러 메시지를 제공하기 위해 일관된 에러 처리 전략을 정의합니다.
-- 레이어별로 적절한 에러 처리를 통해 책임을 명확히 하고, 에러의 원인을 쉽게 파악할 수 있도록 합니다.
+- 시스템의 안정성을 유지하고, 클라이언트에게 명확한 에러 메시지를 제공합니다.
 
 ### 12.2 레이어별 에러 처리
 
 #### 12.2.1 Presentation 레이어
 
-- **역할**: 클라이언트의 요청을 검증하고, 애플리케이션 레이어로 전달하기 전에 유효성 검사를 수행합니다.
-- **에러 유형**: 요청 데이터의 유효성 검사 실패, 인증/인가 실패 등.
-- **처리 방식**: `@Valid` 어노테이션을 사용한 유효성 검사, Spring Security를 통한 인증/인가 처리.
-- **응답**: `ProblemDetail`을 사용하여 RFC 7807 형식으로 클라이언트에게 반환.
+- **역할**: 클라이언트 요청 검증 및 에러 응답 생성.
+- **에러 유형**: 유효성 검사 실패, 인증/인가 실패.
+- **처리 방식**: `@Valid`로 유효성 검사, Spring Security로 인증/인가 처리.
 
 #### 12.2.2 Application 레이어
 
-- **역할**: 비즈니스 로직을 실행하며, 도메인 레이어와 상호작용합니다.
-- **에러 유형**: 비즈니스 규칙 위반, 도메인 로직 에러 등.
-- **처리 방식**: 도메인에서 발생한 예외를 catching하고, `CommandResult` 또는 `AsyncCommandResult`에 에러 정보를 포함하여 반환. 프레젠테이션 레이어에서 이를 `ProblemDetail`로 변환.
-- **응답**: CommandResult 또는 AsyncCommandResult에 에러 정보를 포함하여 반환.
+- **역할**: 비즈니스 로직 실행 및 도메인 예외 처리.
+- **에러 유형**: 비즈니스 규칙 위반.
+- **처리 방식**: 도메인 예외를 `CommandResult`로 변환.
 
 #### 12.2.3 Domain 레이어
 
-- **역할**: 핵심 비즈니스 로직을 포함하며, 도메인 규칙을 준수합니다.
-- **에러 유형**: 도메인 규칙 위반 (예: 무효한 상태 전환).
-- **처리 방식**: 도메인 예외를 throw하여 상위 레이어로 전달.
-- **예외 클래스**: `DomainException`과 같은 커스텀 예외 클래스를 사용.
+- **역할**: 비즈니스 규칙 준수.
+- **에러 유형**: 도메인 규칙 위반.
+- **처리 방식**: 커스텀 예외(`DomainException`) 발생.
 
 #### 12.2.4 Infrastructure 레이어
 
-- **역할**: 데이터베이스, 외부 API 등과의 통신을 담당합니다.
-- **에러 유형**: 데이터베이스 연결 실패, 외부 API 응답 지연 등.
-- **처리 방식**: 인프라 관련 예외를 catching하고, 애플리케이션 레이어에서 처리할 수 있는 형태로 변환.
-- **예외 클래스**: `InfrastructureException`과 같은 커스텀 예외 클래스를 사용.
+- **역할**: 외부 시스템 통신.
+- **에러 유형**: DB 연결 실패, API 호출 오류.
+- **처리 방식**: 커스텀 예외(`InfrastructureException`)로 변환.
 
 ### 12.3 에러 응답 형식
 
-- **형식**: 모든 에러 응답은 RFC 7807에 따라 JSON 형식으로 반환되며, Spring Boot 3.0 이상에서 제공하는 `ProblemDetail` 클래스를 기본으로 사용합니다. `ProblemDetail`은 다음과 같은 필드를 포함합니다:
-  - `type`: 문제 유형을 식별하는 URI (기본값: "about:blank")
-  - `title`: 문제 유형에 대한 간단한 설명 (문제 유형별 고정 문자열)
-  - `status`: HTTP 상태 코드
-  - `detail`: 문제에 대한 인스턴스별 설명
-  - `instance`: 문제를 발생시킨 특정 요청을 식별하는 URI (선택적)
-  - 확장 필드: `errorCode` (에러 식별용 고유 코드), `timestamp` (에러 발생 시각) 등은 `setProperty` 메서드를 통해 추가됩니다.
+- **형식**: RFC 7807 준수, `ProblemDetail` 사용.
 - **예시**:
   ```json
   {
@@ -546,25 +526,19 @@ domains:
 
 ### 13.1 목적
 
-- RESTful API에서 클라이언트가 하드코딩된 URL에 의존하지 않고, 동적으로 제공되는 링크를 통해 리소스를 탐색할 수 있도록 HATEOAS(Hypermedia as the Engine of Application State)를 적용합니다.
-- URI 템플릿을 활용하여 경로 변경에 유연하게 대응합니다.
+- 클라이언트가 동적 링크를 통해 리소스를 탐색하도록 HATEOAS를 적용.
 
 ### 13.2 기본 규칙
 
-- **의존성**: Spring HATEOAS(`spring-boot-starter-hateoas`)를 사용합니다.
-- **링크 포함**: 성공적인 Command 요청(동기/비동기) 응답에는 관련 리소스 상태 확인 또는 다음 작업을 위한 링크를 포함합니다.
-- **실패 응답**: 링크는 선택 사항이며, 오류 해결을 위한 추가 링크(예: 재시도)가 있다면 포함 권장.
+- **의존성**: Spring HATEOAS 사용.
+- **링크 포함**: 성공 응답에 관련 링크 포함.
 
 ### 13.3 링크 구조
 
-- **필수 필드**: 모든 링크는 `rel`(관계), `href`(URL), `method`(HTTP 메서드)를 포함합니다.
-- **형식**:
+- **필수 필드**: `rel`, `href`, `method`.
+- **예시**:
   ```kotlin
-  mapOf(
-      "rel" to "관계_이름",
-      "href" to "리소스_URL",
-      "method" to "HTTP_메서드"
-  )
+  mapOf("rel" to "self", "href" to "/api/v1/users/123", "method" to "GET")
   ```
 
 ---
@@ -592,10 +566,10 @@ domains/
 │   │   └── build.gradle.kts
 │   ├── domain/
 │   │   ├── src/main/kotlin/com/example/domain/user/
-│   │   │   ├── aggregate/User.kt (Aggregate)
-│   │   │   ├── vo/UserId.kt (VO)
-│   │   │   ├── vo/Email.kt (VO)
-│   │   │   ├── repository/UserRepository.kt (Interface)
+│   │   │   ├── aggregate/User.kt
+│   │   │   ├── vo/UserId.kt
+│   │   │   ├── vo/Email.kt
+│   │   │   ├── repository/UserRepository.kt
 │   │   │   └── exception/UserDomainException.kt
 │   │   └── build.gradle.kts
 │   ├── application/
@@ -647,13 +621,9 @@ domains/
 │   │   └── build.gradle.kts
 │   ├── domain/
 │   │   ├── src/main/kotlin/com/example/domain/order/
-│   │   │   ├── aggregate/
-│   │   │   │   └── Order.kt (Aggregate)
-│   │   │   ├── entity/
-│   │   │   │   └── OrderItem.kt (하위 엔티티, JPA 엔티티와 다름)
-│   │   │   ├── vo/
-│   │   │   │   ├── OrderId.kt (VO)
-│   │   │   │   └── ProductId.kt (VO)
+│   │   │   ├── aggregate/Order.kt
+│   │   │   ├── vo/OrderId.kt
+│   │   │   ├── entity/OrderItem.kt
 │   │   └── build.gradle.kts
 │   ├── application/
 │   │   ├── src/main/kotlin/com/example/application/order/
@@ -685,58 +655,30 @@ domains/
 
 ## 15. Presentation 레이어 validation
 
-- **목적**: 클라이언트로부터 입력받은 데이터의 유효성을 검증하여 잘못된 요청을 조기에 차단하고, 시스템의 안정성과 데이터 무결성을 보장합니다.
-- **규칙**: Presentation 레이어에서 요청 데이터(`Request DTO`)의 유효성 검사는 `jakarta.validation.constraints` 패키지의 어노테이션을 적극 활용하여 수행합니다.
-- **의존성**: Spring Boot Starter Validation(`spring-boot-starter-validation`)을 사용하며, Gradle에 추가합니다.
-  - **설정 예시**:
-    ```groovy
-    dependencies {
-        implementation "org.springframework.boot:spring-boot-starter-validation"
-    }
-    ```
-
-- **적용 방식**:
-  - 모든 `Request DTO` 필드에 대해 적절한 검증 어노테이션을 적용합니다.
-  - 컨트롤러 메서드에서 `@Valid` 어노테이션을 사용하여 유효성 검사를 트리거합니다.
+- **목적**: 클라이언트로부터 입력받은 데이터의 유효성을 검증하여 잘못된 요청을 조기에 차단.
+- **규칙**: `jakarta.validation.constraints` 어노테이션 사용.
+- **의존성**:
+  ```groovy
+  dependencies {
+      implementation "org.springframework.boot:spring-boot-starter-validation"
+  }
+  ```
 - **예시**:
-  - **Request DTO 정의**:
-    ```kotlin
-    data class UserCreateRequestV1(
-        @field:NotBlank(message = "이름은 필수입니다.")
-        val name: String,
-        @field:NotBlank(message = "이메일은 필수입니다.")
-        @field:Email(message = "유효한 이메일 형식이어야 합니다.")
-        val email: String
-    )
-    ```
-
-  - **컨트롤러에서 사용**:
-    ```kotlin
-    @RestController
-    @RequestMapping("/api/v1/users")
-    class UserCommandController(
-        private val createUserCommandHandler: CreateUserCommandHandler
-    ) {
-        @PostMapping
-        fun createUser(@Valid @RequestBody request: UserCreateRequestV1): ResponseEntity<Map<String, Any>> {
-            val command = request.toCommand()
-            val result = createUserCommandHandler.handle(command)
-            return ResponseEntity.ok(mapOf(
-                "status" to "success",
-                "message" to "요청이 처리되었습니다.",
-                "correlationId" to result.correlationId
-            ))
-        }
-    }
-    ```
+  ```kotlin
+  data class UserCreateRequestV1(
+      @field:NotBlank(message = "이름은 필수입니다.")
+      val name: String,
+      @field:NotBlank(message = "이메일은 필수입니다.")
+      @field:Email(message = "유효한 이메일 형식이어야 합니다.")
+      val email: String
+  )
+  ```
 
 ---
 
 ## 16. 도메인 익셉션의 전파
 
-### 16.1 CommandResult 기반 처리 (예외 없이 결과만 반환)
-
-애플리케이션 레이어에서 도메인 익셉션을 잡아 `CommandResult`로 변환한 경우, 프레젠테이션 레이어는 `CommandResult`의 상태를 확인하여 `ProblemDetail`을 사용해 RFC 7807 형식의 응답을 구성합니다.
+### 16.1 CommandResult 기반 처리
 
 - **구현 예시**:
   ```kotlin
@@ -777,11 +719,11 @@ domains/
 
 ### 17.1 목적
 
-- API의 명세를 문서화하고, 클라이언트 및 개발자가 쉽게 이해하고 테스트할 수 있도록 Swagger를 Presentation 레이어에 적용합니다.
+- API 명세 문서화 및 테스트 용이성 제공.
 
 ### 17.2 의존성 설정
 
-- **의존성**: `springdoc-openapi-starter-webmvc-ui`를 사용.
+- **의존성**:
   ```groovy
   dependencies {
       implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2"
@@ -837,7 +779,7 @@ domains/
 
 ### 18.1 Kotest 개요 및 테스트 원칙
 
-- **표준화**: 모든 테스트는 Kotest를 사용합니다.
+- **표준화**: Kotest 사용.
 - **목표**: 가독성, 독립성, 단일 책임, 반복 가능성, 빠른 실행.
 
 ### 18.2 기술 스택과 Gradle 설정
@@ -851,19 +793,33 @@ dependencies {
 }
 ```
 
+### 18.3 테스트 예시
+
+- **DTO 변환 테스트**:
+  ```kotlin
+  class UserCreateRequestV1Test : StringSpec({
+      "UserCreateRequestV1에서 CreateUserCommand로 변환" {
+          val request = UserCreateRequestV1(" John ", "JOHN@example.com")
+          val command = request.toCommand()
+          command.name shouldBe "John"
+          command.email shouldBe "john@example.com"
+      }
+  })
+  ```
+
 ---
 
 ## 19. Value Object 작성 가이드
 
 ### 19.1 목적
 
-Value Object(VO)는 도메인 레이어에서 불변 값을 캡슐화하며, 도메인 규칙을 강제합니다.
+- 불변 값 캡슐화 및 도메인 규칙 강제.
 
 ### 19.2 기본 규칙
 
-- **불변성**: 생성 후 상태가 변경되지 않습니다.
-- **Private Constructor**: 생성자를 `private`으로 설정.
-- **Companion Object**: `of` 메서드로 생성 제어.
+- **불변성**: 생성 후 상태 변경 불가.
+- **Private Constructor**: 생성자 비공개.
+- **Companion Object**: `of` 메서드로 생성.
 - **예시**:
   ```kotlin
   data class Email private constructor(
@@ -884,13 +840,20 @@ Value Object(VO)는 도메인 레이어에서 불변 값을 캡슐화하며, 도
 
 ### 20.1 목적
 
-Kafka를 활용한 이벤트 기반 아키텍처에서 Avro를 데이터 직렬화 포맷으로 사용합니다.
+- 이벤트 기반 아키텍처에서 Kafka와 Avro를 사용.
 
 ### 20.2 기본 규칙
 
-- **메시징 시스템**: Apache Kafka
-- **직렬화 포맷**: Avro
-- **스키마 관리**: Confluent Schema Registry
+- **메시징 시스템**: Apache Kafka.
+- **직렬화 포맷**: Avro.
+- **스키마 관리**: Confluent Schema Registry.
+- **예시**:
+  ```kotlin
+  @KafkaListener(topics = ["user-events"])
+  fun handleUserEvent(event: UserEvent) {
+      // 이벤트 처리 로직
+  }
+  ```
 
 ---
 
@@ -898,12 +861,12 @@ Kafka를 활용한 이벤트 기반 아키텍처에서 Avro를 데이터 직렬�
 
 ### 21.1 목적
 
-JPA 엔티티는 데이터베이스와 객체 간 매핑을 담당하며, `Infrastructure` 레이어에서 정의됩니다.
+- 데이터베이스와 객체 간 매핑.
 
 ### 21.2 기본 규칙
 
 - **위치**: `Infrastructure` 레이어.
-- **불변성**: 모든 필드는 `val`로 정의.
+- **불변성**: `val` 사용.
 - **예시**:
   ```kotlin
   @Entity
@@ -918,7 +881,6 @@ JPA 엔티티는 데이터베이스와 객체 간 매핑을 담당하며, `Infra
   ```
 
 ---
-
 
 
 
