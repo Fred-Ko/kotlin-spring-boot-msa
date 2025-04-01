@@ -2781,4 +2781,361 @@ class OrderRepositoryImpl(
 - **안정성**: 기술적 의존성이 도메인에 영향을 주지 않습니다.
 
 ---
+
+# 22. Kafka Producer와 Consumer 작성 가이드
+
+## 22.1 목적
+
+이 가이드는 Apache Kafka의 Producer와 Consumer를 작성하고 운영하기 위한 실무 지침을 제공합니다. 기존 문서의 규칙(특히 Avro 사용)을 준수하며, Spring Boot 기반 구현, 성능 최적화, 오류 처리 등을 다룹니다.
+
+---
+
+## 22.2 소개
+
+- **Kafka Producer**: 애플리케이션에서 Kafka 브로커로 Avro 포맷 데이터를 전송합니다.
+- **Kafka Consumer**: Kafka 토픽에서 Avro 데이터를 소비하여 처리합니다.
+- **적용 사례**: 실시간 이벤트 스트리밍, 대규모 메시지 처리 등.
+- **전제 조건**: 본 문서는 섹션 20(Kafka 및 Avro 사용 규칙)을 준수하며, Avro 스키마를 기본 직렬화 방식으로 사용합니다.
+
+---
+
+## 22.3 Producer 기본 작성 가이드
+
+### 22.3.1 필수 설정
+Producer는 Avro 직렬화를 위해 다음 설정을 포함해야 합니다:
+- `bootstrap.servers`: Kafka 브로커 주소 (예: `kafka-broker:9092`)
+- `key.serializer`: `StringSerializer` (키는 문자열로 가정)
+- `value.serializer`: `KafkaAvroSerializer` (Avro 직렬화)
+- `schema.registry.url`: Schema Registry 주소 (예: `http://schema-registry:8081`)
+
+### 22.3.2 기본 예제 (Spring Boot + Avro)
+```kotlin
+@Configuration
+class KafkaProducerConfig {
+    @Bean
+    fun producerFactory(): ProducerFactory<String, GenericRecord> {
+        val config = mapOf(
+            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka-broker:9092",
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
+            "schema.registry.url" to "http://schema-registry:8081"
+        )
+        return DefaultKafkaProducerFactory(config)
+    }
+
+    @Bean
+    fun kafkaTemplate(): KafkaTemplate<String, GenericRecord> {
+        return KafkaTemplate(producerFactory())
+    }
+}
+
+@Service
+class UserEventProducer(
+    private val kafkaTemplate: KafkaTemplate<String, GenericRecord>
+) {
+    fun sendUserEvent(userId: String, name: String, action: String) {
+        val avroRecord = AvroSchema.userSchema.newRecordBuilder()
+            .setUserId(userId)
+            .setName(name)
+            .setAction(action)
+            .build()
+        kafkaTemplate.send("prod.user.domain-event.user.v1", userId, avroRecord)
+            .whenComplete { result, ex ->
+                if (ex == null) {
+                    println("Sent event for $userId with offset=${result.recordMetadata.offset()}")
+                } else {
+                    println("Failed to send event for $userId: ${ex.message}")
+                }
+            }
+    }
+}
+
+// Avro 스키마 예시 (별도 파일 또는 섹션 20 참조)
+object AvroSchema {
+    val userSchema = SchemaBuilder.record("UserEvent")
+        .fields()
+        .requiredString("userId")
+        .requiredString("name")
+        .requiredString("action")
+        .endRecord()
+}
 ```
+- **설명**: Avro 직렬화를 사용하며, 토픽 네임은 `prod.<서비스>.<도메인>-event.<엔티티>.v1` 형식으로 가정(기존 문서 규칙 추정).
+
+---
+
+## 22.4 Consumer 기본 작성 가이드
+
+### 22.4.1 필수 설정
+Consumer는 Avro 역직렬화를 위해 다음 설정을 포함해야 합니다:
+- `bootstrap.servers`: Kafka 브로커 주소
+- `group.id`: Consumer Group 식별자
+- `key.deserializer`: `StringDeserializer`
+- `value.deserializer`: `KafkaAvroDeserializer`
+- `schema.registry.url`: Schema Registry 주소
+
+### 22.4.2 기본 예제 (Spring Boot + Avro)
+```kotlin
+@Configuration
+class KafkaConsumerConfig {
+    @Bean
+    fun consumerFactory(): ConsumerFactory<String, GenericRecord> {
+        val config = mapOf(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka-broker:9092",
+            ConsumerConfig.GROUP_ID_CONFIG to "user-group",
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroDeserializer::class.java,
+            "schema.registry.url" to "http://schema-registry:8081",
+            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest"
+        )
+        return DefaultKafkaConsumerFactory(config)
+    }
+
+    @Bean
+    fun kafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, GenericRecord> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, GenericRecord>()
+        factory.consumerFactory = consumerFactory()
+        return factory
+    }
+}
+
+@Service
+class UserEventConsumer {
+    @KafkaListener(topics = ["prod.user.domain-event.user.v1"], groupId = "user-group")
+    fun consume(record: GenericRecord) {
+        val userId = record.get("userId").toString()
+        val name = record.get("name").toString()
+        val action = record.get("action").toString()
+        println("Consumed event: userId=$userId, name=$name, action=$action")
+    }
+}
+```
+- **설명**: Avro 데이터를 역직렬화하여 처리하며, Consumer Group 기반으로 구현.
+
+---
+
+## 22.5 Producer 설정 모범 사례
+
+### 22.5.1 메시지 신뢰성 보장
+- **`acks` 설정**:
+  - `acks=all`을 기본으로 사용해 데이터 손실 방지 (기존 문서 규칙 가정).
+  - `retries=3`와 `max.in.flight.requests.per.connection=1`으로 순서 보장.
+- **예제**:
+  ```kotlin
+  val config = mapOf(
+      ProducerConfig.ACKS_CONFIG to "all",
+      ProducerConfig.RETRIES_CONFIG to 3,
+      ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 1
+  )
+  ```
+
+### 22.5.2 성능 튜닝
+- **`batch.size`와 `linger.ms`**:
+  - Avro 데이터 크기에 따라 `batch.size=32768` (32KB) 권장.
+  - `linger.ms=5`로 지연 최소화.
+- **압축**: `compression.type=gzip`으로 Avro 데이터 크기 감소.
+
+### 22.5.3 오류 처리
+- **콜백 활용**:
+  ```kotlin
+  kafkaTemplate.send("topic", avroRecord).whenComplete { _, ex ->
+      if (ex != null) retryOrSendToDeadLetter(avroRecord, ex)
+  }
+  ```
+
+---
+
+## 22.6 Consumer 설정 모범 사례
+
+### 22.6.1 Consumer Group 운영
+- **`group.id`와 파티션 할당**:
+  - 파티션 수와 Consumer 인스턴스 수를 일치시켜 부하 분산.
+  - `max.poll.interval.ms=300000` (5분)으로 재균형 최소화.
+- **예제**:
+  ```kotlin
+  val config = mapOf(
+      ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to 300000,
+      ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 500
+  )
+  ```
+
+### 22.6.2 성능 최적화
+- **Consumer Lag 방지**:
+  - `concurrency=3`으로 병렬 처리 설정.
+- **예제**:
+  ```kotlin
+  @KafkaListener(topics = ["prod.user.domain-event.user.v1"], concurrency = "3")
+  fun consume(record: GenericRecord) {
+      processAvroRecord(record)
+  }
+  ```
+
+### 22.6.3 오류 처리
+- **재시도 및 데드 레터 큐**:
+  ```kotlin
+  @KafkaListener(topics = ["prod.user.domain-event.user.v1"])
+  fun consume(record: GenericRecord) {
+      try {
+          processAvroRecord(record)
+      } catch (e: Exception) {
+          kafkaTemplate.send("dead-letter-topic", record)
+      }
+  }
+  ```
+
+---
+
+## 22.7 실무 예제
+
+### 22.7.1 실시간 사용자 이벤트 처리
+```kotlin
+@Service
+class UserEventProducer(
+    private val kafkaTemplate: KafkaTemplate<String, GenericRecord>
+) {
+    fun sendUserEvent(userId: String, name: String, action: String) {
+        val avroRecord = AvroSchema.userSchema.newRecordBuilder()
+            .setUserId(userId)
+            .setName(name)
+            .setAction(action)
+            .build()
+        kafkaTemplate.send("prod.user.domain-event.user.v1", userId, avroRecord)
+    }
+}
+
+@Service
+class UserEventConsumer {
+    @KafkaListener(topics = ["prod.user.domain-event.user.v1"], groupId = "user-group")
+    fun consume(record: GenericRecord) {
+        val userId = record.get("userId").toString()
+        val name = record.get("name").toString()
+        val action = record.get("action").toString()
+        println("Processed: userId=$userId, name=$name, action=$action")
+    }
+}
+```
+
+---
+
+## 22.8 모니터링 및 운영 팁
+
+- **Consumer Lag 모니터링**: Prometheus와 Grafana로 실시간 추적.
+- **스키마 관리**: Schema Registry를 통해 Avro 스키마 버전 관리.
+- **로그**: Avro 데이터 처리 로그를 통해 디버깅 용이성 확보.
+
+---
+
+## 22.9 주의사항
+
+- **Avro 스키마 호환성**: 스키마 변경 시 기존 Consumer와의 호환성 확인 (섹션 20 참조).
+- **메시지 크기**: Avro 데이터가 1MB를 초과하지 않도록 설계.
+- **테스트**: Testcontainers로 Avro 기반 통합 테스트 권장 (섹션 18.4.3 참조).
+
+---
+
+## 22.10 장점
+
+- **일관성**: Avro로 데이터 구조화 및 스키마 관리 용이.
+- **확장성**: Consumer Group으로 대규모 처리 가능.
+- **호환성**: 기존 문서 규칙 준수로 통합성 유지.
+
+---
+## 22.11 멱등성 보장을 위한 EventLog 테이블 설계
+
+Kafka Consumer에서 메시지를 재처리하더라도 중복 없이 안전하게 처리되도록 하기 위해, **애플리케이션 수준에서의 멱등성 보장**이 중요합니다. 특히 주요 비즈니스 로직이 DB에 대한 CUD(Create/Update/Delete) 작업인 경우, Kafka 메시지를 처리할 때 멱등성 여부를 확인할 수 있는 이벤트 처리 이력을 DB 트랜잭션 안에 함께 저장하는 것이 가장 안정적입니다.
+
+이를 위한 실무적 설계는 다음과 같습니다:
+
+### 22.11.1 `event_log` 테이블 구조 예시
+
+```sql
+CREATE TABLE event_log (
+    event_id        VARCHAR(100) PRIMARY KEY,            -- 메시지 고유 식별자 (예: UUID)
+    event_type      VARCHAR(50),                         -- 이벤트 유형 (선택 사항)
+    received_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 메시지 수신 시간
+    processed_at    TIMESTAMP,                           -- 처리 완료 시간
+    status          VARCHAR(20),                         -- 처리 상태 (예: SUCCESS, FAILED, RETRYING)
+    payload_hash    VARCHAR(255),                        -- 메시지 내용 해시값 (선택 사항)
+    metadata        JSONB                                -- Kafka 오프셋, 파티션 등 메타 정보 (선택 사항)
+);
+```
+
+- `event_id`는 반드시 고유해야 하며, 중복 삽입을 방지하기 위해 **PRIMARY KEY** 또는 **UNIQUE 제약**을 설정합니다.
+    
+- 메시지를 처리할 때 이 테이블에 `INSERT`를 시도하고, 중복된 경우 예외를 잡아 무시하거나 상태를 로깅합니다.
+    
+- 비즈니스 로직(CUD)과 이 기록은 **동일 트랜잭션** 내에서 수행되어야 정확한 처리 상태를 반영할 수 있습니다.
+    
+- `status` 필드를 통해 처리 성공(`SUCCESS`), 실패(`FAILED`), 재시도 중(`RETRYING`) 여부를 기록하여 리트라이 대상 추적에 활용할 수 있습니다.
+    
+
+### 22.11.2 스프링부트 예제 코드 (Kotlin)
+
+```kotlin
+@Service
+class UserEventConsumer(
+    private val eventLogRepository: EventLogRepository,
+    private val orderRepository: OrderRepository
+) {
+    @RetryableTopic(
+        attempts = "3",
+        backoff = @Backoff(delay = 2000L, multiplier = 2.0),
+        dltTopicSuffix = "-dlt",
+        autoCreateTopics = "true"
+    )
+    @KafkaListener(
+        topics = ["prod.user.domain-event.user.v1"],
+        groupId = "user-group",
+        containerFactory = "kafkaListenerContainerFactory"
+    )
+    @Transactional
+    fun consume(record: GenericRecord) {
+        val eventId = record.get("eventId").toString()
+        val userId = record.get("userId").toString()
+        val name = record.get("name").toString()
+        val action = record.get("action").toString()
+
+        try {
+            eventLogRepository.insert(EventLog(eventId, "UserEvent", status = "SUCCESS"))
+            orderRepository.save(Order(userId, name, action))
+        } catch (e: DataIntegrityViolationException) {
+            // event_id 중복 발생 시: 이미 처리된 메시지로 간주하고 무시
+            logger.info("Duplicate event ignored: $eventId")
+        } catch (e: Exception) {
+            // 예기치 못한 오류 발생 시, 상태를 FAILED로 기록하거나 DLQ 처리
+            eventLogRepository.insert(EventLog(eventId, "UserEvent", status = "FAILED"))
+            throw e
+        }
+    }
+}
+```
+
+> 위 예제에서는 `@RetryableTopic` 어노테이션을 통해 메시지 처리 실패 시 최대 3회까지 백오프 전략으로 재시도하며, 최종 실패 시에는 `-dlt` 접미사의 Dead Letter Topic으로 전송됩니다. 이 기능은 Spring Kafka 2.7 이상에서 제공되며, 자동 토픽 생성 기능도 함께 설정 가능합니다.
+
+또한 Kafka에서 Exactly Once Semantics(EOS)를 활용하려면 아래 설정이 Producer와 Consumer 측 모두 필요합니다:
+
+- **Producer 측**:
+    
+    ```yaml
+    spring.kafka.producer.transaction-id-prefix: tx-
+    spring.kafka.properties.enable.idempotence: true
+    ```
+    
+- **Consumer 측**:
+    
+    ```yaml
+    spring.kafka.consumer.isolation-level: read_committed
+    ```
+    
+- **KafkaTemplate 사용 시**:
+    
+    ```kotlin
+    kafkaTemplate.executeInTransaction { template ->
+        template.send(...)
+    }
+    ```
+    
+
+이 설정을 적용하면 Kafka 내에서 메시지 전송, 저장, 소비 과정에서 정확히 한 번 처리(Exactly Once)가 보장되며, 위의 멱등성 로직과 함께 구성할 경우 시스템 전반의 데이터 정합성과 신뢰성이 극대화됩니다.
+
+> 참고: 해당 테이블은 필요에 따라 Outbox 패턴과 통합하여 Kafka 발행과 일관된 이벤트 흐름을 구성할 수도 있습니다.
