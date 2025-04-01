@@ -1,75 +1,115 @@
 #!/bin/bash
 
-# 도메인 이름을 파라미터로 받기
-if [ -z "$1" ]; then
-    echo "사용법: $0 <도메인_이름>"
+# 스크립트 사용법 안내
+usage() {
+    echo "Usage: $0 <new_domain_name> <organization_name>"
+    echo "Example: $0 order restaurant"
     exit 1
+}
+
+# 매개변수 확인
+if [ $# -ne 2 ]; then
+    usage
 fi
 
-DOMAIN_NAME="$1"
-DOMAIN_NAME_CAMEL="$(echo ${DOMAIN_NAME:0:1} | tr '[:lower:]' '[:upper:]')${DOMAIN_NAME:1}"
+# 새로운 도메인 이름 (소문자로 통일)
+NEW_DOMAIN=$1
+NEW_DOMAIN_LOWER=$(echo "$NEW_DOMAIN" | tr '[:upper:]' '[:lower:]')
+NEW_DOMAIN_CAP=$(echo "${NEW_DOMAIN_LOWER^}") # 첫 글자만 대문자
 
-# 패키지 이름 설정
-BASE_PACKAGE="com.ddd"
-PACKAGE_PATH=$(echo "$BASE_PACKAGE" | sed 's/\./\//g')
+# 조직 이름 (패키지 경로에 사용)
+ORG_NAME=$2
+ORG_NAME_LOWER=$(echo "$ORG_NAME" | tr '[:upper:]' '[:lower:]')
 
-# 루트 디렉토리 설정
-BASE_DIR="restaurant/domains"
+# 기본 경로 설정
+BASE_DIR="restaurant/domains/$NEW_DOMAIN_LOWER"
 
-# 도메인별 루트 디렉토리 생성
-mkdir -p "$BASE_DIR/$DOMAIN_NAME"
+# 디렉토리 생성 함수
+create_directory() {
+    local dir="$1"
+    echo "Creating directory: $dir"
+    mkdir -p "$dir"
+}
 
-# apps 모듈
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/apps/src/main/kotlin/$PACKAGE_PATH/apps/$DOMAIN_NAME"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/apps/src/main/resources"
-touch "$BASE_DIR/$DOMAIN_NAME/apps/build.gradle.kts"
-touch "$BASE_DIR/$DOMAIN_NAME/apps/src/main/kotlin/$PACKAGE_PATH/apps/$DOMAIN_NAME/${DOMAIN_NAME_CAMEL}Application.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/apps/src/main/resources/application.yml"
+# 빈 파일 생성 함수
+create_empty_file() {
+    local file="$1"
+    echo "Creating file: $file"
+    touch "$file"
+}
 
-# domain 모듈
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/aggregate"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/vo"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/repository"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/exception"
-touch "$BASE_DIR/$DOMAIN_NAME/domain/build.gradle.kts"
-touch "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/aggregate/${DOMAIN_NAME_CAMEL}.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/repository/${DOMAIN_NAME_CAMEL}Repository.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/domain/src/main/kotlin/$PACKAGE_PATH/domain/$DOMAIN_NAME/exception/${DOMAIN_NAME_CAMEL}DomainException.kt"
+# 메인 디렉토리 구조 생성
+echo "Creating domain structure for: $NEW_DOMAIN_LOWER under $ORG_NAME_LOWER"
+create_directory "$BASE_DIR"
 
 # application 모듈
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/command"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/query"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/handler"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/mapper"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/common"
-touch "$BASE_DIR/$DOMAIN_NAME/application/build.gradle.kts"
-touch "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/mapper/${DOMAIN_NAME_CAMEL}Mapper.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/application/src/main/kotlin/$PACKAGE_PATH/application/$DOMAIN_NAME/common/${DOMAIN_NAME_CAMEL}ApplicationException.kt"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/command"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/command/handler"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/common"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/exception"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/extensions"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/query"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/query/dto"
+create_directory "$BASE_DIR/application/src/main/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/query/handler"
+create_directory "$BASE_DIR/application/src/test/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/application/src/test/kotlin/com/$ORG_NAME_LOWER/application/$NEW_DOMAIN_LOWER/command/handler"
+create_directory "$BASE_DIR/application/src/test/resources"
+create_empty_file "$BASE_DIR/application/build.gradle.kts"
+create_empty_file "$BASE_DIR/application/src/test/resources/application.yml"
+
+# apps 모듈
+create_directory "$BASE_DIR/apps/src/main/kotlin/com/$ORG_NAME_LOWER/apps/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/apps/src/main/kotlin/com/$ORG_NAME_LOWER/apps/$NEW_DOMAIN_LOWER/config"
+create_directory "$BASE_DIR/apps/src/main/resources"
+create_empty_file "$BASE_DIR/apps/build.gradle.kts"
+create_empty_file "$BASE_DIR/apps/src/main/kotlin/com/$ORG_NAME_LOWER/apps/$NEW_DOMAIN_LOWER/${NEW_DOMAIN_CAP}Application.kt"
+create_empty_file "$BASE_DIR/apps/src/main/kotlin/com/$ORG_NAME_LOWER/apps/$NEW_DOMAIN_LOWER/config/SwaggerConfig.kt"
+create_empty_file "$BASE_DIR/apps/src/main/resources/application.yml"
+create_empty_file "$BASE_DIR/apps/src/main/resources/application-dev.yml"
+create_empty_file "$BASE_DIR/apps/src/main/resources/application-prod.yml"
+create_empty_file "$BASE_DIR/apps/src/main/resources/application-test.yml"
+
+# domain 모듈
+create_directory "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/aggregate"
+create_directory "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/entity"
+create_directory "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/exception"
+create_directory "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/repository"
+create_directory "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/vo"
+create_directory "$BASE_DIR/domain/src/test/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/domain/src/test/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/aggregate"
+create_directory "$BASE_DIR/domain/src/test/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/vo"
+create_empty_file "$BASE_DIR/domain/build.gradle.kts"
+create_empty_file "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/aggregate/${NEW_DOMAIN_CAP}.kt"
+create_empty_file "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/repository/${NEW_DOMAIN_CAP}Repository.kt"
+create_empty_file "$BASE_DIR/domain/src/main/kotlin/com/$ORG_NAME_LOWER/domain/$NEW_DOMAIN_LOWER/exception/${NEW_DOMAIN_CAP}DomainException.kt"
 
 # infrastructure 모듈
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/entity"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/mapper"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/repository"
-touch "$BASE_DIR/$DOMAIN_NAME/infrastructure/build.gradle.kts"
-touch "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/entity/${DOMAIN_NAME_CAMEL}Entity.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/mapper/${DOMAIN_NAME_CAMEL}EntityMapper.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/repository/SpringDataJpa${DOMAIN_NAME_CAMEL}Repository.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/infrastructure/src/main/kotlin/$PACKAGE_PATH/infrastructure/$DOMAIN_NAME/repository/${DOMAIN_NAME_CAMEL}RepositoryImpl.kt"
+create_directory "$BASE_DIR/infrastructure/src/main/kotlin/com/$ORG_NAME_LOWER/infrastructure/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/infrastructure/src/main/kotlin/com/$ORG_NAME_LOWER/infrastructure/$NEW_DOMAIN_LOWER/entity"
+create_directory "$BASE_DIR/infrastructure/src/main/kotlin/com/$ORG_NAME_LOWER/infrastructure/$NEW_DOMAIN_LOWER/entity/extensions"
+create_directory "$BASE_DIR/infrastructure/src/main/kotlin/com/$ORG_NAME_LOWER/infrastructure/$NEW_DOMAIN_LOWER/repository"
+create_empty_file "$BASE_DIR/infrastructure/build.gradle.kts"
+create_empty_file "$BASE_DIR/infrastructure/src/main/kotlin/com/$ORG_NAME_LOWER/infrastructure/$NEW_DOMAIN_LOWER/entity/${NEW_DOMAIN_CAP}Entity.kt"
+create_empty_file "$BASE_DIR/infrastructure/src/main/kotlin/com/$ORG_NAME_LOWER/infrastructure/$NEW_DOMAIN_LOWER/repository/${NEW_DOMAIN_CAP}RepositoryImpl.kt"
 
 # presentation 모듈
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/presentation/src/main/kotlin/$PACKAGE_PATH/presentation/$DOMAIN_NAME/v1/command"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/presentation/src/main/kotlin/$PACKAGE_PATH/presentation/$DOMAIN_NAME/v1/query"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/presentation/src/main/kotlin/$PACKAGE_PATH/presentation/$DOMAIN_NAME/v1/dto/request"
-mkdir -p "$BASE_DIR/$DOMAIN_NAME/presentation/src/main/kotlin/$PACKAGE_PATH/presentation/$DOMAIN_NAME/v1/dto/response"
-touch "$BASE_DIR/$DOMAIN_NAME/presentation/build.gradle.kts"
-touch "$BASE_DIR/$DOMAIN_NAME/presentation/src/main/kotlin/$PACKAGE_PATH/presentation/$DOMAIN_NAME/v1/command/${DOMAIN_NAME_CAMEL}CommandController.kt"
-touch "$BASE_DIR/$DOMAIN_NAME/presentation/src/main/kotlin/$PACKAGE_PATH/presentation/$DOMAIN_NAME/v1/query/${DOMAIN_NAME_CAMEL}QueryController.kt"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/command"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/command/dto"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/command/dto/request"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/dto"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/dto/request"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/extensions"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/query"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/query/dto"
+create_directory "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/query/dto/response"
+create_directory "$BASE_DIR/presentation/src/main/resources"
+create_empty_file "$BASE_DIR/presentation/build.gradle.kts"
+create_empty_file "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/command/${NEW_DOMAIN_CAP}CommandControllerV1.kt"
+create_empty_file "$BASE_DIR/presentation/src/main/kotlin/com/$ORG_NAME_LOWER/presentation/$NEW_DOMAIN_LOWER/v1/query/${NEW_DOMAIN_CAP}QueryControllerV1.kt"
+create_empty_file "$BASE_DIR/presentation/src/main/resources/application.yml"
 
-echo "폴더와 파일 생성이 완료되었습니다."
-
-# ./gen.sh delivery
-# ./gen.sh order
-# ./gen.sh payment
-# ./gen.sh restaurant
-# ./gen.sh user
+echo "Domain structure for $NEW_DOMAIN_LOWER created successfully!"
