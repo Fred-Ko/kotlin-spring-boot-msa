@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size
 
 @Schema(description = "사용자 로그인 요청")
 data class UserLoginRequestV1(
-  @field:Schema(description = "사용자 이메일", example = "user@example.com")
+  @field:Schema(description = "사용자 이메일", example = "test@example.com")
   @field:NotBlank(message = "이메일은 필수입니다.")
   @field:Email(message = "유효한 이메일 형식이 아닙니다.")
   val email: String,

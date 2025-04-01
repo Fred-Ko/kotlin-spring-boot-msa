@@ -20,84 +20,84 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 @DirtiesContext
 class ChangePasswordCommandHandlerTest(
-  @Autowired private val userRepository: UserRepository,
-  @Autowired private val handler: ChangePasswordCommandHandler,
+    @Autowired private val userRepository: UserRepository,
+    @Autowired private val handler: ChangePasswordCommandHandler,
 ) : StringSpec({
 
-    "올바른 현재 비밀번호로 비밀번호 변경 요청을 보낼 때 비밀번호가 업데이트되어야 한다" {
-      val currentPassword = "currentPassword123"
-      val newPassword = "newPassword456"
+        "올바른 현재 비밀번호로 비밀번호 변경 요청을 보낼 때 비밀번호가 업데이트되어야 한다" {
+            val currentPassword = "currentPassword123"
+            val newPassword = "newPassword456"
 
-      val savedUser =
-        userRepository.save(
-          User.create(
-            email = Email("password-change-test-user@example.com"),
-            password = Password.of(currentPassword),
-            name = Name.of("테스트유저"),
-          ),
-        )
+            val savedUser =
+                userRepository.save(
+                    User.create(
+                        email = Email("test1@example.com"),
+                        password = Password.of(currentPassword),
+                        name = Name.of("테스트유저"),
+                    ),
+                )
 
-      val command =
-        ChangePasswordCommand(
-          userId = savedUser.id!!.value,
-          currentPassword = currentPassword,
-          newPassword = newPassword,
-        )
+            val command =
+                ChangePasswordCommand(
+                    userId = savedUser.id!!.value,
+                    currentPassword = currentPassword,
+                    newPassword = newPassword,
+                )
 
-      // 비밀번호 변경 실행
-      val result = handler.handle(command)
+            // 비밀번호 변경 실행
+            val result = handler.handle(command)
 
-      // 검증
-      result.success shouldBe true
-      result.correlationId.shouldNotBeEmpty()
+            // 검증
+            result.success shouldBe true
+            result.correlationId.shouldNotBeEmpty()
 
-      // 업데이트된 사용자 확인
-      val updatedUser = userRepository.findById(savedUser.id!!)!!
-      updatedUser.checkPassword(newPassword) shouldBe true
-      updatedUser.checkPassword(currentPassword) shouldBe false
-    }
+            // 업데이트된 사용자 확인
+            val updatedUser = userRepository.findById(savedUser.id!!)!!
+            updatedUser.checkPassword(newPassword) shouldBe true
+            updatedUser.checkPassword(currentPassword) shouldBe false
+        }
 
-    "존재하지 않는 사용자 ID로 비밀번호 변경 요청을 보낼 때 실패 결과가 반환되어야 한다" {
-      val nonExistentUserId = 999L
-      val command =
-        ChangePasswordCommand(
-          userId = nonExistentUserId,
-          currentPassword = "anypassword",
-          newPassword = "newpassword",
-        )
+        "존재하지 않는 사용자 ID로 비밀번호 변경 요청을 보낼 때 실패 결과가 반환되어야 한다" {
+            val nonExistentUserId = 999L
+            val command =
+                ChangePasswordCommand(
+                    userId = nonExistentUserId,
+                    currentPassword = "anypassword",
+                    newPassword = "newpassword",
+                )
 
-      // 결과 확인
-      val result = handler.handle(command)
+            // 결과 확인
+            val result = handler.handle(command)
 
-      result.success shouldBe false
-      result.errorCode shouldBe UserErrorCode.NOT_FOUND.code
-    }
+            result.success shouldBe false
+            result.errorCode shouldBe UserErrorCode.NOT_FOUND.code
+        }
 
-    "잘못된 현재 비밀번호로 비밀번호 변경 요청을 보낼 때 실패 결과가 반환되어야 한다" {
-      val actualPassword = "actualPassword123"
-      val wrongPassword = "wrongPassword123"
-      val newPassword = "newPassword456"
+        "잘못된 현재 비밀번호로 비밀번호 변경 요청을 보낼 때 실패 결과가 반환되어야 한다" {
+            val actualPassword = "actualPassword123"
+            val wrongPassword = "wrongPassword123"
+            val newPassword = "newPassword456"
 
-      val savedUser =
-        userRepository.save(
-          User.create(
-            email = Email("user2@example.com"),
-            password = Password.of(actualPassword),
-            name = Name.of("테스트유저2"),
-          ),
-        )
+            val savedUser =
+                userRepository.save(
+                    User.create(
+                        email = Email("test2@example.com"),
+                        password = Password.of(actualPassword),
+                        name = Name.of("테스트유저2"),
+                    ),
+                )
 
-      val command =
-        ChangePasswordCommand(
-          userId = savedUser.id!!.value,
-          currentPassword = wrongPassword,
-          newPassword = newPassword,
-        )
+            val command =
+                ChangePasswordCommand(
+                    userId = savedUser.id!!.value,
+                    currentPassword = wrongPassword,
+                    newPassword = newPassword,
+                )
 
-      // 결과 확인
-      val result = handler.handle(command)
+            // 결과 확인
+            val result = handler.handle(command)
 
-      result.success shouldBe false
-      result.errorCode shouldBe UserErrorCode.INVALID_PASSWORD.code
-    }
-  })
+            result.success shouldBe false
+            result.errorCode shouldBe UserErrorCode.INVALID_PASSWORD.code
+        }
+    })

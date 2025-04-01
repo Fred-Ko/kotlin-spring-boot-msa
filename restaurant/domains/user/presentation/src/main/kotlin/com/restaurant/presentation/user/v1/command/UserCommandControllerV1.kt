@@ -11,7 +11,7 @@ import com.restaurant.presentation.user.v1.command.dto.request.UserDeleteRequest
 import com.restaurant.presentation.user.v1.command.dto.request.UserLoginRequestV1
 import com.restaurant.presentation.user.v1.command.dto.request.UserRegisterRequestV1
 import com.restaurant.presentation.user.v1.command.dto.request.UserUpdateProfileRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.toCommand
+import com.restaurant.presentation.user.v1.command.dto.request.extensions.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

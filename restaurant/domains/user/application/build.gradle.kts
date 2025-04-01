@@ -35,7 +35,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.3")
 
     // H2 데이터베이스
-    testRuntimeOnly("com.h2database:h2:2.2.224")
+    testRuntimeOnly("com.h2database:h2:2.3.232")
 }
 
 tasks.withType<Test> {

@@ -1,4 +1,4 @@
-package com.restaurant.presentation.user.v1.command.dto.request
+package com.restaurant.presentation.user.v1.command.dto.request.extensions
 
 import com.restaurant.application.user.command.ChangePasswordCommand
 import com.restaurant.application.user.command.DeleteUserCommand
@@ -7,6 +7,7 @@ import com.restaurant.application.user.command.RegisterAddressCommand
 import com.restaurant.application.user.command.RegisterUserCommand
 import com.restaurant.application.user.command.UpdateAddressCommand
 import com.restaurant.application.user.command.UpdateProfileCommand
+import com.restaurant.presentation.user.v1.command.dto.request.*
 
 // RegisterUserCommand 변환
 fun UserRegisterRequestV1.toCommand(): RegisterUserCommand =

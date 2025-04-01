@@ -32,7 +32,7 @@ class UpdateProfileCommandHandlerTest(
       val savedUser =
         userRepository.save(
           User.create(
-            email = Email("profile-update-test-user@example.com"),
+            email = Email("test@example.com"),
             password = Password.of("password123"),
             name = Name.of(oldName),
           ),

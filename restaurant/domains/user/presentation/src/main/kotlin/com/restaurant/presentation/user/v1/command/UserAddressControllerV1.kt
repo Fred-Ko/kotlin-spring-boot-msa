@@ -7,7 +7,7 @@ import com.restaurant.application.user.command.handler.UpdateAddressCommandHandl
 import com.restaurant.application.user.common.UserErrorCode
 import com.restaurant.presentation.user.v1.command.dto.request.UserAddressRegisterRequestV1
 import com.restaurant.presentation.user.v1.command.dto.request.UserAddressUpdateRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.toCommand
+import com.restaurant.presentation.user.v1.command.dto.request.extensions.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

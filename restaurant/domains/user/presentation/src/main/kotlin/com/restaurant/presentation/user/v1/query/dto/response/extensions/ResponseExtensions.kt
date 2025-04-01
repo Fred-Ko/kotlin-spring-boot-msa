@@ -1,6 +1,8 @@
-package com.restaurant.presentation.user.v1.query.dto.response
+package com.restaurant.presentation.user.v1.query.dto.response.extensions
 
 import com.restaurant.application.user.query.dto.UserProfileDto
+import com.restaurant.presentation.user.v1.query.dto.response.AddressResponseV1
+import com.restaurant.presentation.user.v1.query.dto.response.UserProfileResponseV1
 
 // UserProfileDto를 UserProfileResponseV1으로 변환
 fun UserProfileDto.toResponse(): UserProfileResponseV1 =

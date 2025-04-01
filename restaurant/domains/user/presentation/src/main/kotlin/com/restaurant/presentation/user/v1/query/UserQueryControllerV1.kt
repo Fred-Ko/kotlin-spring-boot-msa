@@ -5,7 +5,7 @@ import com.restaurant.application.user.exception.UserNotFoundApplicationExceptio
 import com.restaurant.application.user.query.GetUserProfileQuery
 import com.restaurant.application.user.query.handler.GetUserProfileQueryHandler
 import com.restaurant.presentation.user.v1.query.dto.response.UserProfileResponseV1
-import com.restaurant.presentation.user.v1.query.dto.response.toResponse
+import com.restaurant.presentation.user.v1.query.dto.response.extensions.toResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
