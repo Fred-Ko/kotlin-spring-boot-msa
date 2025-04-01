@@ -5,13 +5,13 @@ import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.UserId
 
 interface UserRepository {
-  fun save(user: User): User
+    fun save(user: User): User
 
-  fun findById(id: UserId): User?
+    fun findById(id: UserId): User?
 
-  fun findByEmail(email: Email): User?
+    fun findByEmail(email: Email): User?
 
-  fun existsByEmail(email: Email): Boolean
+    fun existsByEmail(email: Email): Boolean
 
-  fun delete(user: User)
+    fun delete(user: User)
 }

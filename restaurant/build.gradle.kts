@@ -4,9 +4,10 @@ plugins {
     kotlin("plugin.jpa") version "2.1.20" apply false
     kotlin("plugin.allopen") version "2.1.20" apply false
     kotlin("plugin.noarg") version "2.1.20" apply false
+    kotlin("kapt") version "2.1.20" apply false
     id("org.springframework.boot") version "3.4.4" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
-    kotlin("kapt") version "2.1.20" apply false
+    id("org.jlleitschuh.gradle.ktlint") version "12.2.0" apply false
     java
 }
 
@@ -33,6 +34,21 @@ subprojects {
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "java")
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    
+    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+        version.set("1.5.0")
+        debug.set(true)
+        verbose.set(true)
+        outputToConsole.set(true)
+        outputColorName.set("RED")
+        ignoreFailures.set(false)
+        enableExperimentalRules.set(true)
+        filter {
+            exclude { it.file.path.contains("generated/") }
+        }
+        disabledRules.set(setOf("HEADER_KEYWORD", "no-wildcard-imports", "no-blank-line-before-rbrace", "no-empty-file"))
+    }
     
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_21

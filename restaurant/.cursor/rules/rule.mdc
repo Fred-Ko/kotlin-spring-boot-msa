@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-# 프로젝트 기술 문서
+# 프로젝트 기술 문서 (수정됨)
 
 ## 1. 프로젝트 개요
 
@@ -102,14 +102,15 @@ alwaysApply: true
                       request:
                         - UserCreateRequestV1.kt
                         - UserUpdateRequestV1.kt
-                      extensions:  // Extensions 폴더 추가
+                      // extensions 폴더 위치 변경: dto/request -> v1 레벨
+                      extensions:
                         - UserRequestExtensions.kt // 확장 함수 파일
     ```
 
   - **확장 함수 구현 예시 (UserRequestExtensions.kt)**:
 
     ```kotlin
-    package com.example.presentation.user.v1.dto.request.extensions
+    package com.example.presentation.user.v1.extensions // 패키지 경로 변경
 
     import com.example.presentation.user.v1.dto.request.UserCreateRequestV1
     import com.example.application.user.command.CreateUserCommand
@@ -351,8 +352,8 @@ domains:
      - handler
       - GetUserQueryHandler.kt
       - FindUsersQueryHandler.kt
-      extensions: 
-     - UserApplicationExtensions.kt 
+      extensions:  // extensions 폴더 위치 변경: application 레벨 최상위
+     - UserApplicationExtensions.kt
       common:
      - UserApplicationException.kt
  order:
@@ -378,8 +379,8 @@ domains:
                    - GetOrderQueryHandler.kt
                    - FindOrdersQueryHandler.kt
                    - FindOrdersByCustomerQueryHandler.kt
-               extensions:
-                 - OrderApplicationExtensions.kt 
+               extensions: // extensions 폴더 위치 변경: application 레벨 최상위
+                 - OrderApplicationExtensions.kt
                common:
                  - OrderApplicationException.kt
 ```
@@ -406,8 +407,9 @@ domains:
       request:
         - UserCreateRequestV1.kt
         - UserUpdateRequestV1.kt
-        extensions:  // dto.request 하위에 extensions 폴더 추가
-          - UserRequestExtensions.kt // 확장 함수 파일
+      // extensions 폴더 위치 변경: v1 레벨
+     extensions:
+       - UserRequestExtensions.kt // 확장 함수 파일
      query:
        - UserQueryController.kt
        dto:
@@ -420,8 +422,8 @@ domains:
        dto:
       request:
         - UserCreateRequestV2.kt
-        extensions:  // dto.request 하위에 extensions 폴더 추가
-          - UserRequestExtensionsV2.kt // 확장 함수 파일
+      extensions:  // extensions 폴더 위치 변경: v2 레벨
+        - UserRequestExtensionsV2.kt // 확장 함수 파일
      query:
        - UserQueryControllerV2.kt
        dto:
@@ -441,8 +443,8 @@ domains:
       request:
         - OrderCreateRequestV1.kt
         - OrderCancelRequestV1.kt
-        extensions:  // dto.request 하위에 extensions 폴더 추가
-          - OrderRequestExtensions.kt // 확장 함수 파일
+      extensions:  // extensions 폴더 위치 변경: v1 레벨
+        - OrderRequestExtensions.kt // 확장 함수 파일
      query:
        - OrderQueryController.kt
        dto:
@@ -1016,8 +1018,8 @@ domains/
 │   │   │   │   └── handler/
 │   │   │   │       ├── GetUserQueryHandler.kt
 │   │   │   │       └── FindUsersQueryHandler.kt
-│   │   │   ├── extensions/ // mapper -> extensions 로 변경
-│   │   │   │    - UserApplicationExtensions.kt // UserMapper.kt -> UserApplicationExtensions.kt 로 변경
+│   │   │   ├── extensions/ // extensions 폴더 위치 변경: application 레벨 최상위
+│   │   │   │    - UserApplicationExtensions.kt
 │   │   │   └── common/UserApplicationException.kt
 │   │   └── build.gradle.kts
 │   ├── infrastructure/
@@ -1038,8 +1040,8 @@ domains/
 │   │   │   │   │   └── dto/request/
 │   │   │   │   │       ├── UserCreateRequestV1.kt
 │   │   │   │   │       ├── UserUpdateRequestV1.kt
-│   │   │   │   │       └── extensions/ // dto/request 하위에 extensions 폴더 추가
-│   │   │   │   │           - UserRequestExtensions.kt // 확장 함수 파일
+│   │   │   │   ├── extensions/ // extensions 폴더 위치 변경: v1 레벨
+│   │   │   │   │   - UserRequestExtensions.kt // 확장 함수 파일
 │   │   │   │   └── query/
 │   │   │   │       ├── UserQueryController.kt
 │   │   │   │       └── dto/response/
@@ -1081,7 +1083,7 @@ domains/
 │   │   │   │       ├── GetOrderQueryHandler.kt
 │   │   │   │       ├── FindOrdersQueryHandler.kt
 │   │   │   │       └── FindOrdersByCustomerQueryHandler.kt
-│   │   │   ├── extensions/ // mapper -> extensions 로 변경
+│   │   │   ├── extensions/ // extensions 폴더 위치 변경: application 레벨 최상위
 │   │   │   │    - OrderApplicationExtensions.kt // OrderMapper.kt -> OrderApplicationExtensions.kt 로 변경
 │   │   │   └── common/OrderApplicationException.kt
 │   │   └── build.gradle.kts
@@ -1105,8 +1107,8 @@ domains/
 │   │   │   │   │   └── dto/request/
 │   │   │   │   │       ├── OrderCreateRequestV1.kt
 │   │   │   │   │       ├── OrderCancelRequestV1.kt
-│   │   │   │   │       └── extensions/ // dto/request 하위에 extensions 폴더 추가
-│   │   │   │   │           - OrderRequestExtensions.kt // 확장 함수 파일
+│   │   │   │   ├── extensions/ // extensions 폴더 위치 변경: v1 레벨
+│   │   │   │   │   - OrderRequestExtensions.kt // 확장 함수 파일
 │   │   │   │   └── query/
 │   │   │   │       ├── OrderQueryController.kt
 │   │   │   │       └── dto/response/
@@ -2779,4 +2781,4 @@ class OrderRepositoryImpl(
 - **안정성**: 기술적 의존성이 도메인에 영향을 주지 않습니다.
 
 ---
-
+```

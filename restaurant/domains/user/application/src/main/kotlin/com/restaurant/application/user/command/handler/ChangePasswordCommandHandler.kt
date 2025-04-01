@@ -11,28 +11,28 @@ import java.util.UUID
 
 @Service
 class ChangePasswordCommandHandler(
-  private val userRepository: UserRepository,
+    private val userRepository: UserRepository,
 ) {
-  @Transactional
-  fun handle(command: ChangePasswordCommand): CommandResult {
-    try {
-      val userId = UserId(command.userId)
-      val user =
-        userRepository.findById(userId)
-          ?: return CommandResult(false, errorCode = UserErrorCode.NOT_FOUND.code)
+    @Transactional
+    fun handle(command: ChangePasswordCommand): CommandResult {
+        try {
+            val userId = UserId(command.userId)
+            val user =
+                userRepository.findById(userId)
+                    ?: return CommandResult(false, errorCode = UserErrorCode.NOT_FOUND.code)
 
-      if (!user.checkPassword(command.currentPassword)) {
-        return CommandResult(false, errorCode = UserErrorCode.INVALID_PASSWORD.code)
-      }
+            if (!user.checkPassword(command.currentPassword)) {
+                return CommandResult(false, errorCode = UserErrorCode.INVALID_PASSWORD.code)
+            }
 
-      val updatedUser = user.changePassword(command.newPassword)
-      userRepository.save(updatedUser)
+            val updatedUser = user.changePassword(command.newPassword)
+            userRepository.save(updatedUser)
 
-      return CommandResult(true, UUID.randomUUID().toString())
-    } catch (e: IllegalArgumentException) {
-      return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
-    } catch (e: Exception) {
-      return CommandResult(false, errorCode = UserErrorCode.SYSTEM_ERROR.code)
+            return CommandResult(true, UUID.randomUUID().toString())
+        } catch (e: IllegalArgumentException) {
+            return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
+        } catch (e: Exception) {
+            return CommandResult(false, errorCode = UserErrorCode.SYSTEM_ERROR.code)
+        }
     }
-  }
 }

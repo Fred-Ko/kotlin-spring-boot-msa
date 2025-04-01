@@ -1,5 +1,5 @@
 package com.restaurant.common.core.exception
 
 open class InfrastructureException(
-  message: String,
+    message: String,
 ) : RuntimeException(message)

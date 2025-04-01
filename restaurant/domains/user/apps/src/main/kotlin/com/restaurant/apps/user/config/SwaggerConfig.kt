@@ -8,21 +8,21 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class SwaggerConfig {
-  @Bean
-  fun publicApi(): GroupedOpenApi =
-    GroupedOpenApi
-      .builder()
-      .group("user-api-v1")
-      .pathsToMatch("/api/v1/users/**")
-      .build()
+    @Bean
+    fun publicApi(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("user-api-v1")
+            .pathsToMatch("/api/v1/users/**")
+            .build()
 
-  @Bean
-  fun springOpenAPI(): OpenAPI =
-    OpenAPI()
-      .info(
-        Info()
-          .title("User Service API")
-          .description("User Service API Documentation")
-          .version("v1"),
-      )
+    @Bean
+    fun springOpenAPI(): OpenAPI =
+        OpenAPI()
+            .info(
+                Info()
+                    .title("User Service API")
+                    .description("User Service API Documentation")
+                    .version("v1"),
+            )
 }

@@ -11,27 +11,27 @@ import java.util.UUID
 
 @Service
 class DeleteUserCommandHandler(
-  private val userRepository: UserRepository,
+    private val userRepository: UserRepository,
 ) {
-  @Transactional
-  fun handle(command: DeleteUserCommand): CommandResult {
-    try {
-      val userId = UserId(command.userId)
-      val user =
-        userRepository.findById(userId)
-          ?: return CommandResult(false, errorCode = UserErrorCode.NOT_FOUND.code)
+    @Transactional
+    fun handle(command: DeleteUserCommand): CommandResult {
+        try {
+            val userId = UserId(command.userId)
+            val user =
+                userRepository.findById(userId)
+                    ?: return CommandResult(false, errorCode = UserErrorCode.NOT_FOUND.code)
 
-      if (!user.checkPassword(command.password)) {
-        return CommandResult(false, errorCode = UserErrorCode.INVALID_CREDENTIALS.code)
-      }
+            if (!user.checkPassword(command.password)) {
+                return CommandResult(false, errorCode = UserErrorCode.INVALID_CREDENTIALS.code)
+            }
 
-      userRepository.delete(user)
+            userRepository.delete(user)
 
-      return CommandResult(true, UUID.randomUUID().toString())
-    } catch (e: IllegalArgumentException) {
-      return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
-    } catch (e: Exception) {
-      return CommandResult(false, errorCode = UserErrorCode.DELETION_FAILED.code)
+            return CommandResult(true, UUID.randomUUID().toString())
+        } catch (e: IllegalArgumentException) {
+            return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
+        } catch (e: Exception) {
+            return CommandResult(false, errorCode = UserErrorCode.DELETION_FAILED.code)
+        }
     }
-  }
 }

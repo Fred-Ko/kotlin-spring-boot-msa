@@ -14,28 +14,28 @@ import java.util.UUID
 
 @Service
 class RegisterUserCommandHandler(
-  private val userRepository: UserRepository,
+    private val userRepository: UserRepository,
 ) {
-  @Transactional
-  fun handle(command: RegisterUserCommand): CommandResult {
-    try {
-      val email = Email(command.email)
+    @Transactional
+    fun handle(command: RegisterUserCommand): CommandResult {
+        try {
+            val email = Email(command.email)
 
-      if (userRepository.existsByEmail(email)) {
-        return CommandResult(false, errorCode = UserErrorCode.DUPLICATE_EMAIL.code)
-      }
+            if (userRepository.existsByEmail(email)) {
+                return CommandResult(false, errorCode = UserErrorCode.DUPLICATE_EMAIL.code)
+            }
 
-      val password = Password.of(command.password)
-      val name = Name.of(command.name)
-      val user = User.create(email, password, name)
+            val password = Password.of(command.password)
+            val name = Name.of(command.name)
+            val user = User.create(email, password, name)
 
-      userRepository.save(user)
+            userRepository.save(user)
 
-      return CommandResult(true, UUID.randomUUID().toString())
-    } catch (e: IllegalArgumentException) {
-      return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
-    } catch (e: Exception) {
-      return CommandResult(false, errorCode = UserErrorCode.SYSTEM_ERROR.code)
+            return CommandResult(true, UUID.randomUUID().toString())
+        } catch (e: IllegalArgumentException) {
+            return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
+        } catch (e: Exception) {
+            return CommandResult(false, errorCode = UserErrorCode.SYSTEM_ERROR.code)
+        }
     }
-  }
 }

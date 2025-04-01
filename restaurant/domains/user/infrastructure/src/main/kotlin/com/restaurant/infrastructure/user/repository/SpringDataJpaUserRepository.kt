@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long> {
-  fun findByEmail(email: String): UserEntity?
+    fun findByEmail(email: String): UserEntity?
 
-  fun existsByEmail(email: String): Boolean
+    fun existsByEmail(email: String): Boolean
 }

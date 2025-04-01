@@ -11,42 +11,42 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class GetUserProfileQueryHandler(
-  private val userRepository: UserRepository,
+    private val userRepository: UserRepository,
 ) {
-  @Transactional(readOnly = true)
-  fun handle(query: GetUserProfileQuery): UserProfileDto {
-    try {
-      val userId = UserId(query.userId)
-      val user =
-        userRepository.findById(userId)
-          ?: throw UserNotFoundApplicationException(
-            UserErrorCode.NOT_FOUND.message,
-          )
+    @Transactional(readOnly = true)
+    fun handle(query: GetUserProfileQuery): UserProfileDto {
+        try {
+            val userId = UserId(query.userId)
+            val user =
+                userRepository.findById(userId)
+                    ?: throw UserNotFoundApplicationException(
+                        UserErrorCode.NOT_FOUND.message,
+                    )
 
-      return UserProfileDto(
-        id = user.id!!.value,
-        email = user.email.value,
-        name = user.name.value,
-        addresses =
-          user.addresses.map { address ->
-            UserProfileDto.AddressDto(
-              id = address.id,
-              street = address.street,
-              detail = address.detail,
-              zipCode = address.zipCode,
-              isDefault = address.isDefault,
+            return UserProfileDto(
+                id = user.id!!.value,
+                email = user.email.value,
+                name = user.name.value,
+                addresses =
+                    user.addresses.map { address ->
+                        UserProfileDto.AddressDto(
+                            id = address.id,
+                            street = address.street,
+                            detail = address.detail,
+                            zipCode = address.zipCode,
+                            isDefault = address.isDefault,
+                        )
+                    },
+                createdAt = user.createdAt,
+                updatedAt = user.updatedAt,
             )
-          },
-        createdAt = user.createdAt,
-        updatedAt = user.updatedAt,
-      )
-    } catch (e: UserNotFoundApplicationException) {
-      throw e
-    } catch (e: Exception) {
-      throw RuntimeException(
-        UserErrorCode.SYSTEM_ERROR.message,
-        e,
-      )
+        } catch (e: UserNotFoundApplicationException) {
+            throw e
+        } catch (e: Exception) {
+            throw RuntimeException(
+                UserErrorCode.SYSTEM_ERROR.message,
+                e,
+            )
+        }
     }
-  }
 }

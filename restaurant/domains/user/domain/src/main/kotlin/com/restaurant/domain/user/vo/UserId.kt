@@ -2,7 +2,7 @@ package com.restaurant.domain.user.vo
 
 @JvmInline
 value class UserId(
-  val value: Long,
+    val value: Long,
 ) {
-  override fun toString(): String = value.toString()
+    override fun toString(): String = value.toString()
 }
