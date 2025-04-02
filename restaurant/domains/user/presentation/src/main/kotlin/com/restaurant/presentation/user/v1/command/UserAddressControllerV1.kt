@@ -1,13 +1,13 @@
 package com.restaurant.presentation.user.v1.command
 
-import com.restaurant.application.user.command.DeleteAddressCommand
 import com.restaurant.application.user.command.handler.DeleteAddressCommandHandler
 import com.restaurant.application.user.command.handler.RegisterAddressCommandHandler
 import com.restaurant.application.user.command.handler.UpdateAddressCommandHandler
 import com.restaurant.application.user.common.UserErrorCode
-import com.restaurant.presentation.user.v1.command.dto.request.UserAddressRegisterRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.UserAddressUpdateRequestV1
-import com.restaurant.presentation.user.v1.extensions.toCommand
+import com.restaurant.presentation.user.v1.dto.request.DeleteAddressRequestV1
+import com.restaurant.presentation.user.v1.dto.request.RegisterAddressRequestV1
+import com.restaurant.presentation.user.v1.dto.request.UpdateAddressRequestV1
+import com.restaurant.presentation.user.v1.extensions.request.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -61,7 +61,7 @@ class UserAddressControllerV1(
     fun registerAddress(
         @Parameter(description = "사용자 ID", required = true)
         @PathVariable userId: Long,
-        @Valid @RequestBody request: UserAddressRegisterRequestV1,
+        @Valid @RequestBody request: RegisterAddressRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand(userId)
         val result = registerAddressCommandHandler.handle(command)
@@ -120,7 +120,7 @@ class UserAddressControllerV1(
         @PathVariable userId: Long,
         @Parameter(description = "주소 ID", required = true)
         @PathVariable addressId: Long,
-        @Valid @RequestBody request: UserAddressUpdateRequestV1,
+        @Valid @RequestBody request: UpdateAddressRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand(userId, addressId)
         val result = updateAddressCommandHandler.handle(command)
@@ -174,7 +174,8 @@ class UserAddressControllerV1(
         @Parameter(description = "주소 ID", required = true)
         @PathVariable addressId: Long,
     ): ResponseEntity<Any> {
-        val command = DeleteAddressCommand(userId, addressId)
+        val request = DeleteAddressRequestV1(addressId)
+        val command = request.toCommand(userId)
         val result = deleteAddressCommandHandler.handle(command)
 
         return if (result.success) {

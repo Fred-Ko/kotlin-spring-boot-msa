@@ -5,7 +5,7 @@ import com.restaurant.application.account.command.handler.ProcessAccountPaymentC
 import com.restaurant.presentation.account.v1.common.AccountErrorCode
 import com.restaurant.presentation.account.v1.dto.request.CancelPaymentRequestV1
 import com.restaurant.presentation.account.v1.dto.request.ProcessPaymentRequestV1
-import com.restaurant.presentation.account.v1.extensions.toCommand
+import com.restaurant.presentation.account.v1.extensions.request.toCommand
 import jakarta.validation.Valid
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity

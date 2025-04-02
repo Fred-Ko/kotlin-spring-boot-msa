@@ -8,4 +8,4 @@ class InsufficientBalanceException(
     val accountId: AccountId,
     val currentBalance: Money,
     val requiredAmount: Money,
-) : DomainException("계좌(${accountId.value})의 잔액(${currentBalance.amount})이 부족합니다. 필요 금액: ${requiredAmount.amount}")
+) : DomainException("계좌(${accountId.value})의 잔액(${currentBalance.value})이 부족합니다. 필요 금액: ${requiredAmount.value}")

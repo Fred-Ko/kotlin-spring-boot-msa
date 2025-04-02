@@ -13,11 +13,11 @@ import java.net.URI
 import java.time.Instant
 
 /**
- * 전역 예외 처리기
+ * 계좌 관련 전역 예외 처리기
  * RFC 7807 형식(ProblemDetail)으로 에러 응답을 변환
  */
-@ControllerAdvice
-class GlobalExceptionHandler {
+@ControllerAdvice(basePackages = ["com.restaurant.presentation.account"])
+class AccountGlobalExceptionHandler {
     /**
      * 계좌를 찾을 수 없는 예외 처리
      */
@@ -46,8 +46,8 @@ class GlobalExceptionHandler {
                 detail = ex.message
                 setProperty("errorCode", "INSUFFICIENT_BALANCE")
                 setProperty("timestamp", Instant.now().toString())
-                setProperty("currentBalance", ex.currentBalance.amount)
-                setProperty("requiredAmount", ex.requiredAmount.amount)
+                setProperty("currentBalance", ex.currentBalance.value)
+                setProperty("requiredAmount", ex.requiredAmount.value)
             }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }

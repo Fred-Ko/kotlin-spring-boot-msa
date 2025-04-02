@@ -1,6 +1,5 @@
 package com.restaurant.domain.user.vo
 
-@ConsistentCopyVisibility
 data class Name private constructor(
     val value: String,
 ) {

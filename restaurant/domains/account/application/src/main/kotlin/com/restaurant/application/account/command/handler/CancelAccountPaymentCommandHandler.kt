@@ -6,21 +6,22 @@ import com.restaurant.application.account.extensions.toOrderId
 import com.restaurant.common.core.command.CommandResult
 import com.restaurant.domain.account.exception.AccountNotFoundException
 import com.restaurant.domain.account.repository.AccountRepository
-import org.springframework.stereotype.Service
+import com.restaurant.domain.account.repository.TransactionRepository
+import com.restaurant.domain.account.vo.TransactionType
+import org.springframework.stereotype.Component
 import java.util.UUID
 
 /**
- * 계좌 결제 취소 커맨드 핸들러
+ * 계좌 결제 취소 명령 핸들러
  */
-@Service
+@Component
 class CancelAccountPaymentCommandHandler(
     private val accountRepository: AccountRepository,
+    private val transactionRepository: TransactionRepository,
 ) {
     /**
-     * 계좌 결제 취소 커맨드 처리
-     *
-     * @param command 계좌 결제 취소 커맨드
-     * @return 커맨드 결과
+     * 계좌 결제를 취소합니다.
+     * 원래 차감된 금액만큼 다시 계좌에 추가합니다.
      */
     fun handle(command: CancelAccountPaymentCommand): CommandResult {
         try {
@@ -32,19 +33,29 @@ class CancelAccountPaymentCommandHandler(
                 accountRepository.findById(accountId)
                     ?: throw AccountNotFoundException(accountId)
 
-            // 원래 트랜잭션 찾기
-            val transaction = account.findTransactionByOrderId(orderId)
+            // 트랜잭션 리포지토리를 통해 주문 ID로 트랜잭션 조회
+            val transactions = transactionRepository.findByOrderId(orderId)
 
             // 트랜잭션이 없으면 취소할 내역이 없음
-            if (transaction == null) {
+            if (transactions.isEmpty()) {
                 return CommandResult(
                     success = false,
                     errorCode = "TRANSACTION_NOT_FOUND",
                 )
             }
 
+            // DEBIT 타입의 트랜잭션 찾기 (출금 트랜잭션)
+            val debitTransaction = transactions.firstOrNull { it.type == TransactionType.DEBIT }
+
+            if (debitTransaction == null) {
+                return CommandResult(
+                    success = false,
+                    errorCode = "DEBIT_TRANSACTION_NOT_FOUND",
+                )
+            }
+
             // 원래 차감된 금액만큼 다시 계좌에 추가
-            val updatedAccount = account.credit(transaction.amount, orderId)
+            val updatedAccount = account.credit(debitTransaction.amount, orderId)
 
             // 업데이트된 계좌 저장
             accountRepository.save(updatedAccount)

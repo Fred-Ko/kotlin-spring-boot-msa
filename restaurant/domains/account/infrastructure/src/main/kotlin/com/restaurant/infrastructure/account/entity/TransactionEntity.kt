@@ -31,7 +31,7 @@ class TransactionEntity(
     @Column(name = "amount", nullable = false)
     val amount: BigDecimal,
     @Column(name = "order_id", nullable = false)
-    val orderId: Long,
+    val orderId: String,
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long,
 )

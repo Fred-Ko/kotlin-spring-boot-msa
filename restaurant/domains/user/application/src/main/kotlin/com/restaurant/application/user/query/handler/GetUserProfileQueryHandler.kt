@@ -2,6 +2,7 @@ package com.restaurant.application.user.query.handler
 
 import com.restaurant.application.user.common.UserErrorCode
 import com.restaurant.application.user.exception.UserNotFoundApplicationException
+import com.restaurant.application.user.extensions.toUserProfileDto
 import com.restaurant.application.user.query.GetUserProfileQuery
 import com.restaurant.application.user.query.dto.UserProfileDto
 import com.restaurant.domain.user.repository.UserRepository
@@ -23,23 +24,7 @@ class GetUserProfileQueryHandler(
                         UserErrorCode.NOT_FOUND.message,
                     )
 
-            return UserProfileDto(
-                id = user.id!!.value,
-                email = user.email.value,
-                name = user.name.value,
-                addresses =
-                    user.addresses.map { address ->
-                        UserProfileDto.AddressDto(
-                            id = address.id,
-                            street = address.street,
-                            detail = address.detail,
-                            zipCode = address.zipCode,
-                            isDefault = address.isDefault,
-                        )
-                    },
-                createdAt = user.createdAt,
-                updatedAt = user.updatedAt,
-            )
+            return user.toUserProfileDto()
         } catch (e: UserNotFoundApplicationException) {
             throw e
         } catch (e: Exception) {

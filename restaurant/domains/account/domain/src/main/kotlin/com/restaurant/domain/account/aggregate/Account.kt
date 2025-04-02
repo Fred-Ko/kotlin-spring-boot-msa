@@ -1,5 +1,6 @@
 package com.restaurant.domain.account.aggregate
 
+import com.restaurant.domain.account.entity.Transaction
 import com.restaurant.domain.account.exception.InsufficientBalanceException
 import com.restaurant.domain.account.vo.AccountId
 import com.restaurant.domain.account.vo.Money
@@ -14,7 +15,7 @@ data class Account(
     val id: AccountId?,
     val userId: UserId,
     val balance: Money,
-    val transactions: List<Transaction> = emptyList(),
+    val recentTransactions: List<Transaction> = emptyList(), // 최근 트랜잭션만 유지
 ) {
     /**
      * 계좌에서 금액을 차감합니다.
@@ -35,10 +36,21 @@ data class Account(
             )
         }
 
-        val transaction = Transaction.debit(amount, orderId)
+        val transaction =
+            Transaction.debit(
+                amount = amount,
+                orderId = orderId,
+                accountId = id?.value,
+            )
+
+        // 최근 트랜잭션 목록 유지 (최대 10개만)
+        val updatedTransactions =
+            (recentTransactions + transaction)
+                .takeLast(MAX_RECENT_TRANSACTIONS)
+
         return copy(
             balance = balance - amount,
-            transactions = transactions + transaction,
+            recentTransactions = updatedTransactions,
         )
     }
 
@@ -52,10 +64,21 @@ data class Account(
         amount: Money,
         orderId: OrderId,
     ): Account {
-        val transaction = Transaction.credit(amount, orderId)
+        val transaction =
+            Transaction.credit(
+                amount = amount,
+                orderId = orderId,
+                accountId = id?.value,
+            )
+
+        // 최근 트랜잭션 목록 유지 (최대 10개만)
+        val updatedTransactions =
+            (recentTransactions + transaction)
+                .takeLast(MAX_RECENT_TRANSACTIONS)
+
         return copy(
             balance = balance + amount,
-            transactions = transactions + transaction,
+            recentTransactions = updatedTransactions,
         )
     }
 
@@ -66,12 +89,10 @@ data class Account(
      */
     fun deposit(amount: Money): Account = copy(balance = balance + amount)
 
-    /**
-     * 주문 ID로 트랜잭션을 찾습니다.
-     */
-    fun findTransactionByOrderId(orderId: OrderId): Transaction? = transactions.find { it.orderId == orderId }
-
     companion object {
+        // 애그리거트에 유지할 최근 트랜잭션 수
+        const val MAX_RECENT_TRANSACTIONS = 10
+
         /**
          * 새 계좌를 생성합니다.
          *
@@ -88,42 +109,4 @@ data class Account(
                 balance = initialBalance,
             )
     }
-}
-
-/**
- * 계좌 트랜잭션
- * 계좌의 입출금 내역을 추적합니다.
- */
-data class Transaction(
-    val type: TransactionType,
-    val amount: Money,
-    val orderId: OrderId,
-    val timestamp: Long = System.currentTimeMillis(),
-) {
-    companion object {
-        fun debit(
-            amount: Money,
-            orderId: OrderId,
-        ): Transaction =
-            Transaction(
-                type = TransactionType.DEBIT,
-                amount = amount,
-                orderId = orderId,
-            )
-
-        fun credit(
-            amount: Money,
-            orderId: OrderId,
-        ): Transaction =
-            Transaction(
-                type = TransactionType.CREDIT,
-                amount = amount,
-                orderId = orderId,
-            )
-    }
-}
-
-enum class TransactionType {
-    DEBIT, // 출금 (계좌에서 차감)
-    CREDIT, // 입금 (계좌로 추가)
 }

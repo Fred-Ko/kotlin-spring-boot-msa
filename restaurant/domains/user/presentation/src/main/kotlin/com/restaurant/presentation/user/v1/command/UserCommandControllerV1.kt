@@ -6,12 +6,12 @@ import com.restaurant.application.user.command.handler.LoginCommandHandler
 import com.restaurant.application.user.command.handler.RegisterUserCommandHandler
 import com.restaurant.application.user.command.handler.UpdateProfileCommandHandler
 import com.restaurant.application.user.common.UserErrorCode
-import com.restaurant.presentation.user.v1.command.dto.request.UserChangePasswordRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.UserDeleteRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.UserLoginRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.UserRegisterRequestV1
-import com.restaurant.presentation.user.v1.command.dto.request.UserUpdateProfileRequestV1
-import com.restaurant.presentation.user.v1.extensions.toCommand
+import com.restaurant.presentation.user.v1.dto.request.ChangePasswordRequestV1
+import com.restaurant.presentation.user.v1.dto.request.DeleteUserRequestV1
+import com.restaurant.presentation.user.v1.dto.request.LoginRequestV1
+import com.restaurant.presentation.user.v1.dto.request.RegisterUserRequestV1
+import com.restaurant.presentation.user.v1.dto.request.UpdateProfileRequestV1
+import com.restaurant.presentation.user.v1.extensions.request.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -67,7 +67,7 @@ class UserCommandControllerV1(
             ],
     )
     fun register(
-        @Valid @RequestBody request: UserRegisterRequestV1,
+        @Valid @RequestBody request: RegisterUserRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand()
         val result = registerUserCommandHandler.handle(command)
@@ -154,7 +154,7 @@ class UserCommandControllerV1(
             ],
     )
     fun login(
-        @Valid @RequestBody request: UserLoginRequestV1,
+        @Valid @RequestBody request: LoginRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand()
         val result = loginCommandHandler.handle(command)
@@ -223,7 +223,7 @@ class UserCommandControllerV1(
     fun updateProfile(
         @Parameter(description = "사용자 ID", required = true)
         @PathVariable userId: Long,
-        @Valid @RequestBody request: UserUpdateProfileRequestV1,
+        @Valid @RequestBody request: UpdateProfileRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand(userId)
         val result = updateProfileCommandHandler.handle(command)
@@ -283,7 +283,7 @@ class UserCommandControllerV1(
     fun changePassword(
         @Parameter(description = "사용자 ID", required = true)
         @PathVariable userId: Long,
-        @Valid @RequestBody request: UserChangePasswordRequestV1,
+        @Valid @RequestBody request: ChangePasswordRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand(userId)
         val result = changePasswordCommandHandler.handle(command)
@@ -343,7 +343,7 @@ class UserCommandControllerV1(
     fun deleteUser(
         @Parameter(description = "사용자 ID", required = true)
         @PathVariable userId: Long,
-        @Valid @RequestBody request: UserDeleteRequestV1,
+        @Valid @RequestBody request: DeleteUserRequestV1,
     ): ResponseEntity<Any> {
         val command = request.toCommand(userId)
         val result = deleteUserCommandHandler.handle(command)

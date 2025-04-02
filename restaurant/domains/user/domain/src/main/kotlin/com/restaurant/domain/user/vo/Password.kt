@@ -2,7 +2,6 @@ package com.restaurant.domain.user.vo
 
 import java.security.MessageDigest
 
-@ConsistentCopyVisibility
 data class Password private constructor(
     val encodedValue: String,
 ) {

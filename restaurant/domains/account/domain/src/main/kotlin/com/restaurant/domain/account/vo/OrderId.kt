@@ -2,9 +2,9 @@ package com.restaurant.domain.account.vo
 
 @JvmInline
 value class OrderId(
-    val value: Long,
+    val value: String,
 ) {
     companion object {
-        fun of(value: Long): OrderId = OrderId(value)
+        fun of(value: String): OrderId = OrderId(value)
     }
 }

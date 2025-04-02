@@ -3,7 +3,7 @@ package com.restaurant.presentation.account.v1.query
 import com.restaurant.application.account.query.GetAccountBalanceQuery
 import com.restaurant.application.account.query.handler.GetAccountBalanceQueryHandler
 import com.restaurant.domain.account.exception.AccountNotFoundException
-import com.restaurant.presentation.account.v1.extensions.toResponse
+import com.restaurant.presentation.account.v1.extensions.response.toResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

@@ -2,7 +2,7 @@ package com.restaurant.application.account.query.handler
 
 import com.restaurant.application.account.extensions.toAccountId
 import com.restaurant.application.account.query.GetAccountBalanceQuery
-import com.restaurant.application.account.query.result.AccountBalanceResult
+import com.restaurant.application.account.query.dto.AccountBalanceDto
 import com.restaurant.domain.account.exception.AccountNotFoundException
 import com.restaurant.domain.account.repository.AccountRepository
 import org.springframework.stereotype.Service
@@ -21,7 +21,7 @@ class GetAccountBalanceQueryHandler(
      * @return 계좌 잔액 결과
      * @throws AccountNotFoundException 계좌를 찾을 수 없을 경우
      */
-    fun handle(query: GetAccountBalanceQuery): AccountBalanceResult {
+    fun handle(query: GetAccountBalanceQuery): AccountBalanceDto {
         val accountId = query.toAccountId()
 
         // 계좌 조회
@@ -30,9 +30,9 @@ class GetAccountBalanceQueryHandler(
                 ?: throw AccountNotFoundException(accountId)
 
         // 잔액 반환
-        return AccountBalanceResult(
+        return AccountBalanceDto(
             accountId = accountId.value,
-            balance = account.balance.amount.toLong(),
+            balance = account.balance.value,
         )
     }
 }

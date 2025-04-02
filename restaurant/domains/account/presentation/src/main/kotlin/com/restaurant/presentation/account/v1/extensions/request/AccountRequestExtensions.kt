@@ -1,4 +1,4 @@
-package com.restaurant.presentation.account.v1.extensions
+package com.restaurant.presentation.account.v1.extensions.request
 
 import com.restaurant.application.account.command.CancelAccountPaymentCommand
 import com.restaurant.application.account.command.ProcessAccountPaymentCommand

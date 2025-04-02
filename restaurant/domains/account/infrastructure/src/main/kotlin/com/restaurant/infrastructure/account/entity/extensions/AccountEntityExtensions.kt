@@ -1,11 +1,11 @@
 package com.restaurant.infrastructure.account.entity.extensions
 
 import com.restaurant.domain.account.aggregate.Account
-import com.restaurant.domain.account.aggregate.Transaction
-import com.restaurant.domain.account.aggregate.TransactionType
+import com.restaurant.domain.account.entity.Transaction
 import com.restaurant.domain.account.vo.AccountId
 import com.restaurant.domain.account.vo.Money
 import com.restaurant.domain.account.vo.OrderId
+import com.restaurant.domain.account.vo.TransactionType
 import com.restaurant.domain.account.vo.UserId
 import com.restaurant.infrastructure.account.entity.AccountEntity
 import com.restaurant.infrastructure.account.entity.TransactionEntity
@@ -15,13 +15,17 @@ import com.restaurant.infrastructure.account.entity.TransactionTypeEntity
  * AccountEntity -> Account 도메인 객체 변환
  */
 fun AccountEntity.toDomain(): Account {
-    val transactions = this.transactions.map { it.toDomain() }
+    // 이미 JPA 쿼리에서 정렬된 트랜잭션 중 최근 N개만 변환 (성능 개선)
+    val recentTransactions =
+        this.transactions
+            .take(Account.MAX_RECENT_TRANSACTIONS)
+            .map { it.toDomain() }
 
     return Account(
         id = this.id?.let { AccountId.of(it) },
         userId = UserId.of(this.userId),
         balance = Money.of(this.balance),
-        transactions = transactions,
+        recentTransactions = recentTransactions,
     )
 }
 
@@ -33,11 +37,11 @@ fun Account.toEntity(): AccountEntity {
         AccountEntity(
             id = this.id?.value,
             userId = this.userId.value,
-            balance = this.balance.amount,
+            balance = this.balance.value,
         )
 
-    // 트랜잭션이 있으면 추가
-    this.transactions.forEach { transaction ->
+    // 최근 트랜잭션만 추가
+    this.recentTransactions.forEach { transaction ->
         entity.transactions.add(
             TransactionEntity(
                 account = entity,
@@ -46,7 +50,7 @@ fun Account.toEntity(): AccountEntity {
                         TransactionType.DEBIT -> TransactionTypeEntity.DEBIT
                         TransactionType.CREDIT -> TransactionTypeEntity.CREDIT
                     },
-                amount = transaction.amount.amount,
+                amount = transaction.amount.value,
                 orderId = transaction.orderId.value,
                 timestamp = transaction.timestamp,
             ),
@@ -68,5 +72,6 @@ fun TransactionEntity.toDomain(): Transaction =
             },
         amount = Money.of(this.amount),
         orderId = OrderId.of(this.orderId),
+        accountId = this.account.id,
         timestamp = this.timestamp,
     )
