@@ -4,24 +4,27 @@ import com.restaurant.application.account.command.CancelAccountPaymentCommand
 import com.restaurant.application.account.extensions.toAccountId
 import com.restaurant.application.account.extensions.toOrderId
 import com.restaurant.common.core.command.CommandResult
+import com.restaurant.domain.account.aggregate.Transaction
 import com.restaurant.domain.account.exception.AccountNotFoundException
 import com.restaurant.domain.account.repository.AccountRepository
 import com.restaurant.domain.account.repository.TransactionRepository
-import com.restaurant.domain.account.vo.TransactionType
-import org.springframework.stereotype.Component
+import com.restaurant.domain.account.vo.Money
+import org.springframework.stereotype.Service
 import java.util.UUID
 
 /**
- * 계좌 결제 취소 명령 핸들러
+ * 계좌 결제 취소 커맨드 핸들러
  */
-@Component
+@Service
 class CancelAccountPaymentCommandHandler(
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
 ) {
     /**
-     * 계좌 결제를 취소합니다.
-     * 원래 차감된 금액만큼 다시 계좌에 추가합니다.
+     * 계좌 결제 취소 커맨드 처리
+     *
+     * @param command 계좌 결제 취소 커맨드
+     * @return 커맨드 결과
      */
     fun handle(command: CancelAccountPaymentCommand): CommandResult {
         try {
@@ -33,32 +36,51 @@ class CancelAccountPaymentCommandHandler(
                 accountRepository.findById(accountId)
                     ?: throw AccountNotFoundException(accountId)
 
-            // 트랜잭션 리포지토리를 통해 주문 ID로 트랜잭션 조회
-            val transactions = transactionRepository.findByOrderId(orderId)
+            // 해당 주문의 거래 내역 조회
+            val prevTransactions = transactionRepository.findByOrderId(orderId)
 
-            // 트랜잭션이 없으면 취소할 내역이 없음
-            if (transactions.isEmpty()) {
+            // 이전 결제 트랜잭션이 없으면 실패 반환
+            if (prevTransactions.isEmpty()) {
                 return CommandResult(
                     success = false,
                     errorCode = "TRANSACTION_NOT_FOUND",
                 )
             }
 
-            // DEBIT 타입의 트랜잭션 찾기 (출금 트랜잭션)
-            val debitTransaction = transactions.firstOrNull { it.type == TransactionType.DEBIT }
+            // 결제 취소할 금액 계산 (모든 DEBIT 트랜잭션의 합)
+            val refundAmount =
+                prevTransactions
+                    .filter { it.type == com.restaurant.domain.account.vo.TransactionType.DEBIT }
+                    .map { it.amount }
+                    .fold(Money.ZERO) { acc, amount -> acc + amount }
 
-            if (debitTransaction == null) {
+            // 이미 취소된 거래인지 확인 (CREDIT 트랜잭션이 있는 경우)
+            val alreadyCancelled =
+                prevTransactions.any {
+                    it.type == com.restaurant.domain.account.vo.TransactionType.CREDIT
+                }
+
+            if (alreadyCancelled) {
                 return CommandResult(
                     success = false,
-                    errorCode = "DEBIT_TRANSACTION_NOT_FOUND",
+                    errorCode = "PAYMENT_ALREADY_CANCELLED",
                 )
             }
 
-            // 원래 차감된 금액만큼 다시 계좌에 추가
-            val updatedAccount = account.credit(debitTransaction.amount, orderId)
+            // 계좌에 금액 추가
+            val updatedAccount = account.credit(refundAmount)
 
-            // 업데이트된 계좌 저장
+            // 환불 트랜잭션 생성
+            val refundTransaction =
+                Transaction.credit(
+                    amount = refundAmount,
+                    orderId = orderId,
+                    accountId = accountId,
+                )
+
+            // 업데이트된 계좌 및 환불 트랜잭션 저장
             accountRepository.save(updatedAccount)
+            transactionRepository.save(refundTransaction)
 
             return CommandResult(
                 success = true,
@@ -72,7 +94,7 @@ class CancelAccountPaymentCommandHandler(
         } catch (e: Exception) {
             return CommandResult(
                 success = false,
-                errorCode = "PAYMENT_CANCEL_FAILED",
+                errorCode = "PAYMENT_CANCELLATION_FAILED",
             )
         }
     }

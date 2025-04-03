@@ -1,62 +1,88 @@
 package com.restaurant.infrastructure.account.repository
 
-import com.restaurant.domain.account.entity.Transaction
+import com.restaurant.domain.account.aggregate.Transaction
 import com.restaurant.domain.account.repository.TransactionRepository
 import com.restaurant.domain.account.vo.AccountId
 import com.restaurant.domain.account.vo.OrderId
+import com.restaurant.domain.account.vo.TransactionId
 import com.restaurant.domain.account.vo.TransactionType
 import com.restaurant.infrastructure.account.entity.TransactionTypeEntity
 import com.restaurant.infrastructure.account.entity.extensions.toDomain
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
+import com.restaurant.infrastructure.account.entity.extensions.toEntity
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 
 /**
- * 계좌 트랜잭션 리포지토리 구현체
+ * 트랜잭션 리포지토리 구현체
  */
 @Component
 class TransactionRepositoryImpl(
     private val jpaTransactionRepository: JpaTransactionRepository,
 ) : TransactionRepository {
-    override fun findByAccountId(
+    override fun findById(id: TransactionId): Transaction? = jpaTransactionRepository.findById(id.value).map { it.toDomain() }.orElse(null)
+
+    override fun save(transaction: Transaction): Transaction {
+        val entity = transaction.toEntity()
+        val savedEntity = jpaTransactionRepository.save(entity)
+        return savedEntity.toDomain()
+    }
+
+    override fun findByAccountIdWithCursor(
         accountId: AccountId,
-        pageable: Pageable,
-    ): Page<Transaction> =
-        jpaTransactionRepository
-            .findByAccountId(accountId.value, pageable)
-            .map { it.toDomain() }
+        cursor: TransactionId?,
+        limit: Int,
+    ): List<Transaction> {
+        val pageable = PageRequest.of(0, limit)
+        return jpaTransactionRepository
+            .findByAccountIdWithCursor(
+                accountId.value,
+                cursor?.value,
+                pageable,
+            ).map { it.toDomain() }
+    }
 
     override fun findByOrderId(orderId: OrderId): List<Transaction> =
         jpaTransactionRepository
             .findByOrderId(orderId.value)
             .map { it.toDomain() }
 
-    override fun findByAccountIdAndType(
+    override fun findByAccountIdAndTypeWithCursor(
         accountId: AccountId,
         type: TransactionType,
-        pageable: Pageable,
-    ): Page<Transaction> {
-        val typeEntity =
+        cursor: TransactionId?,
+        limit: Int,
+    ): List<Transaction> {
+        val entityType =
             when (type) {
                 TransactionType.DEBIT -> TransactionTypeEntity.DEBIT
                 TransactionType.CREDIT -> TransactionTypeEntity.CREDIT
             }
+
+        val pageable = PageRequest.of(0, limit)
         return jpaTransactionRepository
-            .findByAccountIdAndType(accountId.value, typeEntity, pageable)
-            .map { it.toDomain() }
+            .findByAccountIdAndTypeWithCursor(
+                accountId.value,
+                entityType,
+                cursor?.value,
+                pageable,
+            ).map { it.toDomain() }
     }
 
-    override fun findByAccountIdAndTimestampBetween(
+    override fun findByAccountIdAndTimestampBetweenWithCursor(
         accountId: AccountId,
         startTime: Long,
         endTime: Long,
-        pageable: Pageable,
-    ): Page<Transaction> =
-        jpaTransactionRepository
-            .findByAccountIdAndTimestampBetween(
+        cursor: TransactionId?,
+        limit: Int,
+    ): List<Transaction> {
+        val pageable = PageRequest.of(0, limit)
+        return jpaTransactionRepository
+            .findByAccountIdAndTimestampBetweenWithCursor(
                 accountId.value,
                 startTime,
                 endTime,
+                cursor?.value,
                 pageable,
             ).map { it.toDomain() }
+    }
 }

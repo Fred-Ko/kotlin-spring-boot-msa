@@ -5,9 +5,11 @@ import com.restaurant.application.account.extensions.toAccountId
 import com.restaurant.application.account.extensions.toAmount
 import com.restaurant.application.account.extensions.toOrderId
 import com.restaurant.common.core.command.CommandResult
+import com.restaurant.domain.account.aggregate.Transaction
 import com.restaurant.domain.account.exception.AccountNotFoundException
 import com.restaurant.domain.account.exception.InsufficientBalanceException
 import com.restaurant.domain.account.repository.AccountRepository
+import com.restaurant.domain.account.repository.TransactionRepository
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -17,6 +19,7 @@ import java.util.UUID
 @Service
 class ProcessAccountPaymentCommandHandler(
     private val accountRepository: AccountRepository,
+    private val transactionRepository: TransactionRepository,
 ) {
     /**
      * 계좌 결제 처리 커맨드 처리
@@ -36,10 +39,19 @@ class ProcessAccountPaymentCommandHandler(
                     ?: throw AccountNotFoundException(accountId)
 
             // 계좌에서 금액 차감
-            val updatedAccount = account.debit(amount, orderId)
+            val updatedAccount = account.debit(amount)
 
-            // 업데이트된 계좌 저장
+            // 거래 내역 생성
+            val transaction =
+                Transaction.debit(
+                    amount = amount,
+                    orderId = orderId,
+                    accountId = accountId,
+                )
+
+            // 업데이트된 계좌 및 트랜잭션 저장
             accountRepository.save(updatedAccount)
+            transactionRepository.save(transaction)
 
             return CommandResult(
                 success = true,

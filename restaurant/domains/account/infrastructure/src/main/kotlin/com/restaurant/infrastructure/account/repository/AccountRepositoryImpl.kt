@@ -15,10 +15,7 @@ import org.springframework.stereotype.Component
 class AccountRepositoryImpl(
     private val jpaAccountRepository: JpaAccountRepository,
 ) : AccountRepository {
-    override fun findById(id: AccountId): Account? {
-        // 최근 트랜잭션만 포함하여 계좌 조회
-        return jpaAccountRepository.findByIdWithRecentTransactions(id.value)?.toDomain()
-    }
+    override fun findById(id: AccountId): Account? = jpaAccountRepository.findById(id.value).map { it.toDomain() }.orElse(null)
 
     override fun findByUserId(userId: UserId): Account? = jpaAccountRepository.findByUserId(userId.value)?.toDomain()
 
