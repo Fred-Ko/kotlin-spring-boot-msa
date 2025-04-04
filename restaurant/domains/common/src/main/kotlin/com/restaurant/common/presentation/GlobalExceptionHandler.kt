@@ -20,7 +20,7 @@ class GlobalExceptionHandler {
     fun handleDomainException(ex: DomainException): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/domain-error")
+                type = URI.create("probs/domain-error")
                 title = "도메인 오류"
                 detail = ex.message
                 setProperty("errorCode", "DOMAIN_ERROR")
@@ -33,7 +33,7 @@ class GlobalExceptionHandler {
     fun handleApplicationException(ex: ApplicationException): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/application-error")
+                type = URI.create("probs/application-error")
                 title = "어플리케이션 오류"
                 detail = ex.message
                 setProperty("errorCode", "APPLICATION_ERROR")
@@ -46,7 +46,7 @@ class GlobalExceptionHandler {
     fun handleInfrastructureException(ex: InfrastructureException): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR).apply {
-                type = URI.create("https://example.com/probs/infrastructure-error")
+                type = URI.create("probs/infrastructure-error")
                 title = "인프라스트럭처 오류"
                 detail = ex.message
                 setProperty("errorCode", "INFRASTRUCTURE_ERROR")
@@ -59,7 +59,7 @@ class GlobalExceptionHandler {
     fun handlePresentationException(ex: PresentationException): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/presentation-error")
+                type = URI.create("probs/presentation-error")
                 title = "프레젠테이션 오류"
                 detail = ex.message
                 setProperty("errorCode", "PRESENTATION_ERROR")
@@ -77,7 +77,7 @@ class GlobalExceptionHandler {
 
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/invalid-params")
+                type = URI.create("probs/invalid-params")
                 title = "유효성 검사 오류"
                 detail = "입력 데이터가 유효하지 않습니다."
                 setProperty("errorCode", "VALIDATION_ERROR")
@@ -96,7 +96,7 @@ class GlobalExceptionHandler {
 
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/invalid-params")
+                type = URI.create("probs/invalid-params")
                 title = "유효성 검사 오류"
                 detail = "입력 데이터가 유효하지 않습니다."
                 setProperty("errorCode", "VALIDATION_ERROR")
@@ -110,7 +110,7 @@ class GlobalExceptionHandler {
     fun handleGenericException(ex: Exception): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR).apply {
-                type = URI.create("https://example.com/probs/server-error")
+                type = URI.create("probs/server-error")
                 title = "서버 오류"
                 detail = "서버에서 예상치 못한 오류가 발생했습니다."
                 setProperty("errorCode", "SYSTEM_ERROR")

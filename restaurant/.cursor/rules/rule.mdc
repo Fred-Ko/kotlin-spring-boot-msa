@@ -324,7 +324,7 @@ data class User(
   val email: Email
 ) {
   fun updateName(newName: String): User {
-	  return copy(name = newName)
+   return copy(name = newName)
   }
 }
 
@@ -333,7 +333,7 @@ value class UserId(val value: Long)
 
 data class Email(val value: String) {
   init {
-	  require(value.contains("@")) { "유효한 이메일 형식이 아닙니다." }
+   require(value.contains("@")) { "유효한 이메일 형식이 아닙니다." }
   }
 }
 
@@ -357,9 +357,9 @@ import com.example.domain.user.vo.Email
 
 fun UserEntity.toDomain(): User {
   return User(
-	  id = this.id?.let { UserId.of(it) },
-	  name = this.name,
-	  email = Email.of(this.email)
+   id = this.id?.let { UserId.of(it) },
+   name = this.name,
+   email = Email.of(this.email)
   )
 }
 ```
@@ -373,9 +373,9 @@ import com.example.domain.user.User
 
 fun User.toEntity(): UserEntity {
   return UserEntity(
-	  id = this.id?.value,
-	  name = this.name,
-	  email = this.email.value
+   id = this.id?.value,
+   name = this.name,
+   email = this.email.value
   )
 }
 ```
@@ -386,15 +386,15 @@ class UserRepositoryImpl(
   private val jpaRepository: SpringDataJpaUserRepository
 ) : UserRepository {
   override fun findById(id: UserId): User? {
-	  return jpaRepository.findById(id.value)
-		  .map { it.toDomain() } // 확장 함수를 통한 변환
-		  .orElse(null)
+   return jpaRepository.findById(id.value)
+    .map { it.toDomain() } // 확장 함수를 통한 변환
+    .orElse(null)
   }
 
   override fun save(user: User): User {
-	  val entity = user.toEntity() // 확장 함수를 통한 변환
-	  val savedEntity = jpaRepository.save(entity)
-	  return savedEntity.toDomain() // 확장 함수를 통한 변환
+   val entity = user.toEntity() // 확장 함수를 통한 변환
+   val savedEntity = jpaRepository.save(entity)
+   return savedEntity.toDomain() // 확장 함수를 통한 변환
   }
 }
 ```
@@ -702,26 +702,26 @@ data class Password private constructor(
 val encodedValue: String
 ) {
 companion object {
-	private const val SALT = "ddd-user-salt"
-	private const val MIN_LENGTH = 8
-	private val PASSWORD_REGEX = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]+$")
+ private const val SALT = "ddd-user-salt"
+ private const val MIN_LENGTH = 8
+ private val PASSWORD_REGEX = Regex("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]+$")
 
-	fun of(rawPassword: String): Password {
-		require(rawPassword.length >= MIN_LENGTH) { "비밀번호는 최소 ${MIN_LENGTH}글자 이상이어야 합니다." }
-		require(rawPassword.matches(PASSWORD_REGEX)) { "비밀번호는 영문자와 숫자를 포함해야 합니다." }
-		return Password(encode(rawPassword))
-	}
+ fun of(rawPassword: String): Password {
+  require(rawPassword.length >= MIN_LENGTH) { "비밀번호는 최소 ${MIN_LENGTH}글자 이상이어야 합니다." }
+  require(rawPassword.matches(PASSWORD_REGEX)) { "비밀번호는 영문자와 숫자를 포함해야 합니다." }
+  return Password(encode(rawPassword))
+ }
 
-	fun fromEncoded(encodedPassword: String): Password {
-		return Password(encodedPassword)
-	}
+ fun fromEncoded(encodedPassword: String): Password {
+  return Password(encodedPassword)
+ }
 
-	private fun encode(rawPassword: String): String {
-		val saltedPassword = rawPassword + SALT
-		val messageDigest = MessageDigest.getInstance("SHA-256")
-		val digest = messageDigest.digest(saltedPassword.toByteArray())
-		return digest.fold("") { str, byte -> str + "%02x".format(byte) }
-	}
+ private fun encode(rawPassword: String): String {
+  val saltedPassword = rawPassword + SALT
+  val messageDigest = MessageDigest.getInstance("SHA-256")
+  val digest = messageDigest.digest(saltedPassword.toByteArray())
+  return digest.fold("") { str, byte -> str + "%02x".format(byte) }
+ }
 }
 
 fun matches(rawPassword: String): Boolean = encodedValue == encode(rawPassword)
@@ -887,7 +887,7 @@ data class User(val id: UserId?, val name: String, val email: Email)
 @JvmInline
 value class UserId private constructor(val value: Long) {
   companion object {
-	  fun of(value: Long): UserId = UserId(value)
+   fun of(value: Long): UserId = UserId(value)
   }
 }
 
@@ -1076,10 +1076,10 @@ val items: List<OrderItemEntity> = emptyList()
 ```kotlin
 // 로그 캡처 및 쿼리 수 검증 테스트
 test("주문과 아이템을 조회할 때 N+1 문제가 발생하지 않는다") {
-	val orders = orderRepository.findAllWithItems()
+ val orders = orderRepository.findAllWithItems()
 
-	// 로그 캡처 또는 카운터로 쿼리 수 확인
-	queryCounter.count shouldBe 1 // 단일 쿼리로 모든 데이터 조회
+ // 로그 캡처 또는 카운터로 쿼리 수 확인
+ queryCounter.count shouldBe 1 // 단일 쿼리로 모든 데이터 조회
 }
 ```
 
@@ -1118,17 +1118,17 @@ import com.example.domain.user.vo.Email
 
 fun UserEntity.toDomain(): User {
   return User(
-	  id = this.id?.let { UserId.of(it) },
-	  name = this.name,
-	  email = Email.of(this.email)
+   id = this.id?.let { UserId.of(it) },
+   name = this.name,
+   email = Email.of(this.email)
   )
 }
 
 fun User.toEntity(): UserEntity {
   return UserEntity(
-	  id = this.id?.value,
-	  name = this.name,
-	  email = this.email.value
+   id = this.id?.value,
+   name = this.name,
+   email = this.email.value
   )
 }
 ```
@@ -1158,16 +1158,16 @@ import com.example.domain.order.vo.OrderId
 
 fun OrderEntity.toDomain(): Order {
   return Order(
-	  id = this.id?.let { OrderId.of(it) },
-	  customerId = this.customerId,
-	  items = this.items.map { it.toDomain() } // OrderItemEntity -> OrderItem 변환 확장 함수 호출
+   id = this.id?.let { OrderId.of(it) },
+   customerId = this.customerId,
+   items = this.items.map { it.toDomain() } // OrderItemEntity -> OrderItem 변환 확장 함수 호출
   )
 }
 
 fun Order.toEntity(): OrderEntity {
   val orderEntity = OrderEntity(
-	  id = this.id?.value,
-	  customerId = this.customerId
+   id = this.id?.value,
+   customerId = this.customerId
   )
   val items = this.items.map { it.toEntity(orderEntity) } // OrderItem -> OrderItemEntity 변환 확장 함수 호출, OrderEntity 참조 전달
   orderEntity.items = items // OrderEntity 에 items 설정
@@ -1176,16 +1176,16 @@ fun Order.toEntity(): OrderEntity {
 
 fun OrderItemEntity.toDomain(): OrderItem {
   return OrderItem(
-	  productId = this.productId,
-	  quantity = this.quantity
+   productId = this.productId,
+   quantity = this.quantity
   )
 }
 
 fun OrderItem.toEntity(orderEntity: OrderEntity): OrderItemEntity {
   return OrderItemEntity(
-	  productId = this.productId,
-	  quantity = this.quantity,
-	  order = orderEntity // OrderEntity 참조 설정
+   productId = this.productId,
+   quantity = this.quantity,
+   order = orderEntity // OrderEntity 참조 설정
   )
 }
 ```
@@ -1352,7 +1352,7 @@ class OrderRepositoryImpl(
       }
 ```
 
-- **참고**: 실패 시 프레젠테이션 레이어에서 `ProblemDetail`을 사용해 RFC 7807 형식으로 변환되며, 자세한 내용은 섹션 12. 에러 처리를 참조하세요.
+- **참고**: 실패 시 프레젠테이션 레이어에서 `ProblemDetail`을 사용해 RFC 9457 형식으로 변환되며, 자세한 내용은 섹션 12. 에러 처리를 참조하세요.
 
 - **3.1.1.2.5 구현 참고**
   - **동기 Command 핸들러 예시**:
@@ -1519,33 +1519,33 @@ class OrderRepositoryImpl(
 
 #### 3.1.4 Presentation 레이어 Validation
 
-##### 2.1.4.1 목적
+##### 3.1.4.1 목적
 
 - **목적**: 클라이언트로부터 입력받은 데이터의 유효성을 검증하여 잘못된 요청을 조기에 차단하고, 시스템의 안정성과 데이터 무결성을 보장합니다.
 
-##### 2.1.4.2 규칙
+##### 3.1.4.2 규칙
 
 - **규칙**: Presentation 레이어에서 요청 데이터(`Request DTO`)의 유효성 검사는 `jakarta.validation.constraints` 패키지의 어노테이션을 적극 활용하여 수행합니다.
 
-##### 2.1.4.3 의존성
+##### 3.1.4.3 의존성
 
 - **의존성**: Spring Boot Starter Validation(`spring-boot-starter-validation`)을 사용하며, Gradle에 추가합니다.
   - **설정 예시**:
 
 ```groovy
 dependencies {
-	implementation "org.springframework.boot:spring-boot-starter-validation"
+ implementation "org.springframework.boot:spring-boot-starter-validation"
 }
 ```
 
-##### 2.1.4.4 적용 방식
+##### 3.1.4.4 적용 방식
 
 - **적용 방식**:
   - 모든 `Request DTO` 필드에 대해 적절한 검증 어노테이션을 적용합니다.
   - 컨트롤러 메서드에서 `@Valid` 어노테이션을 사용하여 유효성 검사를 트리거합니다.
   - 검증 실패 시, Spring의 `MethodArgumentNotValidException`을 통해 `ProblemDetail` 형식으로 에러 응답을 반환합니다(12.7 글로벌 예외 처리 참조).
 
-##### 2.1.4.5 주요 검증 어노테이션
+##### 3.1.4.5 주요 검증 어노테이션
 
 - **주요 검증 어노테이션**:
   - `@NotNull`: 필수 입력값 검증
@@ -1556,7 +1556,7 @@ dependencies {
   - `@Pattern`: 정규 표현식을 통한 형식 검증
   - 기타: 프로젝트 요구사항에 따라 커스텀 어노테이션 정의 가능
 
-##### 2.1.4.6 예시
+##### 3.1.4.6 예시
 
 - **예시**:
   - **Request DTO 정의**:
@@ -1574,8 +1574,8 @@ data class UserCreateRequestV1(
   @field:NotBlank(message = "비밀번호는 필수입니다.")
   @field:Size(min = 8, max = 20, message = "비밀번호는 8~20자 사이여야 합니다.")
   @field:Pattern(
-	  regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]+$",
-	  message = "비밀번호는 영문자와 숫자를 포함해야 합니다."
+   regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]+$",
+   message = "비밀번호는 영문자와 숫자를 포함해야 합니다."
   )
   val password: String
 )
@@ -1591,25 +1591,25 @@ class UserCommandController(
 ) {
   @PostMapping
   fun createUser(@Valid @RequestBody request: UserCreateRequestV1): ResponseEntity<Map<String, Any>> {
-	  val command = request.toCommand() // 확장 함수 호출
-	  val result = createUserCommandHandler.handle(command)
-	  return ResponseEntity.ok(mapOf(
-		  "status" to "success",
-		  "message" to "요청이 처리되었습니다.",
-		  "correlationId" to result.correlationId
-	  ))
+   val command = request.toCommand() // 확장 함수 호출
+   val result = createUserCommandHandler.handle(command)
+   return ResponseEntity.ok(mapOf(
+    "status" to "success",
+    "message" to "요청이 처리되었습니다.",
+    "correlationId" to result.correlationId
+   ))
   }
 }
 ```
 
 ##### 2.1.4.7 에러 응답
 
-- **에러 응답**: 검증 실패 시, `ProblemDetail`을 사용하여 RFC 7807 형식을 따르며, 필드별 에러 메시지를 확장 필드 `invalid-params`로 포함합니다.
+- **에러 응답**: 검증 실패 시, `ProblemDetail`을 사용하여 RFC 9457 형식을 따르며, 필드별 에러 메시지를 확장 필드 `invalid-params`로 포함합니다.
   - **예시 응답**:
 
 ```json
 {
-  "type": "https://example.com/probs/invalid-params",
+  "type": "/probs/invalid-params",
   "title": "Invalid Input",
   "status": 400,
   "detail": "입력 데이터가 유효하지 않습니다.",
@@ -1617,14 +1617,14 @@ class UserCommandController(
   "errorCode": "VALIDATION_ERROR",
   "timestamp": "2025-03-24T10:00:00Z",
   "invalid-params": [
-	  {
-		  "field": "name",
-		  "message": "이름은 필수입니다."
-	  },
-	  {
-		  "field": "email",
-		  "message": "유효한 이메일 형식이어야 합니다."
-	  }
+   {
+    "field": "name",
+    "message": "이름은 필수입니다."
+   },
+   {
+    "field": "email",
+    "message": "유효한 이메일 형식이어야 합니다."
+   }
   ]
 }
 ```
@@ -1633,7 +1633,7 @@ class UserCommandController(
 
 ##### 3.1.5.1 에러 처리 목적
 
-- **목적**: 시스템의 안정성을 유지하고, 클라이언트에게 RFC 7807("Problem Details for HTTP APIs")에 준수하는 명확한 에러 메시지를 제공하기 위해 일관된 에러 처리 전략을 정의합니다.
+- **목적**: 시스템의 안정성을 유지하고, 클라이언트에게 RFC 9457("Problem Details for HTTP APIs")에 준수하는 명확한 에러 메시지를 제공하기 위해 일관된 에러 처리 전략을 정의합니다. ProblemDetail의 `type` 필드는 상대 주소로 제공해야 합니다.
 - **필수 준수사항**: 이 문서에서 정의하는 모든 에러 처리 규칙은 프로젝트의 모든 구성원이 반드시 따라야 하는 강제적인 규칙입니다. 일관된 에러 처리는 디버깅과 유지보수를 크게 향상시킵니다.
 
 ##### 3.1.5.2 레이어별 에러 처리
@@ -1642,7 +1642,7 @@ class UserCommandController(
   - **역할**: 클라이언트의 요청을 검증하고, 애플리케이션 레이어로 전달하기 전에 유효성 검사를 수행합니다.
   - **에러 유형**: 요청 데이터의 유효성 검사 실패, 인증/인가 실패 등.
   - **처리 방식**: `@Valid` 어노테이션을 사용한 유효성 검사, Spring Security를 통한 인증/인가 처리.
-  - **응답**: `ProblemDetail`을 사용하여 RFC 7807 형식으로 클라이언트에게 반환.
+  - **응답**: `ProblemDetail`을 사용하여 RFC 9457 형식으로 클라이언트에게 반환.
 
 - **Application 레이어**:
   - **역할**: 비즈니스 로직을 실행하며, 도메인 레이어와 상호작용합니다.
@@ -1664,8 +1664,8 @@ class UserCommandController(
 
 ##### 3.1.5.3 에러 응답 형식
 
-- **형식**: 모든 에러 응답은 RFC 7807에 따라 JSON 형식으로 반환되며, Spring Boot 3.0 이상에서 제공하는 `ProblemDetail` 클래스를 기본으로 사용합니다. `ProblemDetail`은 다음과 같은 필드를 포함합니다:
-  - `type`: 문제 유형을 식별하는 URI (기본값: "about:blank")
+- **형식**: 모든 에러 응답은 RFC 9457에 따라 JSON 형식으로 반환되며, Spring Boot 3.0 이상에서 제공하는 `ProblemDetail` 클래스를 기본으로 사용합니다. `ProblemDetail`은 다음과 같은 필드를 포함합니다:
+  - `type`: 문제 유형을 식별하는 URI (상대 주소 권장, 예: "/probs/user-not-found")
   - `title`: 문제 유형에 대한 간단한 설명 (문제 유형별 고정 문자열)
   - `status`: HTTP 상태 코드 (`UserErrorCode` enum에 정의된 `HttpStatus` 값과 연계)
   - `detail`: 문제에 대한 인스턴스별 설명
@@ -1675,7 +1675,7 @@ class UserCommandController(
 
 ```json
 {
-"type": "https://example.com/probs/user-not-found",
+"type": "/probs/user-not-found",
 "title": "User Not Found",
 "status": 404,
 "detail": "사용자를 찾을 수 없습니다.",
@@ -1695,7 +1695,7 @@ class UserCommandController(
 
 2. **필수 속성 설정**:
    - 모든 ProblemDetail 객체는 다음 속성을 반드시 설정해야 합니다:
-     - `type`: 문제 유형 URI (`type = URI.create("https://example.com/probs/${error.code.lowercase()}")`)
+     - `type`: 문제 유형 URI (`type = URI.create("/probs/${error.code.lowercase()}")`)
      - `title`: 에러 유형 이름 (`title = error.code`)
      - `detail`: 상세 에러 메시지 (`detail = error.message` 또는 예외 메시지)
      - `errorCode`: 에러 코드 (`setProperty("errorCode", error.code)`)
@@ -1720,7 +1720,7 @@ class UserCommandController(
     fun createUser(@Valid @RequestBody request: UserCreateRequestV1): ResponseEntity<Any> {
         val command = request.toCommand()
         val result = createUserCommandHandler.handle(command)
-        
+
         return if (result.success) {
             ResponseEntity.ok(mapOf(
                 "status" to "success",
@@ -1730,17 +1730,17 @@ class UserCommandController(
         } else {
             // 필수 - UserErrorCode enum 활용
             val error = UserErrorCode.fromCode(result.errorCode)
-            
+
             // 필수 - ProblemDetail 생성 및 apply 람다 블록 활용
             val problem = ProblemDetail.forStatus(error.status).apply {
-                type = URI.create("https://example.com/probs/${error.code.lowercase()}")
+                type = URI.create("/probs/${error.code.lowercase()}")
                 title = error.code
                 detail = error.message
                 instance = URI.create("/api/v1/users")
                 setProperty("errorCode", error.code)
                 setProperty("timestamp", Instant.now().toString())
             }
-            
+
             // 필수 - ResponseEntity 반환
             ResponseEntity.status(error.status).body(problem)
         }
@@ -1753,7 +1753,7 @@ class UserCommandController(
 
 ```kotlin
 val problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-    type = URI.create("https://example.com/probs/validation-error")
+    type = URI.create("/probs/validation-error")
     title = "VALIDATION_ERROR"
     detail = "입력 값이 유효하지 않습니다"
     instance = URI.create(request.requestURI)
@@ -1788,14 +1788,14 @@ enum class UserErrorCode(
     // 도메인 에러
     NOT_FOUND("USER_NOT_FOUND", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     DUPLICATE_EMAIL("DUPLICATE_EMAIL", "이미 등록된 이메일입니다.", HttpStatus.CONFLICT),
-    
+
     // 인증 관련 에러
     UNAUTHORIZED("UNAUTHORIZED", "인증에 실패했습니다.", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("FORBIDDEN", "접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
-    
+
     // 입력값 검증 에러
     INVALID_INPUT("INVALID_INPUT", "입력값이 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
-    
+
     // 기본 에러
     UNKNOWN("UNKNOWN_ERROR", "알 수 없는 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -1814,7 +1814,7 @@ enum class UserErrorCode(
 // controller 내 메서드에서
 val error = UserErrorCode.fromCode(result.errorCode)
 val problem = ProblemDetail.forStatus(error.status).apply {
-    type = URI.create("https://example.com/probs/${error.code.lowercase()}")
+    type = URI.create("/probs/${error.code.lowercase()}")
     title = error.code
     detail = error.message
     // 나머지 속성 설정
@@ -1835,7 +1835,7 @@ class CreateUserCommandHandler(
                 // 필수 - UserErrorCode enum의 code 값을 errorCode로 사용
                 return CommandResult(false, errorCode = UserErrorCode.DUPLICATE_EMAIL.code)
             }
-            
+
             userRepository.save(User(command.name, command.email))
             CommandResult(true, UUID.randomUUID().toString())
         } catch (e: Exception) {
@@ -1852,13 +1852,13 @@ class CreateUserCommandHandler(
 ```kotlin
 @ControllerAdvice
 class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(UserCommandException::class)
     fun handleUserCommandException(ex: UserCommandException): ResponseEntity<ProblemDetail> {
         // 필수 - fromCode 메서드로 에러코드 변환
         val error = UserErrorCode.fromCode(ex.errorCode)
         val problem = ProblemDetail.forStatus(error.status).apply {
-            type = URI.create("https://example.com/probs/${error.code.lowercase()}")
+            type = URI.create("/probs/${error.code.lowercase()}")
             title = error.code
             detail = ex.message ?: error.message
             instance = URI.create("/api/v1/users")
@@ -1867,7 +1867,7 @@ class GlobalExceptionHandler {
         }
         return ResponseEntity.status(error.status).body(problem)
     }
-    
+
     // DomainException, ValidationException 등 처리 메서드도 유사한 패턴으로 구현
 }
 ```
@@ -1915,12 +1915,17 @@ throw UserCommandException(UserErrorCode.NOT_FOUND.code)
 @RestController
 class UserController {
     // 컨트롤러 내 메서드들
-    
+
     @ExceptionHandler(UserSpecificException::class)
     fun handleUserSpecificException(ex: UserSpecificException): ResponseEntity<ProblemDetail> {
         val error = UserErrorCode.fromCode(ex.errorCode)
         val problem = ProblemDetail.forStatus(error.status).apply {
             // 필수 속성 설정
+            type = URI.create("/probs/${error.code.lowercase()}")
+            title = error.code
+            detail = error.message
+            setProperty("errorCode", error.code)
+            setProperty("timestamp", Instant.now().toString())
         }
         return ResponseEntity.status(error.status).body(problem)
     }
@@ -1942,18 +1947,73 @@ class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationException(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail> {
         // 유효성 검사 실패 처리 - invalid-params 포함
+        val problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
+            type = URI.create("/probs/validation-error")
+            title = "VALIDATION_ERROR"
+            detail = "입력 값이 유효하지 않습니다"
+            setProperty("errorCode", "VALIDATION_ERROR")
+            setProperty("timestamp", Instant.now().toString())
+            setProperty("invalid-params", ex.bindingResult.fieldErrors.map { error ->
+                mapOf(
+                    "field" to error.field,
+                    "message" to error.defaultMessage
+                )
+            })
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
-    
+
     @ExceptionHandler(DomainException::class)
     fun handleDomainException(ex: DomainException): ResponseEntity<ProblemDetail> {
-        // 도메인 예외 처리
+        val error = UserErrorCode.fromCode(ex.errorCode) // DomainException 에 errorCode 가 있다고 가정
+        val problem = ProblemDetail.forStatus(error.status).apply {
+            type = URI.create("/probs/${error.code.lowercase()}")
+            title = error.code
+            detail = ex.message ?: error.message
+            setProperty("errorCode", error.code)
+            setProperty("timestamp", Instant.now().toString())
+        }
+        return ResponseEntity.status(error.status).body(problem)
     }
-    
-    // 다른 예외 처리 메서드들
-    
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ResponseEntity<ProblemDetail> {
+        val problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
+            type = URI.create("/probs/http-message-not-readable")
+            title = "HTTP_MESSAGE_NOT_READABLE"
+            detail = "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요."
+            setProperty("errorCode", "HTTP_MESSAGE_NOT_READABLE")
+            setProperty("timestamp", Instant.now().toString())
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
+    }
+
+
+    @ExceptionHandler(ApplicationException::class)
+    fun handleApplicationException(ex: ApplicationException): ResponseEntity<ProblemDetail> {
+        val error = UserErrorCode.fromCode(ex.errorCode) // ApplicationException 에 errorCode 가 있다고 가정
+        val problem = ProblemDetail.forStatus(error.status).apply {
+            type = URI.create("/probs/${error.code.lowercase()}")
+            title = error.code
+            detail = ex.message ?: error.message
+            setProperty("errorCode", error.code)
+            setProperty("timestamp", Instant.now().toString())
+        }
+        return ResponseEntity.status(error.status).body(problem)
+    }
+
+
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<ProblemDetail> {
-        // 모든 예외에 대한 기본 폴백 처리
+        val error = UserErrorCode.UNKNOWN
+        val problem = ProblemDetail.forStatus(error.status).apply {
+            type = URI.create("/probs/${error.code.lowercase()}")
+            title = error.code
+            detail = "예상치 못한 오류가 발생했습니다."
+            setProperty("errorCode", error.code)
+            setProperty("timestamp", Instant.now().toString())
+        }
+        return ResponseEntity.status(error.status).body(problem)
     }
 }
 ```
@@ -1980,19 +2040,19 @@ class GlobalExceptionHandler {
 ##### 3.1.5.8 비동기 에러 처리
 
 - **특징**: 비동기 Command의 경우, 에러가 발생하면 `AsyncCommandResult`에 에러 정보를 포함하여 반환합니다. 프레젠테이션 레이어에서 이를 `ProblemDetail`로 변환하여 응답합니다.
-- **응답 형식** (RFC 7807 준수):
+- **응답 형식** (RFC 9457 준수):
 
 ```json
-  {
-	"type": "https://example.com/probs/async-processing-error",
-	"title": "Async Processing Error",
-	"status": 400,
-	"detail": "비동기 작업 처리에 실패했습니다.",
-	"instance": "/api/v1/users/async",
-	"errorCode": "ASYNC_PROCESSING_ERROR",
-	"timestamp": "2025-03-24T10:00:00Z",
-	"jobId": "job123"
-  }
+{
+  "type": "/probs/async-processing-error",
+  "title": "Async Processing Error",
+  "status": 400,
+  "detail": "비동기 작업 처리에 실패했습니다.",
+  "instance": "/api/v1/users/async",
+  "errorCode": "ASYNC_PROCESSING_ERROR",
+  "timestamp": "2025-03-24T10:00:00Z",
+  "jobId": "job123"
+}
 ```
 
 - **상태 조회**: 클라이언트는 `jobId`를 사용하여 작업의 최종 상태를 조회할 수 있으며, 에러 발생 시 상세 에러 정보를 확인할 수 있습니다.
@@ -2006,27 +2066,27 @@ class UserAsyncCommandController(
 ) {
   @PostMapping("/async")
   fun createUserAsync(@RequestBody request: UserCreateRequest): ResponseEntity<Any> {
-	  val command = request.toCommand() // 확장 함수 호출
-	  val result = handler.handle(command)
-	  return if (result.success) {
-		  ResponseEntity.accepted().body(mapOf(
-			  "status" to "accepted",
-			  "message" to "요청이 접수되었습니다.",
-			  "jobId" to result.jobId
-		  ))
-	  } else {
-		  val error = UserErrorCode.fromCode(result.errorCode)
-		  val problem = ProblemDetail.forStatus(error.status).apply {
-			  type = URI.create("https://example.com/probs/${error.code.lowercase()}")
-			  title = error.code
-			  detail = error.message
-			  instance = URI.create("/api/v1/users/async")
-			  setProperty("errorCode", error.code)
-			  setProperty("timestamp", Instant.now().toString())
-			  setProperty("jobId", result.jobId)
-		  }
-		  ResponseEntity.status(error.status).body(problem)
-	  }
+   val command = request.toCommand() // 확장 함수 호출
+   val result = handler.handle(command)
+   return if (result.success) {
+    ResponseEntity.accepted().body(mapOf(
+     "status" to "accepted",
+     "message" to "요청이 접수되었습니다.",
+     "jobId" to result.jobId
+    ))
+   } else {
+    val error = UserErrorCode.fromCode(result.errorCode)
+    val problem = ProblemDetail.forStatus(error.status).apply {
+     type = URI.create("/probs/${error.code.lowercase()}")
+     title = error.code
+     detail = error.message
+     instance = URI.create("/api/v1/users/async")
+     setProperty("errorCode", error.code)
+     setProperty("timestamp", Instant.now().toString())
+     setProperty("jobId", result.jobId)
+    }
+    ResponseEntity.status(error.status).body(problem)
+   }
   }
 }
 ```
@@ -2044,7 +2104,7 @@ class UserAsyncCommandController(
 
 ```groovy
 dependencies {
-	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2"
+ implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2"
 }
 ```
 
@@ -2064,13 +2124,13 @@ import org.springframework.context.annotation.Configuration
 class SwaggerConfig {
   @Bean
   fun customOpenAPI(): OpenAPI {
-	  return OpenAPI()
-		  .info(
-			  Info()
-				  .title("Project API")
-				  .version("v1")
-				  .description("Spring Boot 기반 프로젝트 API 문서")
-			  )
+   return OpenAPI()
+    .info(
+     Info()
+      .title("Project API")
+      .version("v1")
+      .description("Spring Boot 기반 프로젝트 API 문서")
+     )
   }
 }
 ```
@@ -2082,7 +2142,7 @@ class SwaggerConfig {
   - **규칙**:
     - 모든 엔드포인트는 `@Operation`으로 설명을 추가합니다.
     - 요청/응답 DTO는 스키마로 자동 생성되며, 추가 설명은 `@Schema`로 제공합니다.
-    - 에러 응답은 RFC 7807(`ProblemDetail`) 형식을 반영하여 정의합니다(섹션 12 참조).
+    - 에러 응답은 RFC 9457(`ProblemDetail`) 형식을 반영하여 정의합니다(섹션 12 참조).
 
   - **예시**:
 
@@ -2104,19 +2164,19 @@ class UserCommandController(
   @PostMapping
   @Operation(summary = "새로운 사용자 생성", description = "사용자 정보를 입력받아 새로운 사용자를 생성합니다.")
   @ApiResponses(
-	  ApiResponse(responseCode = "200", description = "사용자 생성 성공",
-		  content = [Content(schema = Schema(implementation = Map::class))]),
-	  ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
-		  content = [Content(schema = Schema(implementation = ProblemDetail::class))])
+   ApiResponse(responseCode = "200", description = "사용자 생성 성공",
+    content = [Content(schema = Schema(implementation = Map::class))]),
+   ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
+    content = [Content(schema = Schema(implementation = ProblemDetail::class))])
   )
   fun createUser(@Valid @RequestBody request: UserCreateRequestV1): ResponseEntity<Map<String, Any>> {
-	  val command = request.toCommand() // 확장 함수 호출
-	  val result = createUserCommandHandler.handle(command)
-	  return ResponseEntity.ok(mapOf(
-		  "status" to "success",
-		  "message" to "요청이 처리되었습니다.",
-		  "correlationId" to result.correlationId
-	  ))
+   val command = request.toCommand() // 확장 함수 호출
+   val result = createUserCommandHandler.handle(command)
+   return ResponseEntity.ok(mapOf(
+    "status" to "success",
+    "message" to "요청이 처리되었습니다.",
+    "correlationId" to result.correlationId
+   ))
   }
 }
 ```
@@ -2149,7 +2209,7 @@ data class UserCreateRequestV1(
 @Operation(summary = "비동기 사용자 생성", description = "비동기로 사용자 생성 요청을 접수합니다.")
 @ApiResponses(
   ApiResponse(responseCode = "202", description = "요청 접수 완료",
-	  content = [Content(schema = Schema(implementation = Map::class))])
+   content = [Content(schema = Schema(implementation = Map::class))])
 )
 @PostMapping("/async")
 fun createUserAsync(@Valid @RequestBody request: UserCreateRequestV1): ResponseEntity<Map<String, Any>> {
@@ -2157,14 +2217,14 @@ fun createUserAsync(@Valid @RequestBody request: UserCreateRequestV1): ResponseE
   val result = handler.handle(command)
   val statusLink = linkTo<JobStatusController> { getJobStatus(result.jobId!!) }.withRel("job-status")
   return ResponseEntity.accepted().body(mapOf(
-	  "status" to "accepted",
-	  "message" to "요청이 접수되었습니다.",
-	  "jobId" to result.jobId,
-	  "links" to listOf(mapOf(
-		  "rel" to statusLink.rel.value(),
-		  "href" to statusLink.href,
-		  "method" to "GET"
-	  ))
+   "status" to "accepted",
+   "message" to "요청이 접수되었습니다.",
+   "jobId" to result.jobId,
+   "links" to listOf(mapOf(
+    "rel" to statusLink.rel.value(),
+    "href" to statusLink.href,
+    "method" to "GET"
+   ))
   ))
 }
 ```
@@ -2176,7 +2236,7 @@ fun createUserAsync(@Valid @RequestBody request: UserCreateRequestV1): ResponseE
 ```kotlin
 @ApiResponses(
   ApiResponse(responseCode = "400", description = "유효성 검사 실패",
-	  content = [Content(schema = Schema(implementation = ProblemDetail::class))])
+   content = [Content(schema = Schema(implementation = ProblemDetail::class))])
 )
 ```
 
@@ -2187,8 +2247,8 @@ fun createUserAsync(@Valid @RequestBody request: UserCreateRequestV1): ResponseE
 ```yaml
 springdoc:
   swagger-ui:
-	  path: /custom-swagger-ui.html
-	  display-request-duration: true
+   path: /custom-swagger-ui.html
+   display-request-duration: true
 ```
 
 - **주의사항**:
@@ -2271,15 +2331,15 @@ Kafka를 활용한 이벤트 기반 아키텍처에서 Avro를 데이터 직렬�
 
 ```groovy
 plugins {
-	id "com.github.davidmc24.gradle.plugin.avro" version "1.9.1"
+ id "com.github.davidmc24.gradle.plugin.avro" version "1.9.1"
 }
 dependencies {
-	implementation "org.apache.avro:avro:1.11.3"
-	implementation "io.confluent:kafka-avro-serializer:7.5.0"
+ implementation "org.apache.avro:avro:1.11.3"
+ implementation "io.confluent:kafka-avro-serializer:7.5.0"
 }
 avro {
-	createSetters = false // 불변 객체 생성
-	fieldVisibility = "PRIVATE"
+ createSetters = false // 불변 객체 생성
+ fieldVisibility = "PRIVATE"
 }
 ```
 
@@ -2317,22 +2377,22 @@ avro {
 domains/
 └── common/
   └── src/main/resources/avro/
-	  └── envelope.avsc
+   └── envelope.avsc
 ```
 
 - **스키마**:
 
 ```json
   {
-	"namespace": "com.example.common.avro",
-	"type": "record",
-	"name": "Envelope",
-	"fields": [
-	  {"name": "schemaVersion", "type": "string"},
-	  {"name": "eventId", "type": "string"},
-	  {"name": "timestamp", "type": "long", "doc": "Event timestamp in nanoseconds"},
-	  {"name": "source", "type": "string"}
-	]
+ "namespace": "com.example.common.avro",
+ "type": "record",
+ "name": "Envelope",
+ "fields": [
+   {"name": "schemaVersion", "type": "string"},
+   {"name": "eventId", "type": "string"},
+   {"name": "timestamp", "type": "long", "doc": "Event timestamp in nanoseconds"},
+   {"name": "source", "type": "string"}
+ ]
   }
 ```
 
@@ -2366,7 +2426,7 @@ domains/
   ├── src/main/resources/avro/
   │   └── envelope.avsc
   └── src/main/kotlin/com/example/common/avro/
-	  └── Envelope.kt (자동 생성)
+   └── Envelope.kt (자동 생성)
 ```
 
 - **4.1.1.6.2 관리 방식**
@@ -2391,8 +2451,8 @@ dependencies {
 @KafkaListener(topics = ["prod.order.saga.order.v1"])
 fun handleSaga(event: OrderSagaEvent) {
   when (event.payload.eventType) {
-	  "CREATE" -> processOrderCreation(event)
-	  "COMPENSATE" -> compensateOrderCreation(event)
+   "CREATE" -> processOrderCreation(event)
+   "COMPENSATE" -> compensateOrderCreation(event)
   }
 }
 ```
@@ -2429,17 +2489,17 @@ kafkaTemplate.send("prod.user.domain-event.user.v1", UserDomainEvent(envelope, p
 class KafkaConfig {
   @Bean
   fun kafkaTemplate(): KafkaTemplate<String, Any> {
-	  return KafkaTemplate(producerConfig())
+   return KafkaTemplate(producerConfig())
   }
 
   private fun producerConfig(): ProducerFactory<String, Any> {
-	  val config = mapOf(
-		  ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
-		  ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-		  ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
-		  "schema.registry.url" to "http://localhost:8081"
-	  )
-	  return DefaultKafkaProducerFactory(config)
+   val config = mapOf(
+    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+    ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
+    "schema.registry.url" to "http://localhost:8081"
+   )
+   return DefaultKafkaProducerFactory(config)
   }
 }
 ```
@@ -2450,8 +2510,8 @@ class KafkaConfig {
 ```yaml
 spring:
   kafka:
-	properties:
-	  schema.registry.url: http://localhost:8081
+ properties:
+   schema.registry.url: http://localhost:8081
 ```
 
 - **4.1.1.9 주의사항**
@@ -2490,18 +2550,18 @@ spring:
 class KafkaProducerConfig {
   @Bean
   fun producerFactory(): ProducerFactory<String, GenericRecord> {
-	  val config = mapOf(
-		  ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka-broker:9092",
-		  ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
-		  ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
-		  "schema.registry.url" to "http://schema-registry:8081"
-	  )
-	  return DefaultKafkaProducerFactory(config)
+   val config = mapOf(
+    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka-broker:9092",
+    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+    ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
+    "schema.registry.url" to "http://schema-registry:8081"
+   )
+   return DefaultKafkaProducerFactory(config)
   }
 
   @Bean
   fun kafkaTemplate(): KafkaTemplate<String, GenericRecord> {
-	  return KafkaTemplate(producerFactory())
+   return KafkaTemplate(producerFactory())
   }
 }
 
@@ -2510,30 +2570,30 @@ class UserEventProducer(
   private val kafkaTemplate: KafkaTemplate<String, GenericRecord>
 ) {
   fun sendUserEvent(userId: String, name: String, action: String) {
-	  val avroRecord = AvroSchema.userSchema.newRecordBuilder()
-		  .setUserId(userId)
-		  .setName(name)
-		  .setAction(action)
-		  .build()
-	  kafkaTemplate.send("prod.user.domain-event.user.v1", userId, avroRecord)
-		  .whenComplete { result, ex ->
-			  if (ex == null) {
-				  println("Sent event for $userId with offset=${result.recordMetadata.offset()}")
-			  } else {
-				  println("Failed to send event for $userId: ${ex.message}")
-			  }
-		  }
+   val avroRecord = AvroSchema.userSchema.newRecordBuilder()
+    .setUserId(userId)
+    .setName(name)
+    .setAction(action)
+    .build()
+   kafkaTemplate.send("prod.user.domain-event.user.v1", userId, avroRecord)
+    .whenComplete { result, ex ->
+     if (ex == null) {
+      println("Sent event for $userId with offset=${result.recordMetadata.offset()}")
+     } else {
+      println("Failed to send event for $userId: ${ex.message}")
+     }
+    }
   }
 }
 
 // Avro 스키마 예시 (별도 파일 또는 섹션 20 참조)
 object AvroSchema {
   val userSchema = SchemaBuilder.record("UserEvent")
-	  .fields()
-	  .requiredString("userId")
-	  .requiredString("name")
-	  .requiredString("action")
-	  .endRecord()
+   .fields()
+   .requiredString("userId")
+   .requiredString("name")
+   .requiredString("action")
+   .endRecord()
 }
 ```
 
@@ -2556,22 +2616,22 @@ object AvroSchema {
 class KafkaConsumerConfig {
   @Bean
   fun consumerFactory(): ConsumerFactory<String, GenericRecord> {
-	  val config = mapOf(
-		  ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka-broker:9092",
-		  ConsumerConfig.GROUP_ID_CONFIG to "user-group",
-		  ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-		  ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
-		  "schema.registry.url" to "http://schema-registry:8081",
-		  ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest"
-	  )
-	  return DefaultKafkaConsumerFactory(config)
+   val config = mapOf(
+    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka-broker:9092",
+    ConsumerConfig.GROUP_ID_CONFIG to "user-group",
+    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to KafkaAvroSerializer::class.java,
+    "schema.registry.url" to "http://schema-registry:8081",
+    ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest"
+   )
+   return DefaultKafkaConsumerFactory(config)
   }
 
   @Bean
   fun kafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, GenericRecord> {
-	  val factory = ConcurrentKafkaListenerContainerFactory<String, GenericRecord>()
-	  factory.consumerFactory = consumerFactory()
-	  return factory
+   val factory = ConcurrentKafkaListenerContainerFactory<String, GenericRecord>()
+   factory.consumerFactory = consumerFactory()
+   return factory
   }
 }
 
@@ -2579,10 +2639,10 @@ class KafkaConsumerConfig {
 class UserEventConsumer {
   @KafkaListener(topics = ["prod.user.domain-event.user.v1"], groupId = "user-group")
   fun consume(record: GenericRecord) {
-	  val userId = record.get("userId").toString()
-	  val name = record.get("name").toString()
-	  val action = record.get("action").toString()
-	  println("Consumed event: userId=$userId, name=$name, action=$action")
+   val userId = record.get("userId").toString()
+   val name = record.get("name").toString()
+   val action = record.get("action").toString()
+   println("Consumed event: userId=$userId, name=$name, action=$action")
   }
 }
 ```
@@ -2654,9 +2714,9 @@ fun consume(record: GenericRecord) {
 @KafkaListener(topics = ["prod.user.domain-event.user.v1"])
 fun consume(record: GenericRecord) {
   try {
-	  processAvroRecord(record)
+   processAvroRecord(record)
   } catch (e: Exception) {
-	  kafkaTemplate.send("dead-letter-topic", record)
+   kafkaTemplate.send("dead-letter-topic", record)
   }
 }
 ```
@@ -2671,12 +2731,12 @@ class UserEventProducer(
   private val kafkaTemplate: KafkaTemplate<String, GenericRecord>
 ) {
   fun sendUserEvent(userId: String, name: String, action: String) {
-	  val avroRecord = AvroSchema.userSchema.newRecordBuilder()
-		  .setUserId(userId)
-		  .setName(name)
-		  .setAction(action)
-		  .build()
-	  kafkaTemplate.send("prod.user.domain-event.user.v1", userId, avroRecord)
+   val avroRecord = AvroSchema.userSchema.newRecordBuilder()
+    .setUserId(userId)
+    .setName(name)
+    .setAction(action)
+    .build()
+   kafkaTemplate.send("prod.user.domain-event.user.v1", userId, avroRecord)
   }
 }
 
@@ -2684,10 +2744,10 @@ class UserEventProducer(
 class UserEventConsumer {
   @KafkaListener(topics = ["prod.user.domain-event.user.v1"], groupId = "user-group")
   fun consume(record: GenericRecord) {
-	  val userId = record.get("userId").toString()
-	  val name = record.get("name").toString()
-	  val action = record.get("action").toString()
-	  println("Processed: userId=$userId, name=$name, action=$action")
+   val userId = record.get("userId").toString()
+   val name = record.get("name").toString()
+   val action = record.get("action").toString()
+   println("Processed: userId=$userId, name=$name, action=$action")
   }
 }
 ```
@@ -2743,34 +2803,34 @@ class UserEventConsumer(
   private val orderRepository: OrderRepository
 ) {
   @RetryableTopic(
-	  attempts = "3",
-	  backoff = @Backoff(delay = 2000L, multiplier = 2.0),
-	  dltTopicSuffix = "-dlt",
-	  autoCreateTopics = "true"
+   attempts = "3",
+   backoff = @Backoff(delay = 2000L, multiplier = 2.0),
+   dltTopicSuffix = "-dlt",
+   autoCreateTopics = "true"
   )
   @KafkaListener(
-	  topics = ["prod.user.domain-event.user.v1"],
-	  groupId = "user-group",
-	  containerFactory = "kafkaListenerContainerFactory"
+   topics = ["prod.user.domain-event.user.v1"],
+   groupId = "user-group",
+   containerFactory = "kafkaListenerContainerFactory"
   )
   @Transactional
   fun consume(record: GenericRecord) {
-	  val eventId = record.get("eventId").toString()
-	  val userId = record.get("userId").toString()
-	  val name = record.get("name").toString()
-	  val action = record.get("action").toString()
+   val eventId = record.get("eventId").toString()
+   val userId = record.get("userId").toString()
+   val name = record.get("name").toString()
+   val action = record.get("action").toString()
 
-	  try {
-		  eventLogRepository.insert(EventLog(eventId, "UserEvent", status = "SUCCESS"))
-		  orderRepository.save(Order(userId, name, action))
-	  } catch (e: DataIntegrityViolationException) {
-		  // event_id 중복 발생 시: 이미 처리된 메시지로 간주하고 무시
-		  logger.info("Duplicate event ignored: $eventId")
-	  } catch (e: Exception) {
-		  // 예기치 못한 오류 발생 시, 상태를 FAILED로 기록하거나 DLQ 처리
-		  eventLogRepository.insert(EventLog(eventId, "UserEvent", status = "FAILED"))
-		  throw e
-	  }
+   try {
+    eventLogRepository.insert(EventLog(eventId, "UserEvent", status = "SUCCESS"))
+    orderRepository.save(Order(userId, name, action))
+   } catch (e: DataIntegrityViolationException) {
+    // event_id 중복 발생 시: 이미 처리된 메시지로 간주하고 무시
+    logger.info("Duplicate event ignored: $eventId")
+   } catch (e: Exception) {
+    // 예기치 못한 오류 발생 시, 상태를 FAILED로 기록하거나 DLQ 처리
+    eventLogRepository.insert(EventLog(eventId, "UserEvent", status = "FAILED"))
+    throw e
+   }
   }
 }
 ```
@@ -2796,7 +2856,7 @@ spring.kafka.consumer.isolation-level: read_committed
 
 ```kotlin
 kafkaTemplate.executeInTransaction { template ->
-	template.send(...)
+ template.send(...)
 }
 ```
 
@@ -2847,14 +2907,14 @@ kafkaTemplate.executeInTransaction { template ->
 
 ```yaml
   spring:
-	datasource:
-	  url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
-	  driver-class-name: org.h2.Driver
-	  username: sa
-	  password:
-	jpa:
-	  hibernate:
-		  ddl-auto: create-drop
+ datasource:
+   url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+   driver-class-name: org.h2.Driver
+   username: sa
+   password:
+ jpa:
+   hibernate:
+    ddl-auto: create-drop
 ```
 
 #### 2.4.1.3 Kotest 공통 설정
@@ -2871,13 +2931,13 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 abstract class SpringKotestSpec(body: BehaviorSpec.() -> Unit = {}) : BehaviorSpec(body) {
   companion object {
-	  private lateinit var context: ApplicationContext
-	  fun setContext(ctx: ApplicationContext) { context = ctx }
-	  inline fun <reified T> getBean(): T = context.getBean(T::class.java)
+   private lateinit var context: ApplicationContext
+   fun setContext(ctx: ApplicationContext) { context = ctx }
+   inline fun <reified T> getBean(): T = context.getBean(T::class.java)
   }
 
   override fun beforeSpec(spec: io.kotest.core.spec.Spec) {
-	  setContext(applicationContext)
+   setContext(applicationContext)
   }
 }
 ```
@@ -2906,23 +2966,23 @@ import io.kotest.assertions.throwables.shouldThrow
 
 class UserTest : FunSpec({
   test("유효한 사용자 생성") {
-	  val user = User(UserId.of(1L), "John", Email.of("john@example.com"))
-	  user.name shouldBe "John"
-	  user.email.value shouldBe "john@example.com"
+   val user = User(UserId.of(1L), "John", Email.of("john@example.com"))
+   user.name shouldBe "John"
+   user.email.value shouldBe "john@example.com"
   }
 
   test("유효하지 않은 이메일로 생성 시 예외 발생") {
-	  val exception = shouldThrow<IllegalArgumentException> {
-		  Email.of("invalid")
-	  }
-	  exception.message shouldBe "유효한 이메일 형식이 아닙니다."
+   val exception = shouldThrow<IllegalArgumentException> {
+    Email.of("invalid")
+   }
+   exception.message shouldBe "유효한 이메일 형식이 아닙니다."
   }
 
   test("이름 업데이트 후 불변성 유지") {
-	  val user = User(UserId.of(1L), "John", Email.of("john@example.com"))
-	  val updated = user.updateName("Jane")
-	  updated.name shouldBe "Jane"
-	  updated.id shouldBe user.id // 불변성 확인
+   val user = User(UserId.of(1L), "John", Email.of("john@example.com"))
+   val updated = user.updateName("Jane")
+   updated.name shouldBe "Jane"
+   updated.id shouldBe user.id // 불변성 확인
   }
 })
 ```
@@ -2954,16 +3014,16 @@ class CreateUserCommandHandlerTest : BehaviorSpec({
   val repository = getBean<UserRepository>()
 
   given("유효한 사용자 생성 요청이 주어졌을 때") {
-	  val command = CreateUserCommand("Alice", "alice@example.com")
-	  when("핸들러를 실행하면") {
-		  val result = handler.handle(command)
-		  then("성공 결과가 반환되고 DB에 저장된다") {
-			  result.success shouldBe true
-			  result.correlationId shouldNotBe null
-			  val user = repository.findByEmail(Email.of("alice@example.com"))
-			  user?.name shouldBe "Alice"
-		  }
-	  }
+   val command = CreateUserCommand("Alice", "alice@example.com")
+   when("핸들러를 실행하면") {
+    val result = handler.handle(command)
+    then("성공 결과가 반환되고 DB에 저장된다") {
+     result.success shouldBe true
+     result.correlationId shouldNotBe null
+     val user = repository.findByEmail(Email.of("alice@example.com"))
+     user?.name shouldBe "Alice"
+    }
+   }
   }
 })
 ```
@@ -2982,9 +3042,9 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 object PostgresContainer : PostgreSQLContainer<PostgresContainer>("postgres:15") {
   init {
-	  withDatabaseName("testdb")
-	  withUsername("test")
-	  withPassword("test")
+   withDatabaseName("testdb")
+   withUsername("test")
+   withPassword("test")
   }
 }
 ```
@@ -3004,16 +3064,16 @@ class UserRepositoryImplTest : FunSpec({
   val repository = UserRepositoryImpl(jpaRepository)
 
   test("사용자 저장 및 조회 성공") {
-	  val user = User(UserId.of(1L), "Bob", Email.of("bob@example.com"))
-	  repository.save(user)
-	  val found = repository.findById(UserId.of(1L))
-	  found shouldNotBe null
-	  found?.name shouldBe "Bob"
+   val user = User(UserId.of(1L), "Bob", Email.of("bob@example.com"))
+   repository.save(user)
+   val found = repository.findById(UserId.of(1L))
+   found shouldNotBe null
+   found?.name shouldBe "Bob"
   }
 
   test("존재하지 않는 ID 조회 시 null 반환") {
-	  val found = repository.findById(UserId.of(999L))
-	  found shouldBe null
+   val found = repository.findById(UserId.of(999L))
+   found shouldBe null
   }
 })
 ```
@@ -3044,27 +3104,27 @@ class UserCommandControllerTest : DescribeSpec({
   val handler = mockk<CreateUserCommandHandler>()
 
   describe("POST /api/v1/users") {
-	  context("유효한 요청일 때") {
-		  it("성공 응답과 correlationId를 반환한다") {
-			  every { handler.handle(any()) } returns CommandResult(true, "corr-123")
-			  mockMvc.perform(post("/api/v1/users")
-				  .contentType(MediaType.APPLICATION_JSON)
-				  .content("""{"name":"Alice","email":"alice@example.com","password":"Pass123!"}"""))
-				  .andExpect(status().isOk)
-				  .andExpect(jsonPath("$.status").value("success"))
-				  .andExpect(jsonPath("$.correlationId").value("corr-123"))
-		  }
-	  }
+   context("유효한 요청일 때") {
+    it("성공 응답과 correlationId를 반환한다") {
+     every { handler.handle(any()) } returns CommandResult(true, "corr-123")
+     mockMvc.perform(post("/api/v1/users")
+      .contentType(MediaType.APPLICATION_JSON)
+      .content("""{"name":"Alice","email":"alice@example.com","password":"Pass123!"}"""))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.status").value("success"))
+      .andExpect(jsonPath("$.correlationId").value("corr-123"))
+    }
+   }
 
-	  context("유효하지 않은 이메일일 때") {
-		  it("400 에러와 ProblemDetail을 반환한다") {
-			  mockMvc.perform(post("/api/v1/users")
-				  .contentType(MediaType.APPLICATION_JSON)
-				  .content("""{"name":"Alice","email":"invalid","password":"Pass123!"}"""))
-				  .andExpect(status().isBadRequest)
-				  .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
-		  }
-	  }
+   context("유효하지 않은 이메일일 때") {
+    it("400 에러와 ProblemDetail을 반환한다") {
+     mockMvc.perform(post("/api/v1/users")
+      .contentType(MediaType.APPLICATION_JSON)
+      .content("""{"name":"Alice","email":"invalid","password":"Pass123!"}"""))
+      .andExpect(status().isBadRequest)
+      .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+    }
+   }
   }
 })
 ```
@@ -3111,9 +3171,9 @@ import io.mockk.coEvery
 class AsyncCommandHandlerTest : FunSpec({
   val handler = mockk<CreateUserAsyncCommandHandler>()
   test("비동기 사용자 생성 성공") {
-	  coEvery { handler.handle(any()) } returns AsyncCommandResult(true, "job-123")
-	  val result = handler.handle(CreateUserCommand("Alice", "alice@example.com"))
-	  result.jobId shouldBe "job-123"
+   coEvery { handler.handle(any()) } returns AsyncCommandResult(true, "job-123")
+   val result = handler.handle(CreateUserCommand("Alice", "alice@example.com"))
+   result.jobId shouldBe "job-123"
   }
 })
 ```
@@ -3165,6 +3225,7 @@ class AsyncCommandHandlerTest : FunSpec({
 ---
 
 ## 문서 추가 및 수정 사항 (2025-04-03)
+
 알겠습니다. 지적해주신 부분 반영하여 더욱 명확한 규칙 문서 형태로 수정했습니다. "~해야 합니다" 와 같은 제안형 어미를 "~해야 한다", "~필수적으로 명시해야 한다" 등의 강제성을 띈 어미로 변경하여 규칙 문서의 명확성을 높였습니다. 수정된 내용은 아래와 같습니다.
 
 ## 답변: MSA 스타일의 독립적인 구성을 위한 도메인별 모듈화

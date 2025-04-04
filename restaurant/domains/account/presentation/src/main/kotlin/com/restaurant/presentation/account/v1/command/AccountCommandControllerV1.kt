@@ -41,7 +41,7 @@ class AccountCommandControllerV1(
             val errorCode = AccountErrorCode.fromCode(result.errorCode)
             val problem =
                 ProblemDetail.forStatus(errorCode.status).apply {
-                    type = URI.create("https://example.com/probs/${errorCode.code.lowercase()}")
+                    type = URI.create("probs/${errorCode.code.lowercase()}")
                     title = errorCode.code
                     detail = errorCode.message
                     instance = URI.create("/api/v1/accounts/$accountId/payments")
@@ -76,7 +76,7 @@ class AccountCommandControllerV1(
             val errorCode = AccountErrorCode.fromCode(result.errorCode)
             val problem =
                 ProblemDetail.forStatus(errorCode.status).apply {
-                    type = URI.create("https://example.com/probs/${errorCode.code.lowercase()}")
+                    type = URI.create("probs/${errorCode.code.lowercase()}")
                     title = errorCode.code
                     detail = errorCode.message
                     instance = URI.create("/api/v1/accounts/$accountId/payments/cancel")

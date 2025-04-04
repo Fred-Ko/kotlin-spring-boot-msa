@@ -25,7 +25,7 @@ class AccountGlobalExceptionHandler {
     fun handleAccountNotFoundException(ex: AccountNotFoundException): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.NOT_FOUND).apply {
-                type = URI.create("https://example.com/probs/account_not_found")
+                type = URI.create("probs/account_not_found")
                 title = "Account Not Found"
                 detail = ex.message
                 setProperty("errorCode", "ACCOUNT_NOT_FOUND")
@@ -41,7 +41,7 @@ class AccountGlobalExceptionHandler {
     fun handleInsufficientBalanceException(ex: InsufficientBalanceException): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/insufficient_balance")
+                type = URI.create("probs/insufficient_balance")
                 title = "Insufficient Balance"
                 detail = ex.message
                 setProperty("errorCode", "INSUFFICIENT_BALANCE")
@@ -68,7 +68,7 @@ class AccountGlobalExceptionHandler {
 
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/validation_error")
+                type = URI.create("probs/validation_error")
                 title = "Validation Error"
                 detail = "입력값 유효성 검사에 실패했습니다."
                 setProperty("errorCode", "VALIDATION_ERROR")
@@ -94,7 +94,7 @@ class AccountGlobalExceptionHandler {
 
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
-                type = URI.create("https://example.com/probs/constraint_violation")
+                type = URI.create("probs/constraint_violation")
                 title = "Constraint Violation"
                 detail = "제약 조건 위반이 발생했습니다."
                 setProperty("errorCode", "CONSTRAINT_VIOLATION")
@@ -111,7 +111,7 @@ class AccountGlobalExceptionHandler {
     fun handleGenericException(ex: Exception): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR).apply {
-                type = URI.create("https://example.com/probs/internal_server_error")
+                type = URI.create("probs/internal_server_error")
                 title = "Internal Server Error"
                 detail = "서버 내부 오류가 발생했습니다."
                 setProperty("errorCode", "INTERNAL_SERVER_ERROR")
