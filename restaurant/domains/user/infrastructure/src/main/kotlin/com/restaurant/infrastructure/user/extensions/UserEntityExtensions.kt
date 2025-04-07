@@ -1,12 +1,10 @@
-package com.restaurant.infrastructure.user.entity.extensions
+package com.restaurant.infrastructure.user.extensions
 
 import com.restaurant.domain.user.aggregate.User
-import com.restaurant.domain.user.entity.Address
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
-import com.restaurant.infrastructure.user.entity.AddressEntity
 import com.restaurant.infrastructure.user.entity.UserEntity
 
 // UserEntity -> User 변환
@@ -15,8 +13,8 @@ fun UserEntity.toDomain(): User {
     val domainAddresses = addresses.map { it.toDomain() }
 
     return User.reconstitute(
-        id = UserId(id!!),
-        email = Email(email),
+        id = UserId.of(id!!),
+        email = Email.of(email),
         password = Password.fromEncoded(password),
         name = Name.of(name),
         addresses = domainAddresses,
@@ -49,26 +47,3 @@ fun User.toEntity(): UserEntity {
 
     return entity
 }
-
-// AddressEntity -> Address 변환
-fun AddressEntity.toDomain(): Address {
-    val id = this.id ?: throw IllegalStateException("영속화된 AddressEntity의 ID는 null일 수 없습니다")
-
-    return Address.reconstitute(
-        id = id,
-        street = street,
-        detail = detail,
-        zipCode = zipCode,
-        isDefault = isDefault,
-    )
-}
-
-// Address -> AddressEntity 변환 (UserEntity 참조 없이)
-fun Address.toEntity(): AddressEntity =
-    AddressEntity(
-        id = id,
-        street = street,
-        detail = detail,
-        zipCode = zipCode,
-        isDefault = isDefault,
-    )

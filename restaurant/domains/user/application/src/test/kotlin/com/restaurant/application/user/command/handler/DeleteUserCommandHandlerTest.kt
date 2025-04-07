@@ -36,7 +36,7 @@ class DeleteUserCommandHandlerTest(
             val savedUser =
                 userRepository.save(
                     User.create(
-                        email = Email("test@example.com"),
+                        email = Email.of("test@example.com"),
                         password = Password.of(password),
                         name = Name.of("테스트유저"),
                     ),
@@ -88,7 +88,7 @@ class DeleteUserCommandHandlerTest(
             val savedUser =
                 userRepository.save(
                     User.create(
-                        email = Email("test@example.com"),
+                        email = Email.of("test@example.com"),
                         password = Password.of(actualPassword),
                         name = Name.of("테스트유저2"),
                     ),

@@ -17,7 +17,7 @@ class UpdateAddressCommandHandler(
     @Transactional
     fun handle(command: UpdateAddressCommand): CommandResult {
         try {
-            val userId = UserId(command.userId)
+            val userId = UserId.of(command.userId)
             val user =
                 userRepository.findById(userId)
                     ?: return CommandResult(

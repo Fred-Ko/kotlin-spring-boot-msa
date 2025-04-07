@@ -45,7 +45,7 @@ class RegisterUserCommandHandlerTest(
                 }
 
                 Then("사용자가 저장되어야 한다") {
-                    val savedUser = userRepository.findByEmail(Email(command.email))
+                    val savedUser = userRepository.findByEmail(Email.of(command.email))
                     savedUser shouldNotBe null
                     savedUser?.email?.value shouldBe command.email
                     savedUser?.name?.value shouldBe command.name
@@ -58,7 +58,7 @@ class RegisterUserCommandHandlerTest(
             val existingEmail = "existing@example.com"
             userRepository.save(
                 User.create(
-                    email = Email(existingEmail),
+                    email = Email.of(existingEmail),
                     password =
                         Password
                             .of("password123"),

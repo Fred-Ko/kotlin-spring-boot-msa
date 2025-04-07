@@ -17,7 +17,7 @@ class UserTest :
     FunSpec({
         test("유효한 정보로 사용자 생성 성공") {
             // given
-            val email = Email("test@example.com")
+            val email = Email.of("test@example.com")
             val password = Password.of("password123")
             val name = Name.of("테스트유저")
 
@@ -35,8 +35,8 @@ class UserTest :
 
         test("기존 정보로 사용자 복원 성공") {
             // given
-            val id = UserId(1L)
-            val email = Email("test@example.com")
+            val id = UserId.of(1L)
+            val email = Email.of("test@example.com")
             val password = Password.of("password123")
             val name = Name.of("테스트유저")
             val createdAt = LocalDateTime.now().minusDays(1)
@@ -59,7 +59,7 @@ class UserTest :
             // given
             val user =
                 User.create(
-                    Email("test@example.com"),
+                    Email.of("test@example.com"),
                     Password.of("password123"),
                     Name.of("원래이름"),
                 )
@@ -82,7 +82,7 @@ class UserTest :
             val originalPassword = "password123"
             val user =
                 User.create(
-                    Email("test@example.com"),
+                    Email.of("test@example.com"),
                     Password.of(originalPassword),
                     Name.of("테스트유저"),
                 )
@@ -105,7 +105,7 @@ class UserTest :
             val rawPassword = "password1234"
             val user =
                 User.create(
-                    Email("test@example.com"),
+                    Email.of("test@example.com"),
                     Password.of(rawPassword),
                     Name.of("테스트유저"),
                 )
@@ -118,7 +118,7 @@ class UserTest :
         // 실패 케이스 추가
         test("빈 이름으로 사용자 생성 실패") {
             // given
-            val email = Email("test@example.com")
+            val email = Email.of("test@example.com")
             val password = Password.of("password123")
             val emptyName = ""
 
@@ -130,7 +130,7 @@ class UserTest :
             // given
             val user =
                 User.create(
-                    Email("test@example.com"),
+                    Email.of("test@example.com"),
                     Password.of("validpassword123"),
                     Name.of("테스트유저"),
                 )

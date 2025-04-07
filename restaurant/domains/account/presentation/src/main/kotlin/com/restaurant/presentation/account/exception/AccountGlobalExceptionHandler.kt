@@ -2,6 +2,8 @@ package com.restaurant.presentation.account.exception
 
 import com.restaurant.domain.account.exception.AccountNotFoundException
 import com.restaurant.domain.account.exception.InsufficientBalanceException
+import com.restaurant.domain.account.exception.PaymentAlreadyCancelledException
+import com.restaurant.domain.account.exception.TransactionNotFoundException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -14,7 +16,7 @@ import java.time.Instant
 
 /**
  * 계좌 관련 전역 예외 처리기
- * RFC 7807 형식(ProblemDetail)으로 에러 응답을 변환
+ * RFC 9457 형식(ProblemDetail)으로 에러 응답을 변환
  */
 @ControllerAdvice(basePackages = ["com.restaurant.presentation.account"])
 class AccountGlobalExceptionHandler {
@@ -32,6 +34,38 @@ class AccountGlobalExceptionHandler {
                 setProperty("timestamp", Instant.now().toString())
             }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem)
+    }
+
+    /**
+     * 거래 내역을 찾을 수 없는 예외 처리
+     */
+    @ExceptionHandler(TransactionNotFoundException::class)
+    fun handleTransactionNotFoundException(ex: TransactionNotFoundException): ResponseEntity<ProblemDetail> {
+        val problem =
+            ProblemDetail.forStatus(HttpStatus.NOT_FOUND).apply {
+                type = URI.create("probs/transaction_not_found")
+                title = "Transaction Not Found"
+                detail = ex.message
+                setProperty("errorCode", "TRANSACTION_NOT_FOUND")
+                setProperty("timestamp", Instant.now().toString())
+            }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem)
+    }
+
+    /**
+     * 이미 결제가 취소된 경우 예외 처리
+     */
+    @ExceptionHandler(PaymentAlreadyCancelledException::class)
+    fun handlePaymentAlreadyCancelledException(ex: PaymentAlreadyCancelledException): ResponseEntity<ProblemDetail> {
+        val problem =
+            ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
+                type = URI.create("probs/payment_already_cancelled")
+                title = "Payment Already Cancelled"
+                detail = ex.message
+                setProperty("errorCode", "PAYMENT_ALREADY_CANCELLED")
+                setProperty("timestamp", Instant.now().toString())
+            }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem)
     }
 
     /**

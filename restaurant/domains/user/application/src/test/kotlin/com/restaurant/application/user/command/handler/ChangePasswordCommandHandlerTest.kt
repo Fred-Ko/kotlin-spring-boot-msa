@@ -31,7 +31,7 @@ class ChangePasswordCommandHandlerTest(
             val savedUser =
                 userRepository.save(
                     User.create(
-                        email = Email("test1@example.com"),
+                        email = Email.of("test1@example.com"),
                         password = Password.of(currentPassword),
                         name = Name.of("테스트유저"),
                     ),
@@ -81,7 +81,7 @@ class ChangePasswordCommandHandlerTest(
             val savedUser =
                 userRepository.save(
                     User.create(
-                        email = Email("test2@example.com"),
+                        email = Email.of("test2@example.com"),
                         password = Password.of(actualPassword),
                         name = Name.of("테스트유저2"),
                     ),

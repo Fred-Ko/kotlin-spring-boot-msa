@@ -35,7 +35,7 @@ class LoginCommandHandlerTest(
             // 테스트 사용자 생성
             userRepository.save(
                 User.create(
-                    email = Email(userEmail),
+                    email = Email.of(userEmail),
                     password = Password.of(userPassword),
                     name = Name.of("테스트유저"),
                 ),
@@ -74,7 +74,7 @@ class LoginCommandHandlerTest(
             // 테스트 사용자 생성
             userRepository.save(
                 User.create(
-                    email = Email(userEmail),
+                    email = Email.of(userEmail),
                     password = Password.of(actualPassword),
                     name = Name.of("테스트유저2"),
                 ),

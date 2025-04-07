@@ -1,11 +1,16 @@
 package com.restaurant.domain.account.vo
 
 import java.math.BigDecimal
+import kotlin.ConsistentCopyVisibility
 
-@JvmInline
-value class Money(
+@ConsistentCopyVisibility
+data class Money private constructor(
     val value: BigDecimal,
 ) {
+    init {
+        require(value >= BigDecimal.ZERO) { "금액은 음수일 수 없습니다." }
+    }
+
     operator fun plus(other: Money): Money = Money(this.value.add(other.value))
 
     operator fun minus(other: Money): Money = Money(this.value.subtract(other.value))
@@ -23,4 +28,6 @@ value class Money(
 
         val ZERO: Money = Money(BigDecimal.ZERO)
     }
+
+    override fun toString(): String = value.toString()
 }

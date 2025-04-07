@@ -12,7 +12,7 @@ class EmailTest :
             val validEmail = "test@example.com"
 
             // when
-            val email = Email(validEmail)
+            val email = Email.of(validEmail)
 
             // then
             email.value shouldBe validEmail
@@ -31,7 +31,7 @@ class EmailTest :
             invalidEmails.forEach { invalidEmail ->
                 val exception =
                     shouldThrow<IllegalArgumentException> {
-                        Email(invalidEmail)
+                        Email.of(invalidEmail)
                     }
                 exception.message shouldBe "유효한 이메일 형식이 아닙니다."
             }
@@ -40,7 +40,7 @@ class EmailTest :
         test("toString()은 이메일 값을 반환한다") {
             // given
             val emailValue = "test@example.com"
-            val email = Email(emailValue)
+            val email = Email.of(emailValue)
 
             // when
             val result = email.toString()

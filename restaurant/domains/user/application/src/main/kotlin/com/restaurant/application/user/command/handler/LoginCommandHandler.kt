@@ -14,26 +14,43 @@ class LoginCommandHandler(
     private val userRepository: UserRepository,
 ) {
     @Transactional(readOnly = true)
-    fun handle(command: LoginCommand): CommandResult {
-        try {
-            val email = Email(command.email)
-            val user =
-                userRepository.findByEmail(email)
-                    ?: return CommandResult(
-                        false,
-                        errorCode = UserErrorCode.INVALID_CREDENTIALS.code,
-                    )
+    fun handle(
+        command: LoginCommand,
+        correlationId: String? = null,
+    ): CommandResult {
+        val actualCorrelationId = correlationId ?: UUID.randomUUID().toString()
 
-            if (!user.checkPassword(command.password)) {
-                return CommandResult(false, errorCode = UserErrorCode.INVALID_CREDENTIALS.code)
+        // 이메일 유효성 검증
+        val email =
+            try {
+                Email.of(command.email)
+            } catch (e: IllegalArgumentException) {
+                return CommandResult.fail(
+                    correlationId = actualCorrelationId,
+                    errorCode = UserErrorCode.INVALID_INPUT.code,
+                    errorMessage = "유효하지 않은 이메일 형식입니다: ${command.email}",
+                )
             }
 
-            // 실제로는 여기서 세션이나 JWT 토큰을 생성해야 함
-            return CommandResult(true, UUID.randomUUID().toString())
-        } catch (e: IllegalArgumentException) {
-            return CommandResult(false, errorCode = UserErrorCode.INVALID_INPUT.code)
-        } catch (e: Exception) {
-            return CommandResult(false, errorCode = UserErrorCode.SYSTEM_ERROR.code)
+        // 사용자 조회
+        val user =
+            userRepository.findByEmail(email)
+                ?: return CommandResult.fail(
+                    correlationId = actualCorrelationId,
+                    errorCode = UserErrorCode.INVALID_CREDENTIALS.code,
+                    errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다.",
+                )
+
+        // 비밀번호 검증
+        if (!user.checkPassword(command.password)) {
+            return CommandResult.fail(
+                correlationId = actualCorrelationId,
+                errorCode = UserErrorCode.INVALID_CREDENTIALS.code,
+                errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다.",
+            )
         }
+
+        // 로그인 성공 - 실제로는 여기서 세션이나 JWT 토큰을 생성해야 함
+        return CommandResult.success(correlationId = actualCorrelationId)
     }
 }
