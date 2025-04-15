@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.math.BigDecimal
 
 /**
@@ -28,8 +29,13 @@ class TransactionEntity(
     val amount: BigDecimal,
     @Column(name = "order_id", nullable = false)
     val orderId: String,
+    @Column(name = "cancelled", nullable = false)
+    val cancelled: Boolean = false,
     @Column(name = "timestamp", nullable = false)
     val timestamp: Long,
+    @Version
+    @Column(nullable = false)
+    val version: Long = 0,
 )
 
 /**

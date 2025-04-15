@@ -6,7 +6,6 @@ import com.restaurant.domain.account.vo.AccountId
 import com.restaurant.domain.account.vo.OrderId
 import com.restaurant.domain.account.vo.TransactionId
 import com.restaurant.domain.account.vo.TransactionType
-import com.restaurant.infrastructure.account.entity.TransactionTypeEntity
 import com.restaurant.infrastructure.account.entity.extensions.toDomain
 import com.restaurant.infrastructure.account.entity.extensions.toEntity
 import org.springframework.data.domain.PageRequest
@@ -52,11 +51,7 @@ class TransactionRepositoryImpl(
         cursor: TransactionId?,
         limit: Int,
     ): List<Transaction> {
-        val entityType =
-            when (type) {
-                TransactionType.DEBIT -> TransactionTypeEntity.DEBIT
-                TransactionType.CREDIT -> TransactionTypeEntity.CREDIT
-            }
+        val entityType = type.toEntity()
 
         val pageable = PageRequest.of(0, limit)
         return jpaTransactionRepository

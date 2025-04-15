@@ -2,18 +2,21 @@ package com.restaurant.presentation.account.v1.query
 
 import com.restaurant.application.account.query.GetAccountBalanceQuery
 import com.restaurant.application.account.query.GetAccountTransactionsQuery
+import com.restaurant.application.account.query.dto.AccountBalanceDto
+import com.restaurant.application.account.query.dto.CursorPageDto
+import com.restaurant.application.account.query.dto.TransactionDto
 import com.restaurant.application.account.query.handler.GetAccountBalanceQueryHandler
 import com.restaurant.application.account.query.handler.GetAccountTransactionsQueryHandler
-import com.restaurant.domain.account.exception.AccountNotFoundException
-import com.restaurant.presentation.account.v1.extensions.response.toResponse
-import org.springframework.http.HttpStatus
+import org.springframework.hateoas.CollectionModel
+import org.springframework.hateoas.EntityModel
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 /**
  * 계좌 쿼리 컨트롤러
@@ -30,16 +33,18 @@ class AccountQueryControllerV1(
     @GetMapping("/{accountId}/balance")
     fun getAccountBalance(
         @PathVariable accountId: Long,
-    ): ResponseEntity<Any> {
-        try {
-            val query = GetAccountBalanceQuery(accountId)
-            val result = getAccountBalanceQueryHandler.handle(query)
-            return ResponseEntity.ok(result.toResponse())
-        } catch (e: AccountNotFoundException) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "계좌를 찾을 수 없습니다.", e)
-        } catch (e: Exception) {
-            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "계좌 잔액 조회 중 오류가 발생했습니다.", e)
-        }
+    ): ResponseEntity<EntityModel<AccountBalanceDto>> {
+        val query = GetAccountBalanceQuery(accountId)
+        val result = getAccountBalanceQueryHandler.handle(query)
+
+        // HATEOAS 링크 생성
+        val selfLink = linkTo(methodOn(this::class.java).getAccountBalance(accountId)).withSelfRel()
+        val transactionsLink = linkTo(methodOn(this::class.java).getAccountTransactions(accountId, null, 10)).withRel("transactions")
+
+        // EntityModel 생성
+        val entityModel = EntityModel.of(result, selfLink, transactionsLink)
+
+        return ResponseEntity.ok(entityModel)
     }
 
     /**
@@ -50,20 +55,42 @@ class AccountQueryControllerV1(
         @PathVariable accountId: Long,
         @RequestParam(required = false) cursor: String?,
         @RequestParam(defaultValue = "10") limit: Int,
-    ): ResponseEntity<Any> {
-        try {
-            val query =
-                GetAccountTransactionsQuery(
-                    accountId = accountId,
-                    cursor = cursor,
-                    limit = limit.coerceIn(1, 100), // 최소 1개, 최대 100개로 제한
-                )
-            val result = getAccountTransactionsQueryHandler.handle(query)
-            return ResponseEntity.ok(result.toResponse())
-        } catch (e: AccountNotFoundException) {
-            throw ResponseStatusException(HttpStatus.NOT_FOUND, "계좌를 찾을 수 없습니다.", e)
-        } catch (e: Exception) {
-            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "트랜잭션 조회 중 오류가 발생했습니다.", e)
+    ): ResponseEntity<CollectionModel<EntityModel<TransactionDto>>> {
+        val query =
+            GetAccountTransactionsQuery(
+                accountId = accountId,
+                cursor = cursor,
+                limit = limit.coerceIn(1, 100),
+            )
+        val result: CursorPageDto<TransactionDto> = getAccountTransactionsQueryHandler.handle(query)
+
+        // 개별 TransactionDto를 EntityModel로 변환 (self 링크 추가 가능)
+        val transactionModels =
+            result.items.map {
+                EntityModel.of(it, linkTo(methodOn(this::class.java).getTransactionDetail(accountId, it.id)).withSelfRel())
+            }
+
+        // 페이지 링크 생성
+        val selfLink = linkTo(methodOn(this::class.java).getAccountTransactions(accountId, cursor, limit)).withSelfRel()
+        val links = mutableListOf(selfLink)
+        if (result.hasNext) {
+            val nextLink = linkTo(methodOn(this::class.java).getAccountTransactions(accountId, result.nextCursor, limit)).withRel("next")
+            links.add(nextLink)
         }
+
+        // CollectionModel 생성
+        val collectionModel = CollectionModel.of(transactionModels, links)
+
+        return ResponseEntity.ok(collectionModel)
+    }
+
+    // TODO: 트랜잭션 상세 조회 엔드포인트 예시 (실제 구현 필요)
+    @GetMapping("/{accountId}/transactions/{transactionId}")
+    fun getTransactionDetail(
+        @PathVariable accountId: Long,
+        @PathVariable transactionId: Long,
+    ): ResponseEntity<EntityModel<TransactionDto>> {
+        // 실제 상세 조회 로직 구현...
+        throw UnsupportedOperationException("Not implemented yet")
     }
 }

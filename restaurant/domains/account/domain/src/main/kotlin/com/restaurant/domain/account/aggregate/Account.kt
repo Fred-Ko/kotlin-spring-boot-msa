@@ -1,6 +1,6 @@
 package com.restaurant.domain.account.aggregate
 
-import com.restaurant.domain.account.exception.InsufficientBalanceException
+import com.restaurant.domain.account.exception.AccountDomainException
 import com.restaurant.domain.account.vo.AccountId
 import com.restaurant.domain.account.vo.Money
 import com.restaurant.domain.account.vo.UserId
@@ -10,7 +10,7 @@ import com.restaurant.domain.account.vo.UserId
  * 사용자에 연결된 계좌를 관리합니다.
  */
 data class Account(
-    val id: AccountId?,
+    val id: AccountId,
     val userId: UserId,
     val balance: Money,
 ) {
@@ -18,12 +18,12 @@ data class Account(
      * 계좌에서 금액을 차감합니다.
      *
      * @param amount 차감할 금액
-     * @throws InsufficientBalanceException 잔액이 부족할 경우 발생
+     * @throws AccountDomainException.Account.InsufficientBalance 잔액이 부족할 경우 발생
      */
     fun debit(amount: Money): Account {
         if (!balance.isGreaterThanOrEqual(amount)) {
-            throw InsufficientBalanceException(
-                accountId = id ?: throw IllegalStateException("계좌 ID가 없습니다."),
+            throw AccountDomainException.Account.InsufficientBalance(
+                accountId = id,
                 currentBalance = balance,
                 requiredAmount = amount,
             )
@@ -53,7 +53,7 @@ data class Account(
 
     companion object {
         /**
-         * 새 계좌를 생성합니다.
+         * 새 계좌를 생성합니다. (ID는 부여되지 않은 상태)
          *
          * @param userId 사용자 ID
          * @param initialBalance 초기 잔액 (기본값 0)
@@ -63,9 +63,27 @@ data class Account(
             initialBalance: Money = Money.ZERO,
         ): Account =
             Account(
-                id = null,
+                id = AccountId.of(0L),
                 userId = userId,
                 balance = initialBalance,
+            )
+
+        /**
+         * 기존 계좌를 재구성합니다.
+         *
+         * @param id 계좌 ID
+         * @param userId 사용자 ID
+         * @param balance 잔액
+         */
+        fun reconstitute(
+            id: AccountId,
+            userId: UserId,
+            balance: Money,
+        ): Account =
+            Account(
+                id = id,
+                userId = userId,
+                balance = balance,
             )
     }
 }

@@ -1,12 +1,11 @@
 package com.restaurant.application.account.command.handler
 
 import com.restaurant.application.account.command.DeleteAccountCommand
-import com.restaurant.application.account.extensions.toAccountId
-import com.restaurant.common.core.command.CommandResult
+import com.restaurant.application.account.exception.AccountApplicationException
 import com.restaurant.domain.account.exception.AccountDomainException
-import com.restaurant.domain.account.exception.AccountNotFoundException
 import com.restaurant.domain.account.repository.AccountRepository
-import com.restaurant.presentation.account.v1.common.AccountErrorCode
+import com.restaurant.domain.account.vo.AccountId
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -18,62 +17,60 @@ import java.util.UUID
 class DeleteAccountCommandHandler(
     private val accountRepository: AccountRepository,
 ) {
+    private val log = LoggerFactory.getLogger(DeleteAccountCommandHandler::class.java)
+
     /**
-     * 계좌 삭제 커맨드 처리
+     * 계좌 삭제 명령 처리
      *
-     * @param command 계좌 삭제 커맨드
-     * @param correlationId 요청 추적을 위한 상관관계 ID
-     * @return 커맨드 결과
+     * @param command 계좌 삭제 명령
+     * @param correlationId 요청 추적용 상관관계 ID
      */
     @Transactional
     fun handle(
         command: DeleteAccountCommand,
         correlationId: String? = null,
-    ): CommandResult {
+    ) {
         val actualCorrelationId = correlationId ?: UUID.randomUUID().toString()
+        log.info("계좌 삭제 명령 처리 시작, correlationId={}", actualCorrelationId)
 
         try {
-            val accountId = command.toAccountId()
+            val accountId = AccountId.of(command.accountId)
 
             // 계좌 존재 여부 확인
             val account =
                 accountRepository.findById(accountId)
-                    ?: throw AccountNotFoundException(accountId)
+                    ?: throw AccountDomainException.Account.NotFound(accountId)
 
             // 계좌 삭제
             accountRepository.delete(accountId)
 
-            return CommandResult.success(correlationId = actualCorrelationId)
+            log.info(
+                "계좌 삭제 명령 처리 완료, correlationId={}, accountId={}",
+                actualCorrelationId,
+                accountId.value,
+            )
         } catch (e: IllegalArgumentException) {
-            // 유효하지 않은 AccountId 등의 문제
-            return CommandResult.fail(
-                correlationId = actualCorrelationId,
-                errorCode = AccountErrorCode.UNKNOWN.code,
+            log.error("유효하지 않은 입력값, correlationId={}, error={}", actualCorrelationId, e.message, e)
+            throw AccountApplicationException.SystemError(
                 errorMessage = "유효하지 않은 계좌 ID 형식입니다: ${e.message}",
             )
-        } catch (e: AccountNotFoundException) {
-            // 계좌를 찾을 수 없는 경우
-            return CommandResult.fail(
-                correlationId = actualCorrelationId,
-                errorCode = AccountErrorCode.ACCOUNT_NOT_FOUND.code,
-                errorMessage = e.message,
-                errorDetails = mapOf("accountId" to e.accountId.value.toString()),
+        } catch (e: AccountDomainException.Account.NotFound) {
+            log.error(
+                "계좌를 찾을 수 없음, correlationId={}, accountId={}",
+                actualCorrelationId,
+                e.accountId.value,
+                e,
             )
-        } catch (e: AccountDomainException) {
-            // 기타 도메인 예외 처리
-            return CommandResult.fail(
-                correlationId = actualCorrelationId,
-                errorCode = AccountErrorCode.UNKNOWN.code,
-                errorMessage = e.message,
-                errorDetails = mapOf("exception" to e.javaClass.simpleName),
-            )
+            throw AccountApplicationException.Query.NotFound(e.accountId.value.toString())
         } catch (e: Exception) {
-            // 기타 예외 처리
-            return CommandResult.fail(
-                correlationId = actualCorrelationId,
-                errorCode = AccountErrorCode.UNKNOWN.code,
-                errorMessage = "계좌 삭제 중 시스템 오류가 발생했습니다.",
-                errorDetails = mapOf("exception" to (e.message ?: "알 수 없는 오류")),
+            log.error(
+                "계좌 삭제 중 시스템 오류, correlationId={}, error={}",
+                actualCorrelationId,
+                e.message,
+                e,
+            )
+            throw AccountApplicationException.SystemError(
+                errorMessage = "계좌 삭제 중 시스템 오류가 발생했습니다: ${e.message}",
             )
         }
     }

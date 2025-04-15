@@ -1,9 +1,6 @@
 package com.restaurant.presentation.account.exception
 
-import com.restaurant.domain.account.exception.AccountNotFoundException
-import com.restaurant.domain.account.exception.InsufficientBalanceException
-import com.restaurant.domain.account.exception.PaymentAlreadyCancelledException
-import com.restaurant.domain.account.exception.TransactionNotFoundException
+import com.restaurant.domain.account.exception.AccountDomainException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -23,8 +20,8 @@ class AccountGlobalExceptionHandler {
     /**
      * 계좌를 찾을 수 없는 예외 처리
      */
-    @ExceptionHandler(AccountNotFoundException::class)
-    fun handleAccountNotFoundException(ex: AccountNotFoundException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(AccountDomainException.Account.NotFound::class)
+    fun handleAccountNotFoundException(ex: AccountDomainException.Account.NotFound): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.NOT_FOUND).apply {
                 type = URI.create("probs/account_not_found")
@@ -39,8 +36,8 @@ class AccountGlobalExceptionHandler {
     /**
      * 거래 내역을 찾을 수 없는 예외 처리
      */
-    @ExceptionHandler(TransactionNotFoundException::class)
-    fun handleTransactionNotFoundException(ex: TransactionNotFoundException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(AccountDomainException.Transaction.NotFound::class)
+    fun handleTransactionNotFoundException(ex: AccountDomainException.Transaction.NotFound): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.NOT_FOUND).apply {
                 type = URI.create("probs/transaction_not_found")
@@ -55,8 +52,8 @@ class AccountGlobalExceptionHandler {
     /**
      * 이미 결제가 취소된 경우 예외 처리
      */
-    @ExceptionHandler(PaymentAlreadyCancelledException::class)
-    fun handlePaymentAlreadyCancelledException(ex: PaymentAlreadyCancelledException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(AccountDomainException.Transaction.AlreadyCancelled::class)
+    fun handlePaymentAlreadyCancelledException(ex: AccountDomainException.Transaction.AlreadyCancelled): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
                 type = URI.create("probs/payment_already_cancelled")
@@ -71,8 +68,8 @@ class AccountGlobalExceptionHandler {
     /**
      * 잔액 부족 예외 처리
      */
-    @ExceptionHandler(InsufficientBalanceException::class)
-    fun handleInsufficientBalanceException(ex: InsufficientBalanceException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(AccountDomainException.Account.InsufficientBalance::class)
+    fun handleInsufficientBalanceException(ex: AccountDomainException.Account.InsufficientBalance): ResponseEntity<ProblemDetail> {
         val problem =
             ProblemDetail.forStatus(HttpStatus.BAD_REQUEST).apply {
                 type = URI.create("probs/insufficient_balance")

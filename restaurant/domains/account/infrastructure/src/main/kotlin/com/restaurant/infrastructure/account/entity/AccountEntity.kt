@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.math.BigDecimal
 
 /**
@@ -21,4 +22,7 @@ class AccountEntity(
     val userId: Long,
     @Column(name = "balance", nullable = false)
     val balance: BigDecimal,
+    @Version
+    @Column(nullable = false)
+    val version: Long = 0,
 )
