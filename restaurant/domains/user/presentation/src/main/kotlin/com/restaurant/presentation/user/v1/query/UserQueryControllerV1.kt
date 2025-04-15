@@ -1,7 +1,7 @@
 package com.restaurant.presentation.user.v1.query
 
 import com.restaurant.application.user.common.UserErrorCode
-import com.restaurant.application.user.exception.UserNotFoundApplicationException
+import com.restaurant.application.user.exception.UserApplicationException
 import com.restaurant.application.user.query.GetUserProfileQuery
 import com.restaurant.application.user.query.handler.GetUserProfileQueryHandler
 import com.restaurant.presentation.user.v1.dto.response.UserProfileResponseV1
@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 import java.time.Instant
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -50,13 +51,14 @@ class UserQueryControllerV1(
         @Parameter(description = "사용자 ID", required = true) @PathVariable userId: Long,
     ): ResponseEntity<Any> {
         val query = GetUserProfileQuery(userId)
+        val correlationId = UUID.randomUUID().toString()
 
         try {
-            val result = getUserProfileQueryHandler.handle(query)
+            val result = getUserProfileQueryHandler.handle(query, correlationId)
             val response = result.toResponse()
             val responseWithLinks = addHateoasLinks(response, userId)
             return ResponseEntity.ok(responseWithLinks)
-        } catch (e: UserNotFoundApplicationException) {
+        } catch (e: UserApplicationException.Query.NotFound) {
             val error = UserErrorCode.NOT_FOUND
             val problem =
                 ProblemDetail.forStatus(error.status).apply {
@@ -69,6 +71,7 @@ class UserQueryControllerV1(
                     instance = URI.create("/api/v1/users/$userId")
                     setProperty("errorCode", error.code)
                     setProperty("timestamp", Instant.now().toString())
+                    setProperty("correlationId", correlationId)
                 }
             return ResponseEntity.status(error.status).body(problem)
         } catch (e: Exception) {
@@ -83,6 +86,7 @@ class UserQueryControllerV1(
                     instance = URI.create("/api/v1/users/$userId")
                     setProperty("errorCode", error.code)
                     setProperty("timestamp", Instant.now().toString())
+                    setProperty("correlationId", correlationId)
                 }
             return ResponseEntity.status(error.status).body(problem)
         }

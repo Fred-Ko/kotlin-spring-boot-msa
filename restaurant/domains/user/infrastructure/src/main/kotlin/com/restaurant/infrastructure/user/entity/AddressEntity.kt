@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 
 @Entity
 @Table(name = "user_addresses")
@@ -18,8 +19,11 @@ class AddressEntity(
     @Column val detail: String,
     @Column(name = "zip_code", nullable = false) val zipCode: String,
     @Column(name = "is_default", nullable = false) val isDefault: Boolean,
+    @Version
+    @Column(nullable = false)
+    val version: Long = 0,
 ) {
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     lateinit var user: UserEntity
 
@@ -34,6 +38,27 @@ class AddressEntity(
     ) : this(id, street, detail, zipCode, isDefault) {
         this.user = user
     }
+
+    /**
+     * 엔티티의 복사본을 생성합니다.
+     * user 속성은 복사되지 않으므로 별도로 설정해주어야 합니다.
+     */
+    fun copy(
+        id: Long? = this.id,
+        street: String = this.street,
+        detail: String = this.detail,
+        zipCode: String = this.zipCode,
+        isDefault: Boolean = this.isDefault,
+        version: Long = this.version,
+    ): AddressEntity =
+        AddressEntity(
+            id = id,
+            street = street,
+            detail = detail,
+            zipCode = zipCode,
+            isDefault = isDefault,
+            version = version,
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -54,5 +79,6 @@ class AddressEntity(
 
     override fun hashCode(): Int = id?.hashCode() ?: (street.hashCode() + zipCode.hashCode())
 
-    override fun toString(): String = "AddressEntity(id=$id, street='$street', detail='$detail', zipCode='$zipCode', isDefault=$isDefault)"
+    override fun toString(): String =
+        "AddressEntity(id=$id, street='$street', detail='$detail', zipCode='$zipCode', isDefault=$isDefault, version=$version)"
 }

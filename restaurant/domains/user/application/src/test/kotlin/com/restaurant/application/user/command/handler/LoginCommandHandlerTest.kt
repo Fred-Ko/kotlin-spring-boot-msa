@@ -3,15 +3,16 @@ package com.restaurant.application.user.command.handler
 import com.restaurant.application.user.TestConfig
 import com.restaurant.application.user.command.LoginCommand
 import com.restaurant.application.user.common.UserErrorCode
+import com.restaurant.application.user.exception.UserApplicationException
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldNotBeEmpty
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
@@ -33,20 +34,20 @@ class LoginCommandHandlerTest(
             val command = LoginCommand(email = userEmail, password = userPassword)
 
             // 테스트 사용자 생성
-            userRepository.save(
-                User.create(
-                    email = Email.of(userEmail),
-                    password = Password.of(userPassword),
-                    name = Name.of("테스트유저"),
-                ),
-            )
+            val user =
+                userRepository.save(
+                    User.create(
+                        email = Email.of(userEmail),
+                        password = Password.of(userPassword),
+                        name = Name.of("테스트유저"),
+                    ),
+                )
 
             When("로그인 처리를 하면") {
                 val result = handler.handle(command)
 
-                Then("로그인 성공 응답이 반환되어야 한다") {
-                    result.success shouldBe true
-                    result.correlationId.shouldNotBeEmpty()
+                Then("결과는 성공한 사용자 ID를 반환해야 한다") {
+                    result shouldBe user.id!!.value
                 }
             }
         }
@@ -56,11 +57,13 @@ class LoginCommandHandlerTest(
             val command = LoginCommand(email = nonExistentEmail, password = "anypassword")
 
             When("로그인 처리를 하면") {
-                val result = handler.handle(command)
+                Then("인증 실패 예외가 발생해야 한다") {
+                    val exception =
+                        shouldThrow<UserApplicationException.Authentication.InvalidCredentials> {
+                            handler.handle(command)
+                        }
 
-                Then("사용자 찾을 수 없음 에러가 반환되어야 한다") {
-                    result.success shouldBe false
-                    result.errorCode shouldBe UserErrorCode.INVALID_CREDENTIALS.code
+                    exception.errorCode shouldBe UserErrorCode.INVALID_CREDENTIALS
                 }
             }
         }
@@ -81,11 +84,13 @@ class LoginCommandHandlerTest(
             )
 
             When("로그인 처리를 하면") {
-                val result = handler.handle(command)
+                Then("인증 실패 예외가 발생해야 한다") {
+                    val exception =
+                        shouldThrow<UserApplicationException.Authentication.InvalidCredentials> {
+                            handler.handle(command)
+                        }
 
-                Then("인증 실패 에러가 반환되어야 한다") {
-                    result.success shouldBe false
-                    result.errorCode shouldBe UserErrorCode.INVALID_CREDENTIALS.code
+                    exception.errorCode shouldBe UserErrorCode.INVALID_CREDENTIALS
                 }
             }
         }
@@ -94,11 +99,13 @@ class LoginCommandHandlerTest(
             val command = LoginCommand(email = "invalid-email", password = "password123")
 
             When("로그인 처리를 하면") {
-                val result = handler.handle(command)
+                Then("입력 유효성 예외가 발생해야 한다") {
+                    val exception =
+                        shouldThrow<UserApplicationException.Authentication.InvalidInput> {
+                            handler.handle(command)
+                        }
 
-                Then("입력 유효성 에러가 반환되어야 한다") {
-                    result.success shouldBe false
-                    result.errorCode shouldBe UserErrorCode.INVALID_INPUT.code
+                    exception.errorCode shouldBe UserErrorCode.INVALID_INPUT
                 }
             }
         }

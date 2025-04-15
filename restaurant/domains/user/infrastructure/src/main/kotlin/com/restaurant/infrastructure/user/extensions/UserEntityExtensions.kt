@@ -25,7 +25,7 @@ fun UserEntity.toDomain(): User {
 
 // User -> UserEntity 변환
 fun User.toEntity(): UserEntity {
-    // UserEntity 생성
+    // 기본 UserEntity 생성
     val entity =
         UserEntity(
             id = id?.value,
@@ -36,14 +36,17 @@ fun User.toEntity(): UserEntity {
             updatedAt = updatedAt,
         )
 
-    // 주소 추가
-    val addressEntities =
-        addresses.map { address ->
-            address.toEntity().apply { user = entity }
-        }
+    // 주소 생성 및 연결
+    if (addresses.isNotEmpty()) {
+        // 각 주소를 엔티티로 변환
+        val addressEntities =
+            addresses.map { address ->
+                address.toEntity()
+            }
 
-    // 안전한 메서드를 통해 주소 추가
-    entity.addAddresses(addressEntities)
+        // 함수형 스타일로 주소들 추가
+        return entity.withAddresses(addressEntities)
+    }
 
     return entity
 }

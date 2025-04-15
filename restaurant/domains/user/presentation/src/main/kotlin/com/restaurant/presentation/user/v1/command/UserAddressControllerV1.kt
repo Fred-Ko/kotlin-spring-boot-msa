@@ -3,7 +3,6 @@ package com.restaurant.presentation.user.v1.command
 import com.restaurant.application.user.command.handler.DeleteAddressCommandHandler
 import com.restaurant.application.user.command.handler.RegisterAddressCommandHandler
 import com.restaurant.application.user.command.handler.UpdateAddressCommandHandler
-import com.restaurant.application.user.common.UserErrorCode
 import com.restaurant.presentation.user.v1.dto.request.DeleteAddressRequestV1
 import com.restaurant.presentation.user.v1.dto.request.RegisterAddressRequestV1
 import com.restaurant.presentation.user.v1.dto.request.UpdateAddressRequestV1
@@ -15,8 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.ProblemDetail
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -26,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
-import java.time.Instant
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/users/{userId}/addresses")
@@ -35,8 +33,9 @@ class UserAddressControllerV1(
     private val registerAddressCommandHandler: RegisterAddressCommandHandler,
     private val updateAddressCommandHandler: UpdateAddressCommandHandler,
     private val deleteAddressCommandHandler: DeleteAddressCommandHandler,
-    @Value("\${app.problem.base-url}") private val problemBaseUrl: String,
 ) {
+    private val log = LoggerFactory.getLogger(UserAddressControllerV1::class.java)
+
     @PostMapping
     @Operation(summary = "주소 등록", description = "사용자의 새로운 배달 주소를 등록합니다.")
     @ApiResponses(
@@ -63,35 +62,23 @@ class UserAddressControllerV1(
         @PathVariable userId: Long,
         @Valid @RequestBody request: RegisterAddressRequestV1,
     ): ResponseEntity<Any> {
+        val correlationId = UUID.randomUUID().toString()
         val command = request.toCommand(userId)
-        val result = registerAddressCommandHandler.handle(command)
 
-        return if (result.success) {
-            val addressUri = "/api/v1/users/$userId/addresses/${result.correlationId}"
-            ResponseEntity
-                .created(URI.create(addressUri))
-                .body(
-                    mapOf(
-                        "status" to "success",
-                        "message" to "주소가 등록되었습니다.",
-                        "correlationId" to (result.correlationId ?: ""),
-                    ),
-                )
-        } else {
-            val error = UserErrorCode.fromCode(result.errorCode)
-            val problem =
-                ProblemDetail.forStatus(error.status).apply {
-                    type = URI.create("$problemBaseUrl/${error.code.lowercase()}")
-                    title =
-                        error.code
+        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
+        registerAddressCommandHandler.handle(command, correlationId)
 
-                    detail = error.message
-                    instance = URI.create("/api/v1/users/$userId/addresses")
-                    setProperty("errorCode", error.code)
-                    setProperty("timestamp", Instant.now().toString())
-                }
-            ResponseEntity.status(error.status).body(problem)
-        }
+        // 성공 시 응답
+        val addressUri = "/api/v1/users/$userId/addresses"
+        return ResponseEntity
+            .created(URI.create(addressUri))
+            .body(
+                mapOf(
+                    "status" to "SUCCESS",
+                    "message" to "주소가 등록되었습니다.",
+                    "correlationId" to correlationId,
+                ),
+            )
     }
 
     @PutMapping("/{addressId}")
@@ -122,34 +109,22 @@ class UserAddressControllerV1(
         @PathVariable addressId: Long,
         @Valid @RequestBody request: UpdateAddressRequestV1,
     ): ResponseEntity<Any> {
+        val correlationId = UUID.randomUUID().toString()
         val command = request.toCommand(userId, addressId)
-        val result = updateAddressCommandHandler.handle(command)
 
-        return if (result.success) {
-            ResponseEntity
-                .ok()
-                .body(
-                    mapOf(
-                        "status" to "success",
-                        "message" to "주소가 수정되었습니다.",
-                        "correlationId" to (result.correlationId ?: ""),
-                    ),
-                )
-        } else {
-            val error = UserErrorCode.fromCode(result.errorCode)
-            val problem =
-                ProblemDetail.forStatus(error.status).apply {
-                    type = URI.create("$problemBaseUrl/${error.code.lowercase()}")
-                    title =
-                        error.code
+        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
+        updateAddressCommandHandler.handle(command, correlationId)
 
-                    detail = error.message
-                    instance = URI.create("/api/v1/users/$userId/addresses/$addressId")
-                    setProperty("errorCode", error.code)
-                    setProperty("timestamp", Instant.now().toString())
-                }
-            ResponseEntity.status(error.status).body(problem)
-        }
+        // 성공 시 응답
+        return ResponseEntity
+            .ok()
+            .body(
+                mapOf(
+                    "status" to "SUCCESS",
+                    "message" to "주소가 수정되었습니다.",
+                    "correlationId" to correlationId,
+                ),
+            )
     }
 
     @DeleteMapping("/{addressId}")
@@ -174,34 +149,22 @@ class UserAddressControllerV1(
         @Parameter(description = "주소 ID", required = true)
         @PathVariable addressId: Long,
     ): ResponseEntity<Any> {
+        val correlationId = UUID.randomUUID().toString()
         val request = DeleteAddressRequestV1(addressId)
         val command = request.toCommand(userId)
-        val result = deleteAddressCommandHandler.handle(command)
 
-        return if (result.success) {
-            ResponseEntity
-                .ok()
-                .body(
-                    mapOf(
-                        "status" to "success",
-                        "message" to "주소가 삭제되었습니다.",
-                        "correlationId" to (result.correlationId ?: ""),
-                    ),
-                )
-        } else {
-            val error = UserErrorCode.fromCode(result.errorCode)
-            val problem =
-                ProblemDetail.forStatus(error.status).apply {
-                    type = URI.create("$problemBaseUrl/${error.code.lowercase()}")
-                    title =
-                        error.code
+        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
+        deleteAddressCommandHandler.handle(command, correlationId)
 
-                    detail = error.message
-                    instance = URI.create("/api/v1/users/$userId/addresses/$addressId")
-                    setProperty("errorCode", error.code)
-                    setProperty("timestamp", Instant.now().toString())
-                }
-            ResponseEntity.status(error.status).body(problem)
-        }
+        // 성공 시 응답
+        return ResponseEntity
+            .ok()
+            .body(
+                mapOf(
+                    "status" to "SUCCESS",
+                    "message" to "주소가 삭제되었습니다.",
+                    "correlationId" to correlationId,
+                ),
+            )
     }
 }

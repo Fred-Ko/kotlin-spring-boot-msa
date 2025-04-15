@@ -9,7 +9,9 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.time.LocalDateTime
+import java.util.ArrayList
 
 @Entity
 @Table(name = "users")
@@ -22,28 +24,85 @@ class UserEntity(
     val createdAt: LocalDateTime = LocalDateTime.now(),
     @Column(name = "updated_at", nullable = false)
     val updatedAt: LocalDateTime = LocalDateTime.now(),
+    @Version
+    @Column(nullable = false)
+    val version: Long = 0,
 ) {
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    private val _addresses: MutableList<AddressEntity> = mutableListOf()
+    // JPA 필드는 private으로 설정
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    private var addressEntities: MutableList<AddressEntity> = ArrayList()
 
-    // 주소 목록에 대한 불변 뷰 제공
+    // 주소 목록에 대한 불변 뷰 제공 (프로퍼티로 제공)
     val addresses: List<AddressEntity>
-        get() = _addresses.toList()
+        get() = addressEntities.toList()
 
-    // 주소 추가 메서드
-    fun addAddress(address: AddressEntity) {
-        address.user = this
-        _addresses.add(address)
+    /**
+     * 이 메서드는 JPA와 함께 사용하기 위한 메서드이며,
+     * 불변성을 유지하면서도 JPA의 양방향 관계를 설정할 수 있게 합니다.
+     * 도메인 로직에서 직접 호출하지 않고, 리포지토리 구현체에서만 호출해야 합니다.
+     */
+    internal fun initializeAddresses(initialAddresses: Collection<AddressEntity>) {
+        this.addressEntities.clear()
+        initialAddresses.forEach {
+            it.user = this
+            this.addressEntities.add(it)
+        }
     }
 
-    // 여러 주소 추가 메서드
-    fun addAddresses(addressesToAdd: Collection<AddressEntity>) {
-        addressesToAdd.forEach { addAddress(it) }
+    // 주소 추가를 위한 새 UserEntity 생성
+    fun withAddress(address: AddressEntity): UserEntity {
+        val clone = clone()
+
+        // 주소 설정
+        val newAddress = address.copy() // 주소 복제 (AddressEntity에 copy 메서드 추가 필요)
+        newAddress.user = clone
+        clone.addressEntities.add(newAddress)
+
+        return clone
     }
 
-    // 모든 주소 제거 메서드
-    fun clearAddresses() {
-        _addresses.clear()
+    // 여러 주소 추가를 위한 새 UserEntity 생성
+    fun withAddresses(addressesToAdd: Collection<AddressEntity>): UserEntity {
+        val clone = clone()
+
+        // 주소 추가
+        addressesToAdd.forEach { address ->
+            val newAddress = address.copy() // 주소 복제 (AddressEntity에 copy 메서드 추가 필요)
+            newAddress.user = clone
+            clone.addressEntities.add(newAddress)
+        }
+
+        return clone
+    }
+
+    // 모든 주소를 제거한 새 UserEntity 생성
+    fun withoutAddresses(): UserEntity {
+        val clone = clone()
+        clone.addressEntities.clear()
+        return clone
+    }
+
+    // UserEntity 복제
+    private fun clone(): UserEntity {
+        val clone =
+            UserEntity(
+                id = this.id,
+                email = this.email,
+                password = this.password,
+                name = this.name,
+                createdAt = this.createdAt,
+                updatedAt = LocalDateTime.now(),
+                version = this.version,
+            )
+
+        // 주소 복사
+        this.addressEntities.forEach { address ->
+            val newAddress = address.copy() // AddressEntity에 copy 메서드 추가 필요
+            newAddress.user = clone
+            clone.addressEntities.add(newAddress)
+        }
+
+        return clone
     }
 
     override fun equals(other: Any?): Boolean {
@@ -65,5 +124,5 @@ class UserEntity(
     }
 
     override fun toString(): String =
-        "UserEntity(id=$id, email='$email', name='$name', createdAt=$createdAt, updatedAt=$updatedAt, addresses=${addresses.size})"
+        "UserEntity(id=$id, email='$email', name='$name', createdAt=$createdAt, updatedAt=$updatedAt, addresses=${addressEntities.size}, version=$version)"
 }

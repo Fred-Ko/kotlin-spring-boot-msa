@@ -54,7 +54,7 @@ class CancelAccountPaymentCommandHandler(
                 transactionRepository
                     .findByOrderId(orderId)
                     .takeIf { it.isNotEmpty() }
-                    ?: throw TransactionNotFoundException(orderId)
+                    ?: throw TransactionNotFoundException(orderId.toString())
 
             // 결제 취소할 금액 계산 (모든 DEBIT 트랜잭션의 합)
             val refundAmount =
@@ -65,7 +65,7 @@ class CancelAccountPaymentCommandHandler(
 
             // 이미 취소된 거래인지 확인 (CREDIT 트랜잭션이 있는 경우)
             if (prevTransactions.any { it.type == TransactionType.CREDIT }) {
-                throw PaymentAlreadyCancelledException(orderId)
+                throw PaymentAlreadyCancelledException(orderId.toString())
             }
 
             // 계좌에 금액 추가 및 환불 트랜잭션 생성
@@ -102,21 +102,21 @@ class CancelAccountPaymentCommandHandler(
                         correlationId = actualCorrelationId,
                         errorCode = AccountErrorCode.TRANSACTION_NOT_FOUND.code,
                         errorMessage = e.message,
-                        errorDetails = mapOf("transactionId" to e.transactionId.value.toString()),
+                        errorDetails = mapOf("orderId" to orderId.value.toString()),
                     )
                 is PaymentAlreadyCancelledException ->
                     CommandResult.fail(
                         correlationId = actualCorrelationId,
                         errorCode = AccountErrorCode.PAYMENT_CANCELLATION_FAILED.code,
                         errorMessage = e.message,
-                        errorDetails = mapOf("transactionId" to e.transactionId.value.toString()),
+                        errorDetails = mapOf("orderId" to orderId.value.toString()),
                     )
                 is AccountDomainException ->
                     CommandResult.fail(
                         correlationId = actualCorrelationId,
                         errorCode = AccountErrorCode.PAYMENT_CANCELLATION_FAILED.code,
-                        errorMessage = e.message,
-                        errorDetails = mapOf("exception" to e.javaClass.simpleName),
+                        errorMessage = "결제 취소 중 도메인 규칙 위반이 발생했습니다.",
+                        errorDetails = mapOf("reason" to (e.message ?: "알 수 없는 도메인 오류")),
                     )
                 else ->
                     CommandResult.fail(

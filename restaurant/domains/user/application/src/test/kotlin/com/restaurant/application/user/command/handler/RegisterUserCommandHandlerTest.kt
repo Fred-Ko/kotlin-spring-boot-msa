@@ -3,16 +3,17 @@ package com.restaurant.application.user.command.handler
 import com.restaurant.application.user.TestConfig
 import com.restaurant.application.user.command.RegisterUserCommand
 import com.restaurant.application.user.common.UserErrorCode
+import com.restaurant.application.user.exception.UserApplicationException
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.string.shouldNotBeEmpty
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
@@ -37,11 +38,10 @@ class RegisterUserCommandHandlerTest(
                 )
 
             When("회원가입 처리를 하면") {
-                val result = handler.handle(command)
+                val userId = handler.handle(command)
 
-                Then("성공 결과가 반환되어야 한다") {
-                    result.success shouldBe true
-                    result.correlationId.shouldNotBeEmpty()
+                Then("사용자 ID가 반환되어야 한다") {
+                    userId shouldNotBe null
                 }
 
                 Then("사용자가 저장되어야 한다") {
@@ -74,11 +74,13 @@ class RegisterUserCommandHandlerTest(
                 )
 
             When("회원가입 처리를 하면") {
-                val result = handler.handle(command)
+                Then("이메일 중복 예외가 발생해야 한다") {
+                    val exception =
+                        shouldThrow<UserApplicationException.Registration.DuplicateEmail> {
+                            handler.handle(command)
+                        }
 
-                Then("이메일 중복 오류가 반환되어야 한다") {
-                    result.success shouldBe false
-                    result.errorCode shouldBe UserErrorCode.DUPLICATE_EMAIL.code
+                    exception.errorCode shouldBe UserErrorCode.DUPLICATE_EMAIL
                 }
             }
         }
@@ -92,11 +94,13 @@ class RegisterUserCommandHandlerTest(
                 )
 
             When("회원가입 처리를 하면") {
-                val result = handler.handle(command)
+                Then("입력 유효성 예외가 발생해야 한다") {
+                    val exception =
+                        shouldThrow<UserApplicationException.Registration.InvalidInput> {
+                            handler.handle(command)
+                        }
 
-                Then("입력 유효성 오류가 반환되어야 한다") {
-                    result.success shouldBe false
-                    result.errorCode shouldBe UserErrorCode.INVALID_INPUT.code
+                    exception.errorCode shouldBe UserErrorCode.INVALID_INPUT
                 }
             }
         }
