@@ -6,161 +6,165 @@ alwaysApply: true
 ---
 ## 프로젝트 기술 문서 규칙 (불변식)
 
-### 프로젝트 구조 
+### 프로젝트 구조
 
-1. **모든 규칙의 필수 준수**: 프로젝트 기술 문서에 명시된 모든 규칙과 패턴은 선택 사항이 아닌 필수이며, 모든 구성원은 예외 없이 이를 준수해야 한다. 규칙 위반 시 즉시 코드 리뷰에서 반려된다。
-2. **레이어별 모듈 분리**: 프로젝트는 반드시 Presentation, Application, Domain, Infrastructure 레이어로 모듈을 분리해야 하며, 각 레이어는 별도의 Gradle 모듈로 관리된다。
-3. **도메인별 모듈화**: 각 도메인은 `domains/` 최상위 폴더 아래 독립적인 폴더로 구성해야 한다 (예: `domains/user`, `domains/order`). 도메인 간 의존성은 명시적으로 금지된다。
-4. **공통 모듈 관리**: 공통 유틸리티, 공유 추상 클래스, 인터페이스는 `common` 모듈에 포함되며, 공통 모듈은 특정 도메인 로직을 포함하지 않아야 한다. 공통 모듈 의존은 최소화하여 "공통 모듈 지옥"을 방지한다。
-5. **Extensions 폴더 구조 준수**: 모든 레이어는 Presentation, Application, Infrastructure별로 `extensions` 폴더를 반드시 포함해야 하며, 이 폴더는 확장 함수 전용으로 사용된다。
-6. **Extensions 하위 폴더명 규칙**: `extensions` 폴더의 하위 폴더명은 반드시 소문자로 작성하며, 기능별로 명확히 구분해야 한다 (예: `extensions/mapping`, `extensions/validation`)。
-7. **Extensions 기능별 폴더**: 각 `extensions` 하위 폴더는 해당 기능의 확장 함수만 포함하며, 다른 유형의 코드를 포함해서는 안 된다。
-8. **Extensions 파일명 규칙**: 확장 함수 파일명은 `도메인명+기능명+Extensions.kt` 형식을 따라야 한다 (예: `UserMappingExtensions.kt`, `OrderValidationExtensions.kt`)。
-9. **확장 함수 위치 제한**: 확장 함수는 반드시 정의된 `extensions` 폴더와 해당 기능 폴더에만 위치해야 하며, 다른 위치에 정의된 확장 함수는 허용되지 않는다。
-10. **모듈 간 의존성 명확화**: 모듈 간 의존성은 단방향으로 제한되며, Domain 레이어는 다른 레이어를 의존하지 않고, Infrastructure는 Domain만 의존 가능하다. 의존성 주입은 Spring `@Bean` 또는 `@Component`를 통해 명시적으로 관리한다。
+1. **모든 규칙의 필수 준수**: 프로젝트 기술 문서에 명시된 모든 규칙과 패턴은 선택 사항이 아닌 필수이며, 모든 구성원은 예외 없이 이를 준수해야 한다. 규칙 위반 시 즉시 코드 리뷰에서 반려된다.
+2. **레이어별 모듈 분리**: 프로젝트는 반드시 Presentation, Application, Domain, Infrastructure 레이어로 모듈을 분리해야 하며, 각 레이어는 별도의 Gradle 모듈로 관리된다.
+3. **도메인별 모듈화**: 각 도메인은 `domains/` 최상위 폴더 아래 독립적인 폴더로 구성해야 한다 (예: `domains/user`, `domains/order`). 도메인 간 의존성은 명시적으로 금지된다.
+4. **공통 모듈 관리**: 공통 유틸리티, 공유 추상 클래스, 인터페이스는 `common` 모듈에 포함되며, 공통 모듈은 특정 도메인 로직을 포함하지 않아야 한다. 공통 모듈 의존은 최소화하여 "공통 모듈 지옥"을 방지한다.
+5. **Extensions 폴더 구조 준수**: 모든 레이어는 Presentation, Application, Infrastructure별로 `extensions` 폴더를 반드시 포함해야 하며, 이 폴더는 확장 함수 전용으로 사용된다.
+6. **Extensions 기능별 폴더**: 각 `extensions` 하위 폴더는 해당 기능의 확장 함수만 포함하며, 다른 유형의 코드를 포함해서는 안 된다.
+7. **Extensions 파일명 규칙**: 확장 함수 파일명은 `도메인명+기능명+Extensions.kt` 형식을 따라야 한다 (예: `UserMappingExtensions.kt`, `OrderValidationExtensions.kt`).
+8. **확장 함수 위치 제한**: 확장 함수는 반드시 정의된 `extensions` 폴더와 해당 기능 폴더에만 위치해야 하며, 다른 위치에 정의된 확장 함수는 허용되지 않는다.
+9. **모듈 간 의존성 명확화**: 모듈 간 의존성은 단방향으로 제한되며, Domain 레이어는 다른 레이어를 의존하지 않고, Infrastructure는 Domain만 의존 가능하다. 의존성 주입은 Spring `@Bean` 또는 `@Component`를 통해 명시적으로 관리한다。
 
 ### 핵심 개발 원칙
 
-11. **도메인 레이어 독립성**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조하지 않으며, 순수 Kotlin으로 작성되어 기술 프레임워크 의존성을 배제한다。
-12. **Aggregate와 VO 위치**: Aggregate, Value Object (VO), DDD 하위 엔티티는 반드시 Domain 레이어에 정의하며, 외부 프레임워크(JPA, Spring 등)에 의존하지 않도록 순수하게 유지한다。
-13. **Aggregate VO 사용 제한**: 도메인 내 Aggregate의 Value Object는 Domain 레이어 외부에서 참조하거나 사용하지 않아야 한다. 외부 레이어에서는 DTO로 변환하여 사용한다。
-14. **VO 불변성 및 생성 제어**: 모든 VO는 불변 객체로 설계하며, `private` 생성자와 `companion object`의 `of` 메서드를 통해 생성을 제어해야 한다。
-15. **VO 유효성 검사**: VO의 유효성 검사는 `init` 블록에서 `require`를 사용하여 수행하며, 실패 시 도메인 의미를 담은 명확한 에러 메시지를 반환한다 (예: `require(name.isNotBlank()) { "User name cannot be empty" }`)。
-16. **VO toString 오버라이드**: VO의 `toString()` 메서드는 디버깅 및 로깅을 위해 값 자체를 명확히 표현하도록 재정의해야 한다 (예: `UserName(name=John)`)。
-17. **Aggregate 팩토리 함수**: Aggregate 및 DDD 하위 엔티티는 `companion object`에 `create` (신규 생성) 및 `reconstitute` (재구성) 팩토리 함수를 반드시 정의해야 한다。
-18. **JPA 엔티티 위치 JUN**: JPA 엔티티는 반드시 Infrastructure 레이어의 `entity` 패키지에 정의하며, 도메인 로직을 포함하지 않는다。
-19. **JPA 엔티티 불변성**: JPA 엔티티의 모든 필드는 `val`로 선언하여 불변성을 유지하며, Setter 메서드는 절대 사용하지 않는다。
-20. **JPA 엔티티 ID 필드**: JPA 엔티티의 ID는 `val id: Long? = null`로 선언하여 신규 엔티티와 기존 엔티티를 구분한다。
-21. **JPA 엔티티 테이블명**: JPA 엔티티의 테이블명은 `@Table` 어노테이션으로 명시하며, 소문자 복수형을 사용한다 (예: `@Table(name = "users")`)。
-22. **JPA 엔티티 컬럼 속성**: JPA 엔티티의 컬럼은 `@Column` 어노테이션으로 제약 조건을 명시하며, 데이터베이스 스키마와 일치해야 한다 (예: `@Column(nullable = false, length = 50)`)。
-23. **JPA 엔티티와 도메인 매핑**: JPA 엔티티와 도메인 Aggregate/VO 간 변환은 Infrastructure 레이어의 `extensions` 폴더에서 코틀린 확장 함수로 정의한다 (예: `UserEntity.toDomain()`)。
-24. **JPA 매핑 파일명**: JPA 매핑 확장 함수 파일은 `{Domain}EntityExtensions.kt` 형식을 따라야 한다 (예: `UserEntityExtensions.kt`)。
-25. **JPA 관계 설정**: JPA 엔티티의 관계는 단방향을 우선하며, 양방향 관계는 명확한 필요성(예: 비즈니스 요구사항)이 있을 때만 사용한다。
-26. **JPA Fetch 전략**: JPA 엔티티 관계는 기본적으로 `@ManyToOne`, `@OneToMany` 등에 `fetch = FetchType.LAZY`를 설정하며, Eager 로딩은 성능 검증 후 사용한다。
-27. **JPA Kotlin 플러그인**: `kotlin-jpa`와 `kotlin-allopen` 플러그인을 반드시 적용하여 JPA 요구사항을 충족한다。
-28. **JPA** `@ConsistentCopyVisibility` **사용**: Hibernate 프록시와 Kotlin `copy` 메서드 충돌 가능성이 있는 경우, `@ConsistentCopyVisibility` 어노테이션을 적용한다。
-29. **JPA 도메인 로직 배제**: JPA 엔티티에는 비즈니스 로직을 포함시키지 않으며, 로직은 Domain 레이어의 Aggregate 또는 Application 레이어의 서비스에서 처리한다。
-30. **JPA 동시성 제어**: 모든 JPA 엔티티는 낙관적 잠금을 기본으로 사용하며, `@Version` 어노테이션을 필수로 포함하여 동시성 충돌을 관리한다. 낙관적 잠금 실패 시 `OptimisticLockException`을 `ApplicationException`으로 래핑하여 상위 레이어로 전파한다。
-31. **도메인 이벤트 정의**: 도메인 이벤트는 Domain 레이어의 `event` 패키지에 정의하며, `data class`로 구현하고 `DomainEvent` 인터페이스를 구현해야 한다。
-32. **도메인 이벤트 발행**: 도메인 이벤트는 Aggregate 내에서 생성되며, Application 레이어의 이벤트 퍼블리셔를 통해 발행된다. 이벤트 발행은 Spring `@EventListener` 또는 Kafka로 처리한다。
-33. **Kafka 이벤트 전송**: 도메인 이벤트를 외부 시스템으로 전송할 경우, Kafka를 기본 메시지 브로커로 사용하며, 이벤트 스키마는 Avro 포맷으로 정의한다. Avro 스키마는 `schemas/` 폴더에 저장하고, Schema Registry를 통해 관리한다。
-34. **Kafka 이벤트 처리**: Kafka 이벤트 발행 시 `correlationId`를 헤더에 포함하며, 이벤트 처리 실패는 Dead Letter Queue(DLQ)로 전송하고 최대 5회 재시도 후 `JobError` 엔티티에 기록한다。
+10. **도메인 레이어 독립성**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조하지 않으며, 순수 Kotlin으로 작성되어 기술 프레임워크 의존성을 배제한다.
+11. **Aggregate와 VO 위치**: Aggregate, Value Object (VO), DDD 하위 엔티티는 반드시 Domain 레이어에 정의하며, 외부 프레임워크(JPA, Spring 등)에 의존하지 않도록 순수하게 유지한다.
+12. **Aggregate VO 사용 제한**: 도메인 내 Aggregate의 Value Object는 Domain 레이어 외부에서 참조하거나 사용하지 않아야 한다. 외부 레이어에서는 DTO로 변환하여 사용한다.
+13. **VO 불변성 및 생성 제어**: 모든 VO는 불변 객체로 설계하며, `private` 생성자와 `companion object`의 `of` 메서드를 통해 생성을 제어해야 한다.
+14. **VO 유효성 검사**: VO의 유효성 검사는 `init` 블록에서 `require`를 사용하여 수행하며, 실패 시 도메인 의미를 담은 명확한 에러 메시지를 반환한다 (예: `require(name.isNotBlank()) { "User name cannot be empty" }`).
+15. **VO toString 오버라이드**: VO의 `toString()` 메서드는 디버깅 및 로깅을 위해 값 자체를 명확히 표현하도록 재정의해야 한다 (예: `UserName(name=John)`).
+16. **Aggregate 팩토리 함수**: Aggregate 및 DDD 하위 엔티티는 `companion object`에 `create` (신규 생성) 및 `reconstitute` (재구성) 팩토리 함수를 반드시 정의해야 한다.
+17. **JPA 엔티티 위치**: JPA 엔티티는 반드시 Infrastructure 레이어의 `entity` 패키지에 정의하며, 도메인 로직을 포함하지 않는다.
+18. **JPA 엔티티 불변성**: JPA 엔티티의 모든 필드는 `val`로 선언하여 불변성을 유지하며, Setter 메서드는 절대 사용하지 않는다.
+19. **JPA 엔티티 ID 필드**: JPA 엔티티의 ID는 `val id: Long? = null`로 선언하여 신규 엔티티와 기존 엔티티를 구분한다.
+20. **JPA 엔티티 테이블명**: JPA 엔티티의 테이블명은 `@Table` 어노테이션으로 명시하며, 소문자 복수형을 사용한다 (예: `@Table(name = "users")`).
+21. **JPA 엔티티 컬럼 속성**: JPA 엔티티의 컬럼은 `@Column` 어노테이션으로 제약 조건을 명시하며, 데이터베이스 스키마와 일치해야 한다 (예: `@Column(nullable = false, length = 50)`).
+22. **JPA 엔티티와 도메인 매핑**: JPA 엔티티와 도메인 Aggregate/VO 간 변환은 Infrastructure 레이어의 `extensions` 폴더에서 코틀린 확장 함수로 정의한다 (예: `UserEntity.toDomain()`).
+23. **JPA 매핑 파일명**: JPA 매핑 확장 함수 파일은 `{Domain}EntityExtensions.kt` 형식을 따라야 한다 (예: `UserEntityExtensions.kt`).
+24. **JPA 관계 설정**: JPA 엔티티의 관계는 단방향을 우선하며, 양방향 관계는 명확한 필요성(예: 비즈니스 요구사항)이 있을 때만 사용한다.
+25. **JPA Fetch 전략**: JPA 엔티티 관계는 기본적으로 `@ManyToOne`, `@OneToMany` 등에 `fetch = FetchType.LAZY`를 설정하며, Eager 로딩은 성능 검증 후 사용한다.
+26. **JPA Kotlin 플러그인**: `kotlin-jpa`와 `kotlin-allopen` 플러그인을 반드시 적용하여 JPA 요구사항을 충족한다.
+27. **JPA `@ConsistentCopyVisibility` 사용**: Hibernate 프록시와 Kotlin `copy` 메서드 충돌 가능성이 있는 경우, `@ConsistentCopyVisibility` 어노테이션을 적용한다.
+28. **JPA 도메인 로직 배제**: JPA 엔티티에는 비즈니스 로직을 포함시키지 않으며, 로직은 Domain 레이어의 Aggregate 또는 Application 레이어의 서비스에서 처리한다.
+29. **JPA 동시성 제어**: 모든 JPA 엔티티는 낙관적 잠금을 기본으로 사용하며, `@Version` 어노테이션을 필수로 포함하여 동시성 충돌을 관리한다. 낙관적 잠금 실패 시 `OptimisticLockException`을 `ApplicationException`으로 래핑하여 상위 레이어로 전파한다.
+30. **도메인 이벤트 정의**: 도메인 이벤트는 Domain 레이어의 `event` 패키지에 정의하며, `data class`로 구현하고 `DomainEvent` 인터페이스를 구현해야 한다.
+31. **도메인 이벤트 발행**: 도메인 이벤트는 Aggregate 내에서 생성되며, Application 레이어의 이벤트 퍼블리셔를 통해 발행된다. 이벤트 발행은 Spring `@EventListener` 또는 Kafka로 처리한다.
+32. **Kafka 이벤트 전송**: 도메인 이벤트를 외부 시스템으로 전송할 경우, Kafka를 기본 메시지 브로커로 사용하며, 이벤트 스키마는 Avro 포맷으로 정의한다. Avro 스키마는 `schemas/` 폴더에 저장하고, Schema Registry를 통해 관리한다.
+33. **Kafka 이벤트 처리**: Kafka 이벤트 발행 시 `correlationId`를 헤더에 포함하며, 이벤트 처리 실패는 Dead Letter Queue(DLQ)로 전송하고 최대 5회 재시도 후 `JobError` 엔티티에 기록한다。
 
 ### API 개발 규칙
 
-35. **Command 요청 동기 응답**: Command 요청의 동기 응답은 JSON 형식으로 `status` (예: "SUCCESS"), `message` (결과 메시지), `correlationId` (요청 추적 ID)를 필수로 포함한다。
-36. **Command 요청 비동기 응답**: 비동기 Command 응답은 `status`, `message`, `jobId` (작업 ID), 상태 조회용 HATEOAS 링크(예: `/jobs/{jobId}/status`)를 포함한다。
-37. **X-Correlation-Id 헤더**: 모든 API 요청은 `X-Correlation-Id` 헤더를 포함하며, Controller는 이를 `correlationId`로 Command Handler에 전달하고 응답에 포함한다。
-38. **HATEOAS 의존성**: API는 `spring-boot-starter-hateoas`를 의존성으로 추가하며, 모든 응답은 HATEOAS 링크를 포함한다。
-39. **HATEOAS 링크 구조**: HATEOAS 링크는 `rel` (링크 관계), `href` (URI), `method` (HTTP 메서드)를 포함하며, `links` 필드에 `List<Map<String, String>>`로 반환된다。
-40. **HATEOAS URI 동적 생성**: HATEOAS 링크는 하드코딩 대신 Spring HATEOAS의 `linkTo`와 `methodOn`을 사용해 동적으로 생성한다 (예: `linkTo(methodOn(UserController::class.java).getUser(id)).withSelfRel()`)。
-41. **비동기 Command 상태 링크**: 비동기 Command 응답은 `job-status` 링크를 포함하며, 이는 `/jobs/{jobId}/status` 형식으로 `jobId`를 기반으로 생성된다。
-42. **다건 조회 페이지네이션**: 다건 조회 API는 반드시 페이지네이션을 구현하며, 응답은 `content`, `page`, `size`, `totalElements`, `totalPages` 필드를 포함한다。
-43. **커서 페이지네이션 우선**: 페이지네이션은 커서 기반 페이지네이션을 기본으로 사용하며, 오프셋 페이지네이션은 성능 검증 후 사용한다。
-44. **Presentation Validation**: `Request DTO`의 유효성 검사는 `jakarta.validation.constraints` 어노테이션(예: `@NotNull`, `@Size`)을 사용하여 수행한다。
-45. **Validation 의존성**: 프로젝트는 `spring-boot-starter-validation`을 의존성에 반드시 추가한다。
-46. **Request DTO Validation**: 모든 `Request DTO` 필드는 적절한 검증 어노테이션을 반드시 적용하며, 검증 로직은 어노테이션으로 처리한다。
-47. **Controller** `@Valid` **사용**: Controller 메서드는 `Request DTO`에 `@Valid` 어노테이션을 적용하여 유효성 검사를 트리거한다。
-48. **Validation 에러 응답**: Validation 실패 시 RFC 9457 `ProblemDetail` 형식을 따르며, `invalid-params` 필드에 필드별 에러 메시지(예: `[{ "field": "name", "reason": "cannot be empty" }]`)를 포함한다。
-49. **에러 응답 형식**: 모든 에러 응답은 RFC 9457을 준수하며, `ProblemDetail` 클래스를 사용하여 `type`, `title`, `detail`, `errorCode`, `timestamp`를 포함한다。
-50. **ProblemDetail 속성 설정**: `ProblemDetail`은 `.apply { ... }` 람다 블록으로 속성을 설정하며, `ResponseEntity.status(error.status).body(problemDetail)`로 반환한다。
-51. **GlobalExceptionHandler 구현**: 모든 프로젝트는 `GlobalExceptionHandler` 클래스를 구현하며, 다음 예외를 반드시 처리한다: `MethodArgumentNotValidException`, `HttpMessageNotReadableException`, `DomainException`, `ApplicationException`, `Exception`。
-52. **컨트롤러 및 글로벌 예외 처리**: 컨트롤러 레벨과 글로벌 레벨 예외 처리를 모두 구현하며, 컨트롤러별 예외는 특정 도메인 에러를 처리하고, 글로벌 핸들러는 공통 에러를 처리한다。
-53. **API 문서화 Swagger**: API 문서화는 `springdoc-openapi` 라이브러리를 사용하여 Swagger로 구현한다。
-54. **Swagger 어노테이션**: Controller의 모든 엔드포인트는 `@Operation` (설명), `@ApiResponse` (응답), `@Parameter` (파라미터) 어노테이션을 적용한다。
-55. **Swagger 에러 응답**: Swagger 문서는 RFC 9457 `ProblemDetail` 형식을 반영하며, 에러 응답 스키마를 명시한다。
-56. **Swagger HATEOAS 링크**: Swagger 문서는 `links` 필드를 `@Schema`로 설명하며, HATEOAS 링크 구조를 포함한다。
-57. **API 버전 관리**: API는 `/v1/` 접두사를 사용하여 버전을 관리하며, 새로운 주요 변경 시 버전을 증가시킨다 (예: `/v2/`)。
+34. **Command 요청 동기 응답**: Command 요청의 동기 응답은 JSON 형식으로 `status` (예: "SUCCESS"), `message` (결과 메시지), `correlationId` (요청 추적 ID)를 필수로 포함한다.
+35. **Command 요청 비동기 응답**: 비동기 Command 응답은 `status`, `message`, `jobId` (작업 ID), 상태 조회용 HATEOAS 링크(예: `/jobs/{jobId}/status`)를 포함한다.
+36. **X-Correlation-Id 헤더**: 모든 API 요청은 `X-Correlation-Id` 헤더를 포함하며, Controller는 이를 `correlationId`로 Command Handler에 전달하고 응답에 포함한다.
+37. **HATEOAS 의존성**: API는 `spring-boot-starter-hateoas`를 의존성으로 추가하며, 모든 응답은 HATEOAS 링크를 포함한다.
+38. **HATEOAS 링크 구조**: HATEOAS 링크는 `rel` (링크 관계), `href` (URI), `method` (HTTP 메서드)를 포함하며, `links` 필드에 `List<Map<String, String>>`로 반환된다。
+39. **HATEOAS URI 동적 생성**: HATEOAS 링크는 하드코딩 대신 Spring HATEOAS의 `linkTo`와 `methodOn`을 사용해 동적으로 생성한다 (예: `linkTo(methodOn(UserController::class.java).getUser(id)).withSelfRel()`).
+40. **비동기 Command 상태 링크**: 비동기 Command 응답은 `job-status` 링크를 포함하며, 이는 `/jobs/{jobId}/status` 형식으로 `jobId`를 기반으로 생성된다.
+41. **다건 조회 페이지네이션**: 다건 조회 API는 반드시 페이지네이션을 구현하며, 응답은 `content`, `page`, `size`, `totalElements`, `totalPages` 필드를 포함한다。
+42. **커서 페이지네이션 우선**: 페이지네이션은 커서 기반 페이지네이션을 기본으로 사용하며, 오프셋 페이지네이션은 성능 검증 후 사용한다。
+43. **Presentation Validation**: `Request DTO`의 유효성 검사는 `jakarta.validation.constraints` 어노테이션(예: `@NotNull`, `@Size`)을 사용하여 수행한다。
+44. **Validation 의존성**: 프로젝트는 `spring-boot-starter-validation`을 의존성에 반드시 추가한다。
+45. **Request DTO Validation**: 모든 `Request DTO` 필드는 적절한 검증 어노테이션을 반드시 적용하며, 검증 로직은 어노테이션으로 처리한다。
+46. **Controller `@Valid` 사용**: Controller 메서드는 `Request DTO`에 `@Valid` 어노테이션을 적용하여 유효성 검사를 트리거한다。
+47. **Validation 에러 응답**: Validation 실패 시 RFC 9457 `ProblemDetail` 형식을 따르며, `invalid-params` 필드에 필드별 에러 메시지(예: `[{ "field": "name", "reason": "cannot be empty" }]`를 포함한다。
+48. **에러 응답 형식**: 모든 에러 응답은 RFC 9457을 준수하며, `ProblemDetail` 클래스를 사용하여 `type`, `title`, `detail`, `errorCode`, `timestamp`를 포함한다。
+49. **ProblemDetail 속성 설정**: `ProblemDetail`은 `.apply { ... }` 람다 블록으로 속성을 설정하며, `ResponseEntity.status(error.status).body(problemDetail)`로 반환한다。
+50. **GlobalExceptionHandler 구현**: 모든 프로젝트는 `GlobalExceptionHandler` 클래스를 구현하며, 다음 예외를 반드시 처리한다: `MethodArgumentNotValidException`, `HttpMessageNotReadableException`, `DomainException`, `ApplicationException`, `Exception`。
+51. **컨트롤러 및 글로벌 예외 처리**: 컨트롤러 레벨과 글로벌 레벨 예외 처리를 모두 구현하며, 컨트롤러별 예외는 특정 도메인 에러를 처리하고, 글로벌 핸들러는 공통 에러를 처리한다。
+52. **API 문서화 Swagger**: API 문서화는 `springdoc-openapi` 라이브러리를 사용하여 Swagger로 구현한다。
+53. **Swagger 어노테이션**: Controller의 모든 엔드포인트는 `@Operation` (설명), `@ApiResponse` (응답), `@Parameter` (파라미터) 어노테이션을 적용한다。
+54. **Swagger 에러 응답**: Swagger 문서는 RFC 9457 `ProblemDetail` 형식을 반영하며, 에러 응답 스키마를 명시한다。
+55. **Swagger HATEOAS 링크**: Swagger 문서는 `links` 필드를 `@Schema`로 설명하며, HATEOAS 링크 구조를 포함한다。
+56. **API 버전 관리**: API는 `/v1/` 접두사를 사용하여 버전을 관리하며, 새로운 주요 변경 시 버전을 증가시킨다 (예: `/v2/`)。
 
-### 데이터 처리 규칙 (기존 규칙 유지)
+### 데이터 처리 규칙
 
-58. **DTO 변환**: Presentation 레이어의 `Request DTO`는 Application 레이어의 `Command DTO` 또는 `Query DTO`로 변환되며, 변환은 `extensions` 폴더의 확장 함수로 구현한다。
-59. **DTO 변환 파일명**: DTO 변환 확장 함수 파일은 `{Domain}DtoExtensions.kt` 형식을 따른다 (예: `UserDtoExtensions.kt`)。
-60. **JPA 엔티티 매핑**: JPA 엔티티와 도메인 모델 간 매핑은 Infrastructure 레이어의 `extensions` 폴더에서 확장 함수로 정의한다。
-61. **데이터 변환 일관성**: 모든 데이터 변환(예: DTO, 엔티티, VO 간)은 확장 함수를 사용하며, 변환 로직은 단일 책임 원칙을 준수해야 한다。
-62. **VO 생성 규칙**: VO는 `companion object`의 `of` 메서드로만 생성하며, `private` 생성자를 사용하여 직접 생성을 차단한다。
-63. **JPA 엔티티 관계 Lazy 로딩**: JPA 엔티티 관계는 `FetchType.LAZY`를 기본으로 설정하며, 관계 접근 시 N+1 문제를 방지하기 위해 `@EntityGraph` 또는 JPQL을 사용한다。
-64. **데이터베이스 스키마 일치**: JPA 엔티티의 `@Table`, `@Column` 정의는 데이터베이스 스키마와 1:1로 일치해야 하며, 스키마 변경 시 엔티티를 동기화한다。
-65. **로깅 표준화**: 모든 레이어에서 로깅은 SLF4J를 사용하며, `correlationId`를 포함한 구조화된 로깅을 적용한다 (예: `log.info("Processing user creation, correlationId={}", correlationId)`)。
+57. **DTO 변환**: Presentation 레이어의 `Request DTO`는 Application 레이어의 `Command DTO` 또는 `Query DTO`로 변환되며, 변환은 `extensions` 폴더의 확장 함수로 구현한다。
+58. **DTO 변환 파일명**: DTO 변환 확장 함수 파일은 `{Domain}DtoExtensions.kt` 형식을 따른다 (예: `UserDtoExtensions.kt`)。
+59. **JPA 엔티티 매핑**: JPA 엔티티와 도메인 모델 간 매핑은 Infrastructure 레이어의 `extensions` 폴더에서 확장 함수로 정의한다。
+60. **데이터 변환 일관성**: 모든 데이터 변환(예: DTO, 엔티티, VO 간)은 확장 함수를 사용하며, 변환 로직은 단일 책임 원칙을 준수해야 한다。
+61. **VO 생성 규칙**: VO는 `companion object`의 `of` 메서드로만 생성하며, `private` 생성자를 사용하여 직접 생성을 차단한다。
+62. **JPA 엔티티 관계 Lazy 로딩**: JPA 엔티티 관계는 `FetchType.LAZY`를 기본으로 설정하며, 관계 접근 시 N+1 문제를 방지하기 위해 `@EntityGraph` 또는 JPQL을 사용한다。
+63. **데이터베이스 스키마 일치**: JPA 엔티티의 `@Table`, `@Column` 정의는 데이터베이스 스키마와 1:1로 일치해야 하며, 스키마 변경 시 엔티티를 동기화한다。
+64. **로깅 표준화**: 모든 레이어에서 로깅은 SLF4J를 사용하며, `correlationId`를 포함한 구조화된 로깅을 적용한다 (예: `log.info("Processing user creation, correlationId={}", correlationId)`)。
 
 ### 애플리케이션 핸들러 예외 처리 규칙 (sealed class & ErrorCode 규칙 적용)
 
-66. **ErrorCode 인터페이스 정의**: 모든 에러 코드는 `common` 모듈에 정의된 `ErrorCode` 인터페이스를 구현해야 하며, `code` 속성을 통해 고유한 에러 코드를 문자열 형태로 제공해야 한다.
-67. **애플리케이션 레이어 예외 sealed class 정의**: Application 레이어에서 발생하는 모든 예외는 `ApplicationException` (또는 하위 예외 클래스)을 상속받는 sealed class로 정의하며, 각 sealed class는 `ErrorCode` 인터페이스를 구현하고, 하위에 구체적인 예외 data class들을 포함해야 한다.
-68. **sealed class 예외별 에러 코드**: sealed class 내 각 예외 data class는 생성 시 `ErrorCode` 구현체 (Enum 권장) 를 연결하여 고유한 에러 코드를 가져야 한다.
-69. **예외 발생 시 ErrorCode 로깅**: Application 레이어에서 예외 발생 시 SLF4J를 사용하여 예외 정보, `correlationId` 와 함께 `ErrorCode`를 로깅해야 한다 (예: `log.error("Failed to process command, correlationId={}, errorCode={}, error={}", correlationId, e.errorCode.code, e.message, e)`).
-70. **예외 전파**: Application 레이어는 예외를 직접 처리하지 않고, `ApplicationException` 또는 `DomainException` sealed class (혹은 하위 data class) 를 상위 레이어(Controller 또는 GlobalExceptionHandler)로 전파한다.
-71. **비즈니스 로직 예외 구분**: 비즈니스 로직에서 발생한 예외는 `DomainException` sealed class로 정의하며, 기술적 오류(예: DB 연결 실패, 외부 API 오류)는 `ApplicationException` sealed class로 구분한다.
-72. **예외 메시지 표준화**: 모든 `ApplicationException`과 `DomainException` sealed class 및 하위 data class 는 사용자 친화적인 메시지와 개발자용 디버깅 메시지를 sealed class 또는 data class 내에서 관리하며, 메시지는 다국어 지원을 고려해 `message.properties`에서 관리한다.
-73. **예외 처리 일관성**: Application 레이어의 Command Handler와 Query Handler는 예외 발생 시 일관된 방식으로 `ProblemDetail` 객체를 생성하도록 확장 함수(예: `toProblemDetail()`)를 사용하거나, ControllerAdvice 기반의 공통 예외 처리 방식을 적용한다.
-74. **비동기 Command 예외 처리**: 비동기 Command Handler는 예외 발생 시 `jobId`와 함께 예외 정보 및 `ErrorCode`를 별도의 `JobError` 엔티티에 저장하고, 상태 조회 API를 통해 클라이언트가 확인할 수 있도록 한다.
-75. **재시도 로직 포함**: Application 레이어는 일시적 오류(예: 외부 API 호출 실패)에 대해 최대 3회 재시도 로직을 포함하며, 재시도 실패 시 `ApplicationException` sealed class (기술적 오류 관련 data class) 를 발생시킨다.
-76. **Resilience4j 회로 차단기**: 외부 시스템 호출은 Resilience4j를 사용하여 회로 차단기 패턴을 적용하며, 기본 타임아웃은 5초로 설정한다. 회로 차단기 설정은 `@CircuitBreaker` 어노테이션을 사용하고, 폴백 메서드를 정의하여 장애 시 기본 응답을 반환한다。
-77. **Resilience4j 재시도 설정**: Resilience4j의 `@Retry` 어노테이션을 사용하여 일시적 오류에 대해 최대 3회 재시도하며, 재시도 간격은 지수 백오프(exponential backoff) 전략을 따른다。
+65. **ErrorCode 인터페이스 정의**: 모든 에러 코드는 각 도메인의 `domain` 또는 `application` 모듈 내에 정의된 도메인별 `ErrorCode` 인터페이스를 구현해야 하며, `code` 속성을 통해 고유한 에러 코드를 문자열 형태로 제공해야 한다. 예를 들어, `user` 도메인은 `domains/user/domain/src/main/kotlin/com/domain/user/error/UserErrorCode`에 인터페이스를 정의하고, `application` 레이어의 기술적 오류는 `domains/user/application/src/main/kotlin/com/application/user/common/UserApplicationErrorCode`에 정의한다.
+66. **애플리케이션 레이어 예외 sealed class 정의**: Application 레이어에서 발생하는 모든 예외는 각 도메인의 `application` 모듈 내에서 정의된 `ApplicationException` (또는 도메인별 하위 예외 클래스, 예: `UserApplicationException`)을 상속받는 sealed class로 정의하며, 각 sealed class는 해당 도메인의 `UserApplicationErrorCode` 인터페이스를 구현한 에러 코드를 참조하고, 하위에 구체적인 예외 data class들을 포함해야 한다.
+67. **sealed class 예외별 에러 코드**: sealed class 내 각 예외 data class는 생성 시 해당 도메인의 `ErrorCode` 구현체 (Enum 권장, 예: `UserErrorCodes`, `UserApplicationErrorCodes`)를 연결하여 고유한 에러 코드를 가져야 한다.
+68. **예외 발생 시 ErrorCode 로깅**: Application 레이어에서 예외 발생 시 SLF4J를 사용하여 예외 정보, `correlationId`와 함께 도메인별 `ErrorCode`를 로깅해야 한다 (예: `log.error("Failed to process command, correlationId={}, errorCode={}, error={}", correlationId, e.errorCode.code, e.message, e)`). 여기서 `e.errorCode`는 해당 도메인의 `UserErrorCode` 또는 `UserApplicationErrorCode` 구현체를 참조한다.
+69. **예외 전파**: Application 레이어는 예외를 직접 처리하지 않고, `ApplicationException` 또는 `DomainException` sealed class (혹은 하위 data class)를 상위 레이어(Controller 또는 GlobalExceptionHandler)로 전파한다。
+70. **비즈니스 로직 예외 구분**: 비즈니스 로직에서 발생한 예외는 각 도메인의 `domain` 모듈 내에서 정의된 `DomainException` sealed class (예: `UserDomainException`)로 정의하며, 기술적 오류(예: DB 연결 실패, 외부 API 오류)는 각 도메인의 `application` 모듈 내에서 정의된 `ApplicationException` sealed class (예: `UserApplicationException`)로 구분한다.
+71. **예외 메시지 표준화**: 각 도메인의 `ApplicationException` (예: `UserApplicationException`)과 `DomainException` (예: `UserDomainException`) sealed class 및 하위 data class는 해당 도메인의 `ErrorCode` (예: `UserErrorCodes`, `UserApplicationErrorCodes`)를 참조하여 사용자 친화적인 메시지와 개발자용 디버깅 메시지를 sealed class 또는 data class 내에서 관리하며, 메시지는 단일 언어로 명확히 정의한다.
+72. **예외 처리 일관성**: Application 레이어의 Command Handler와 Query Handler는 예외 발생 시 일관된 방식으로 `ProblemDetail` 객체를 생성하도록 확장 함수(예: `toProblemDetail()`)를 사용하거나, ControllerAdvice 기반의 공통 예외 처리 방식을 적용한다。
+73. **비동기 Command 예외 처리**: 비동기 Command Handler는 예외 발생 시 `jobId`와 함께 예외 정보 및 `ErrorCode`를 별도의 `JobError` 엔티티에 저장하고, 상태 조회 API를 통해 클라이언트가 확인할 수 있도록 한다。
+74. **재시도 로직 포함**: Application 레이어는 일시적 오류(예: 외부 API 호출 실패)에 대해 최대 3회 재시도 로직을 포함하며, 재시도 실패 시 `ApplicationException` sealed class (기술적 오류 관련 data class)를 발생시킨다。
+75. **Resilience4j 회로 차단기**: 외부 시스템 호출은 Resilience4j를 사용하여 회로 차단기 패턴을 적용하며, 기본 타임아웃은 5초로 설정한다. 회로 차단기 설정은 `@CircuitBreaker` 어노테이션을 사용하고, 폴백 메서드를 정의하여 장애 시 기본 응답을 반환한다。
+76. **Resilience4j 재시도 설정**: Resilience4j의 `@Retry` 어노테이션을 사용하여 일시적 오류에 대해 최대 3회 재시도하며, 재시도 간격은 지수 백오프(exponential backoff) 전략을 따른다。
 
-### 불변식 규칙 (Kafka) (기존 규칙 유지)
+### 불변식 규칙 (Kafka)
 
-78. **Kafka를 활용한 이벤트 기반 아키텍처에서 Avro를 데이터 직렬화 포맷으로 사용한다.**
-79. **스키마 레지스트리를 통해 스키마를 중앙 집중식으로 관리한다.**
-80. **대규모 조직에서의 이벤트 처리 (Saga, Request & Response)에 Kafka 및 Avro를 활용한다.**
-81. **외부 도메인 이벤트 발행에 Kafka 및 Avro를 활용한다.**
-82. **스키마 버전 관리에 Avro 스키마와 스키마 레지스트리를 사용한다.**
-83. **공통 데이터 구조의 재사용성 보장을 위해 Avro 스키마를 활용한다.**
-84. **메시징 시스템으로 Apache Kafka를 사용한다.**
-85. **데이터 직렬화 포맷으로 Avro를 사용한다.**
-86. **스키마 관리 시스템으로 Confluent Schema Registry를 사용한다.**
-87. **Kafka 클라이언트로 Spring Kafka (`spring-kafka`) 라이브러리를 사용한다.**
-88. **내부 이벤트는 Kafka를 사용하지 않고 애플리케이션 내부 메모리 내 이벤트 버스를 활용한다 (예: Spring `ApplicationEvent`).**
-89. **외부 이벤트는 Kafka를 통해 발행하며, 외부 도메인 이벤트와 내부 이벤트를 명확히 구분한다.**
-90. **분산 트랜잭션 처리를 위해 Saga 패턴을 적용하며, 이벤트는 상태 변경 명령과 보상 트랜잭션으로 구성한다.**
-91. **동기 요청-응답 패턴은 Kafka Streams 또는 별도 HTTP API로 처리하고, 비동기 이벤트는 Kafka 토픽으로 발행한다.**
-92. **Kafka 토픽 이름은 다음 형식을 따른다: `{environment}.{domain}.{event-type}.{entity}.{version}`.**
-93. **토픽 네이밍 컨벤션에서 `environment`는 운영 환경을 나타낸다 (예: `prod`, `staging`, `dev`).**
-94. **토픽 네이밍 컨벤션에서 `domain`은 도메인 이름을 나타낸다 (예: `user`, `order`, `payment`).**
-95. **토픽 네이밍 컨벤션에서 `event-type`은 이벤트 유형을 나타낸다 (예: `domain-event`, `saga`, `request`, `response`).**
-96. **토픽 네이밍 컨벤션에서 `entity`는 엔티티 이름을 나타낸다 (예: `user`, `order`, `transaction`).**
-97. **토픽 네이밍 컨벤션에서 `version`은 스키마 버전을 나타낸다 (예: `v1`, `v2`).**
-98. **외부 도메인 이벤트는 토픽 유형을 `domain-event`로 한정하고, 내부 이벤트용 Kafka 토픽은 생성하지 않는다.**
-99. **Kafka 토픽 이름은 소문자와 하이픈(`-`)만 사용하고, 최대 249자로 제한한다.**
-100. **Kafka 토픽 이름의 `version`은 스키마 레지스트리의 `schemaVersion`과 일치해야 한다.**
-101. **Avro 스키마 파일은 각 도메인 모듈의 `infrastructure` 레이어 내 `avro` 디렉터리에 저장한다.**
-102. **Avro 스키마 파일 저장 구체적 경로는 `domains/{domain}/infrastructure/src/main/resources/avro/` 이다.**
-103. **Avro 스키마 파일명 형식은 `{entity}-{event-type}-{version}.avsc` 를 따른다.**
-104. **Avro 스키마는 `.avsc` 파일로 작성하여 Confluent Schema Registry에 등록하여 관리한다.**
-105. **Avro 스키마 버전 관리는 스키마 변경 시 새로운 `.avsc` 파일을 생성하고, 기존 스키마와의 호환성(Backward, Forward, Full)을 보장한다.**
-106. **Avro 스키마 Kotlin 클래스 자동 생성을 위해 Gradle 플러그인(`com.github.davidmc24.gradle.plugin.avro`)을 사용한다.**
-107. **Gradle Avro 플러그인 설정 시 `createSetters = false` 옵션을 설정한다.**
-108. **Gradle Avro 플러그인 설정 시 `fieldVisibility = "PRIVATE"` 옵션을 설정한다.**
-109. **자동 생성된 Avro Kotlin 클래스는 `infrastructure/src/main/kotlin/com/example/infrastructure/{domain}/avro/` 위치에 생성된다.**
-110. **`Envelope` 스키마 파일은 공통 모듈(`common`)의 `avro` 디렉터리에 위치한다.**
-111. **`Envelope` 스키마 파일 저장 구체적 경로는 `domains/common/src/main/resources/avro/envelope.avsc` 이다.**
-112. **`Envelope` 스키마는 `schemaVersion`, `eventId`, `timestamp`, `source` 필드를 포함한다.**
-113. **`Envelope` 스키마의 `schemaVersion` 필드는 토픽 이름의 `version`과 일치시킨다 (예: `v1`, `v2`).**
-114. **`Envelope` 스키마의 `eventId` 필드는 UUID로 고유 식별자를 생성하여 할당한다.**
-115. **`Envelope` 스키마의 `timestamp` 필드는 이벤트 발생 시각을 나노초 단위로 기록한다 (Unix epoch nanoseconds, `System.nanoTime()` 사용).**
-116. **`Envelope` 스키마의 `source` 필드는 이벤트 발행 도메인을 기록한다 (예: `user`, `order`).**
-117. **공통 `Envelope` 스키마는 모든 도메인 이벤트에서 공통으로 포함하고, 각 도메인의 `.avsc` 파일에서 참조하여 재사용한다.**
-118. **공통 스키마 변경 시, 모든 도메인에서 호환성 테스트 후 배포한다.**
-119. **공통 모듈 의존성 설정은 `dependencies { implementation project(":domains:common") }` 와 같이 한다.**
-120. **Saga 패턴 관련 Kafka 토픽은 `{environment}.{domain}.saga.{entity}.{version}` 형식으로 명명한다.**
-121. **Saga 패턴 관련 Kafka 메시지는 상태 변경 명령과 보상 트랜잭션 이벤트를 발행한다.**
-122. **Request & Response 패턴 관련 Kafka 요청 토픽은 `{environment}.{domain}.request.{entity}.{version}` 형식으로 명명한다.**
-123. **Request & Response 패턴 관련 Kafka 응답 토픽은 `{environment}.{domain}.response.{entity}.{version}` 형식으로 명명한다.**
-124. **Request & Response 패턴 구현 시 `correlationId`를 `Envelope.eventId`로 사용하여 요청-응답을 매핑한다.**
-125. **외부 도메인 이벤트 관련 Kafka 토픽은 `{environment}.{domain}.domain-event.{entity}.{version}` 형식으로 명명한다.**
-126. **내부 이벤트는 Kafka로 발행하지 않고, 외부 시스템과의 통신에 Kafka를 사용한다.**
-127. **Spring Kafka 설정 시 `KafkaTemplate` 및 `ProducerFactory` 빈을 `@Configuration`, `@Bean` 을 사용하여 설정한다.**
-128. **Spring Kafka `KafkaTemplate` 설정 시 `BOOTSTRAP_SERVERS_CONFIG` 설정을 포함한다.**
-129. **Spring Kafka `KafkaTemplate` 설정 시 `KEY_SERIALIZER_CLASS_CONFIG` 설정을 포함한다.**
-130. **Spring Kafka `KafkaTemplate` 설정 시 `VALUE_SERIALIZER_CLASS_CONFIG` 설정을 포함한다.**
-131. **Spring Kafka `KafkaTemplate` 설정 시 `schema.registry.url` 설정을 포함한다.**
-132. **스키마 레지스트리 URL 설정은 `application.yml` 파일에 `spring.kafka.properties.schema.registry.url` 속성으로 설정한다.**
-133. **Avro 스키마 변경 시 Confluent Schema Registry의 호환성 규칙 (기본: Backward)을 준수한다.**
-134. **대규모 트래픽을 고려하여 도메인별/이벤트 유형별로 토픽을 세분화한다.**
-135. **Kafka와 Schema Registry를 포함한 통합 테스트는 Testcontainers를 사용하여 작성한다. (섹션 18.3.3 참조)**
-136. **이벤트 `timestamp`는 나노초 단위로 기록하고, 시스템 간 시간 동기화 (NTP 등)를 고려한다.**
-137. **`schemaVersion`과 토픽 버전 불일치 감지를 위한 모니터링 설정이 필요하다.**
+77. **Kafka를 활용한 이벤트 기반 아키텍처에서 Avro를 데이터 직렬화 포맷으로 사용한다.**
+78. **스키마 레지스트리를 통해 스키마를 중앙 집중식으로 관리한다.**
+79. **대규모 조직에서의 이벤트 처리 (Saga, Request & Response)에 Kafka 및 Avro를 활용한다.**
+80. **외부 도메인 이벤트 발행에 Kafka 및 Avro를 활용한다.**
+81. **스키마 버전 관리에 Avro 스키마와 스키마 레지스트리를 사용한다.**
+82. **공통 데이터 구조의 재사용성 보장을 위해 Avro 스키마를 활용한다.**
+83. **메시징 시스템으로 Apache Kafka를 사용한다.**
+84. **데이터 직렬화 포맷으로 Avro를 사용한다.**
+85. **스키마 관리 시스템으로 Confluent Schema Registry를 사용한다.**
+86. **Kafka 클라이언트로 Spring Kafka (`spring-kafka`) 라이브러리를 사용한다.**
+87. **내부 이벤트는 Kafka를 사용하지 않고 애플리케이션 내부 메모리 내 이벤트 버스를 활용한다 (예: Spring `ApplicationEvent`).**
+88. **외부 이벤트는 Kafka를 통해 발행하며, 외부 도메인 이벤트와 내부 이벤트를 명확히 구분한다.**
+89. **분산 트랜잭션 처리를 위해 Saga 패턴을 적용하며, 이벤트는 상태 변경 명령과 보상 트랜잭션으로 구성한다.**
+90. **동기 요청-응답 패턴은 Kafka Streams 또는 별도 HTTP API로 처리하고, 비동기 이벤트는 Kafka 토픽으로 발행한다.**
+91. **Kafka 토픽 이름은 다음 형식을 따른다: `{environment}.{domain}.{event-type}.{entity}.{version}`.**
+92. **토픽 네이밍 컨벤션에서 `environment`는 운영 환경을 나타낸다 (예: `prod`, `staging`, `dev`).**
+93. **토픽 네이밍 컨벤션에서 `domain`은 도메인 이름을 나타낸다 (예: `user`, `order`, `payment`).**
+94. **토픽 네이밍 컨벤션에서 `event-type`은 이벤트 유형을 나타낸다 (예: `domain-event`, `saga`, `request`, `response`).**
+95. **토픽 네이밍 컨벤션에서 `entity`는 엔티티 이름을 나타낸다 (예: `user`, `order`, `transaction`).**
+96. **토픽 네이밍 컨벤션에서 `version`은 스키마 버전을 나타낸다 (예: `v1`, `v2`).**
+97. **외부 도메인 이벤트는 토픽 유형을 `domain-event`로 한정하고, 내부 이벤트용 Kafka 토픽은 생성하지 않는다.**
+98. **Kafka 토픽 이름은 소문자와 하이픈(`-`)만 사용하고, 최대 249자로 제한한다.**
+99. **Kafka 토픽 이름의 `version`은 스키마 레지스트리의 `schemaVersion`과 일치해야 한다.**
+100. **Avro 스키마 파일은 각 도메인 모듈의 `infrastructure` 레이어 내 `avro` 디렉터리에 저장한다.**
+101. **Avro 스키마 파일 저장 구체적 경로는 `domains/{domain}/infrastructure/src/main/resources/avro/` 이다.**
+102. **Avro 스키마 파일명 형식은 `{entity}-{event-type}-{version}.avsc` 를 따른다.**
+103. **Avro 스키마는 `.avsc` 파일로 작성하여 Confluent Schema Registry에 등록하여 관리한다.**
+104. **Avro 스키마 버전 관리는 스키마 변경 시 새로운 `.avsc` 파일을 생성하고, 기존 스키마와의 호환성(Backward, Forward, Full)을 보장한다.**
+105. **Avro 스키마 Kotlin 클래스 자동 생성을 위해 Gradle 플러그인(`com.github.davidmc24.gradle.plugin.avro`)을 사용한다.**
+106. **Gradle Avro 플러그인 설정 시 `createSetters = false` 옵션을 설정한다.**
+107. **Gradle Avro 플러그인 설정 시 `fieldVisibility = "PRIVATE"` 옵션을 설정한다.**
+108. **자동 생성된 Avro Kotlin 클래스는 `infrastructure/src/main/kotlin/com/example/infrastructure/{domain}/avro/` 위치에 생성된다.**
+109. **`Envelope` 스키마 파일은 공통 모듈(`common`)의 `avro` 디렉터리에 위치한다.**
+110. **`Envelope` 스키마 파일 저장 구체적 경로는 `domains/common/src/main/resources/avro/envelope.avsc` 이다.**
+111. **`Envelope` 스키마는 `schemaVersion`, `eventId`, `timestamp`, `source` 필드를 포함한다.**
+112. **`Envelope` 스키마의 `schemaVersion` 필드는 토픽 이름의 `version`과 일치시킨다 (예: `v1`, `v2`).**
+113. **`Envelope` 스키마의 `eventId` 필드는 UUID로 고유 식별자를 생성하여 할당한다.**
+114. **`Envelope` 스키마의 `timestamp` 필드는 이벤트 발생 시각을 나노초 단위로 기록한다 (Unix epoch nanoseconds, `System.nanoTime()` 사용).**
+115. **`Envelope` 스키마의 `source` 필드는 이벤트 발행 도메인을 기록한다 (예: `user`, `order`).**
+116. **공통 `Envelope` 스키마는 모든 도메인 이벤트에서 공통으로 포함하고, 각 도메인의 `.avsc` 파일에서 참조하여 재사용한다.**
+117. **공통 스키마 변경 시, 모든 도메인에서 호환성 테스트 후 배포한다.**
+118. **공통 모듈 의존성 설정은 `dependencies { implementation project(":domains:common") }` 와 같이 한다.**
+119. **Saga 패턴 관련 Kafka 토픽은 `{environment}.{domain}.saga.{entity}.{version}` 형식으로 명명한다.**
+120. **Saga 패턴 관련 Kafka 메시지는 상태 변경 명령과 보상 트랜잭션 이벤트를 발행한다.**
+121. **Request & Response 패턴 관련 Kafka 요청 토픽은 `{environment}.{domain}.request.{entity}.{version}` 형식으로 명명한다.**
+122. **Request & Response 패턴 관련 Kafka 응답 토픽은 `{environment}.{domain}.response.{entity}.{version}` 형식으로 명명한다.**
+123. **Request & Response 패턴 구현 시 `correlationId`를 `Envelope.eventId`로 사용하여 요청-응답을 매핑한다.**
+124. **외부 도메인 이벤트 관련 Kafka 토픽은 `{environment}.{domain}.domain-event.{entity}.{version}` 형식으로 명명한다.**
+125. **내부 이벤트는 Kafka로 발행하지 않고, 외부 시스템과의 통신에 Kafka를 사용한다.**
+126. **Spring Kafka 설정 시 `KafkaTemplate` 및 `ProducerFactory` 빈을 `@Configuration`, `@Bean` 을 사용하여 설정한다.**
+127. **Spring Kafka `KafkaTemplate` 설정 시 `BOOTSTRAP_SERVERS_CONFIG` 설정을 포함한다.**
+128. **Spring Kafka `KafkaTemplate` 설정 시 `KEY_SERIALIZER_CLASS_CONFIG` 설정을 포함한다.**
+129. **Spring Kafka `KafkaTemplate` 설정 시 `VALUE_SERIALIZER_CLASS_CONFIG` 설정을 포함한다.**
+130. **Spring Kafka `KafkaTemplate` 설정 시 `schema.registry.url` 설정을 포함한다.**
+131. **스키마 레지스트리 URL 설정은 `application.yml` 파일에 `spring.kafka.properties.schema.registry.url` 속성으로 설정한다.**
+132. **Avro 스키마 변경 시 Confluent Schema Registry의 호환성 규칙 (기본: Backward)을 준수한다.**
+133. **대규모 트래픽을 고려하여 도메인별/이벤트 유형별로 토픽을 세분화한다.**
+134. **Kafka와 Schema Registry를 포함한 통합 테스트는 Testcontainers를 사용하여 작성한다.**
+135. **이벤트 `timestamp`는 나노초 단위로 기록하고, 시스템 간 시간 동기화 (NTP 등)를 고려한다.**
+136. **`schemaVersion`과 토픽 버전 불일치 감지를 위한 모니터링 설정이 필요하다.**
 
+---
+
+### 디렉터리 구조
+
+디렉터리 구조는 다국어 관련 규칙 제거로 인해 변경되지 않으며, 기존 구조를 그대로 유지합니다. 다만, `message.properties` 파일은 다국어 키-값 쌍 대신 단일 언어 메시지로 간소화되거나, 경우에 따라 예외 메시지를 코드 내에서 직접 정의하여 파일 자체가 제거될 수 있습니다. 아래는 참고용 디렉터리 구조입니다:
 
 ```
 domains/
@@ -172,6 +176,8 @@ domains/
 │   │   │   │       └── example/
 │   │   │   │           └── common/
 │   │   │   │               ├── dto/
+│   │   │   │               │   ├── AsyncCommandResult.kt
+│   │   │   │               │   └── CommandResult.kt
 │   │   │   │               ├── exception/
 │   │   │   │               │   ├── ApplicationException.kt
 │   │   │   │               │   ├── DomainException.kt
@@ -184,7 +190,6 @@ domains/
 │   │   │   │                   └── GlobalExceptionHandler.kt
 │   │   │   ├── resources/
 │   │   │   │   ├── application.yml
-│   │   │   │   └── message.properties
 │   │   └── test/
 ├── user/
 │   ├── apps/
@@ -197,7 +202,6 @@ domains/
 │   │   │   │   │               └── UserApplication.kt
 │   │   │   │   ├── resources/
 │   │   │   │   │   ├── application.yml
-│   │   │   │   │   └── message.properties
 │   │   │   └── test/
 │   ├── domain/
 │   │   ├── src/
@@ -239,7 +243,6 @@ domains/
 │   │   │   │   │               ├── event/
 │   │   │   │   │               │   └── UserEventPublisher.kt
 │   │   │   │   │               ├── extensions/
-│   │   │   │   │               │   └── mapping/
 │   │   │   │   │               │       └── UserDtoExtensions.kt
 │   │   │   │   │               └── query/
 │   │   │   │   │                   ├── handler/
@@ -262,7 +265,6 @@ domains/
 │   │   │   │   │               ├── exception/
 │   │   │   │   │               │   └── UserInfrastructureException.kt
 │   │   │   │   │               ├── extensions/
-│   │   │   │   │               │   └── mapping/
 │   │   │   │   │               │       └── UserEntityExtensions.kt
 │   │   │   │   │               └── repository/
 │   │   │   │   │                   ├── SpringDataJpaUserRepository.kt
@@ -286,7 +288,6 @@ domains/
 │   │   │   │   │               │   │           ├── UserCreateRequestV1.kt
 │   │   │   │   │               │   │           └── UserUpdateRequestV1.kt
 │   │   │   │   │               │   ├── extensions/
-│   │   │   │   │               │   │   └── mapping/
 │   │   │   │   │               │   │       └── UserRequestExtensions.kt
 │   │   │   │   │               │   └── query/
 │   │   │   │   │               │       ├── UserQueryControllerV1.kt
@@ -296,7 +297,6 @@ domains/
 │   │   │   │   │               │               └── UserSearchResponseV1.kt
 │   │   │   │   ├── resources/
 │   │   │   │   │   ├── application.yml
-│   │   │   │   │   └── message.properties
 │   │   │   └── test/
 │   └── build.gradle.kts
 ├── order/
@@ -310,7 +310,6 @@ domains/
 │   │   │   │   │               └── OrderApplication.kt
 │   │   │   │   ├── resources/
 │   │   │   │   │   ├── application.yml
-│   │   │   │   │   └── message.properties
 │   │   │   └── test/
 │   ├── domain/
 │   │   ├── src/
@@ -356,7 +355,6 @@ domains/
 │   │   │   │   │               ├── event/
 │   │   │   │   │               │   └── OrderEventPublisher.kt
 │   │   │   │   │               ├── extensions/
-│   │   │   │   │               │   └── mapping/
 │   │   │   │   │               │       └── OrderDtoExtensions.kt
 │   │   │   │   │               └── query/
 │   │   │   │   │                   ├── handler/
@@ -382,7 +380,6 @@ domains/
 │   │   │   │   │               ├── exception/
 │   │   │   │   │               │   └── OrderInfrastructureException.kt
 │   │   │   │   │               ├── extensions/
-│   │   │   │   │               │   └── mapping/
 │   │   │   │   │               │       └── OrderEntityExtensions.kt
 │   │   │   │   │               └── repository/
 │   │   │   │   │                   ├── SpringDataJpaOrderRepository.kt
@@ -406,7 +403,6 @@ domains/
 │   │   │   │   │               │   │           ├── OrderCancelRequestV1.kt
 │   │   │   │   │               │   │           └── OrderCreateRequestV1.kt
 │   │   │   │   │               │   ├── extensions/
-│   │   │   │   │               │   │   └── mapping/
 │   │   │   │   │               │   │       └── OrderRequestExtensions.kt
 │   │   │   │   │               │   └── query/
 │   │   │   │   │               │       ├── OrderQueryControllerV1.kt
@@ -416,7 +412,6 @@ domains/
 │   │   │   │   │               │               └── OrderResponseV1.kt
 │   │   │   │   ├── resources/
 │   │   │   │   │   ├── application.yml
-│   │   │   │   │   └── message.properties
 │   │   │   └── test/
 │   └── build.gradle.kts
 └── build.gradle.kts

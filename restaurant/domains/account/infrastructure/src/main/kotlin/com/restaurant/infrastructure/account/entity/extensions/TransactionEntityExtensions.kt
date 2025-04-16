@@ -6,53 +6,52 @@ import com.restaurant.domain.account.vo.Money
 import com.restaurant.domain.account.vo.OrderId
 import com.restaurant.domain.account.vo.TransactionId
 import com.restaurant.domain.account.vo.TransactionType
+import com.restaurant.infrastructure.account.entity.AccountTransactionTypeEntity
 import com.restaurant.infrastructure.account.entity.TransactionEntity
-import com.restaurant.infrastructure.account.entity.TransactionTypeEntity
+import java.time.Instant
 
 /**
- * TransactionEntity -> Transaction 도메인 객체 변환
+ * TransactionEntity를 도메인 Transaction으로 변환
  */
-fun TransactionEntity.toDomain(): Transaction {
-    requireNotNull(this.id) { "TransactionEntity ID는 null일 수 없습니다." }
-    return Transaction.reconstitute(
-        id = TransactionId.of(this.id),
-        type = this.type.toDomain(),
-        amount = Money.of(this.amount),
-        orderId = OrderId.of(this.orderId),
-        accountId = AccountId.of(this.accountId),
-        cancelled = this.cancelled,
-        timestamp = this.timestamp,
+fun TransactionEntity.toDomain(): Transaction =
+    Transaction.reconstitute(
+        id = TransactionId.of(id!!),
+        type = type.toDomain(),
+        amount = Money.of(amount),
+        orderId = OrderId.of(orderId),
+        accountId = AccountId.of(accountId),
+        cancelled = cancelled,
+        timestamp = timestamp.toEpochMilli(),
     )
-}
 
 /**
- * Transaction 도메인 객체 -> TransactionEntity 변환
+ * Transaction을 TransactionEntity로 변환
  */
 fun Transaction.toEntity(): TransactionEntity =
     TransactionEntity(
-        id = this.id.value,
-        accountId = this.accountId.value,
-        type = this.type.toEntity(),
-        amount = this.amount.value,
-        orderId = this.orderId.value,
-        cancelled = this.cancelled,
-        timestamp = this.timestamp,
+        id = id.value,
+        accountId = accountId.value,
+        type = type.toEntity(),
+        amount = amount.value,
+        orderId = orderId.value,
+        cancelled = cancelled,
+        timestamp = Instant.ofEpochMilli(timestamp),
     )
 
 /**
- * TransactionTypeEntity Enum -> TransactionType 도메인 Enum 변환
+ * AccountTransactionTypeEntity를 도메인 TransactionType으로 변환
  */
-fun TransactionTypeEntity.toDomain(): TransactionType =
+private fun AccountTransactionTypeEntity.toDomain(): TransactionType =
     when (this) {
-        TransactionTypeEntity.DEBIT -> TransactionType.DEBIT
-        TransactionTypeEntity.CREDIT -> TransactionType.CREDIT
+        AccountTransactionTypeEntity.DEBIT -> TransactionType.DEBIT
+        AccountTransactionTypeEntity.CREDIT -> TransactionType.CREDIT
     }
 
 /**
- * TransactionType 도메인 Enum -> TransactionTypeEntity Enum 변환
+ * TransactionType을 AccountTransactionTypeEntity로 변환
  */
-fun TransactionType.toEntity(): TransactionTypeEntity =
+private fun TransactionType.toEntity(): AccountTransactionTypeEntity =
     when (this) {
-        TransactionType.DEBIT -> TransactionTypeEntity.DEBIT
-        TransactionType.CREDIT -> TransactionTypeEntity.CREDIT
+        TransactionType.DEBIT -> AccountTransactionTypeEntity.DEBIT
+        TransactionType.CREDIT -> AccountTransactionTypeEntity.CREDIT
     }

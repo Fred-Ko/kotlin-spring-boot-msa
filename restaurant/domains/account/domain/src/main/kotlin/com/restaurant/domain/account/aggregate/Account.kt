@@ -35,21 +35,14 @@ data class Account(
     }
 
     /**
-     * 계좌에 금액을 추가합니다.
+     * 계좌에 금액을 입금합니다.
      *
-     * @param amount 추가할 금액
+     * @param amount 입금할 금액
      */
     fun credit(amount: Money): Account =
         copy(
             balance = balance + amount,
         )
-
-    /**
-     * 계좌에 입금합니다.
-     *
-     * @param amount 입금할 금액
-     */
-    fun deposit(amount: Money): Account = copy(balance = balance + amount)
 
     companion object {
         /**

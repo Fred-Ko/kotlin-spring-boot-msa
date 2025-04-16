@@ -7,12 +7,12 @@ data class UserId private constructor(
     val value: Long,
 ) {
     init {
-        require(value > 0) { "UserId는 0보다 커야 합니다." }
+        require(value > 0L) { "UserId must be greater than 0, but was: $value" }
     }
 
     companion object {
         fun of(value: Long): UserId = UserId(value)
     }
 
-    override fun toString(): String = value.toString()
+    override fun toString(): String = "UserId(value=$value)"
 }

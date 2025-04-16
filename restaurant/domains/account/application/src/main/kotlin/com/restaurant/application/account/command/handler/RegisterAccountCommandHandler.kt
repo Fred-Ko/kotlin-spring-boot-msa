@@ -42,7 +42,7 @@ class RegisterAccountCommandHandler(
             val existingAccount = accountRepository.findByUserId(userId)
             if (existingAccount != null) {
                 // 이미 계좌가 있으면 기존 계좌에 입금만 처리
-                val updatedAccount = existingAccount.deposit(initialBalance)
+                val updatedAccount = existingAccount.credit(initialBalance)
                 accountRepository.save(updatedAccount)
                 log.info(
                     "기존 계좌에 입금 처리 완료, correlationId={}, userId={}, amount={}",

@@ -20,7 +20,7 @@ class AccountEntity(
     val id: Long? = null,
     @Column(name = "user_id", nullable = false)
     val userId: Long,
-    @Column(name = "balance", nullable = false)
+    @Column(name = "balance", nullable = false, precision = 19, scale = 4)
     val balance: BigDecimal,
     @Version
     @Column(nullable = false)

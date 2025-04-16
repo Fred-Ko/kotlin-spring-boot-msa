@@ -29,5 +29,5 @@ data class Money private constructor(
         val ZERO: Money = Money(BigDecimal.ZERO)
     }
 
-    override fun toString(): String = value.toString()
+    override fun toString(): String = "Money(value=$value)"
 }

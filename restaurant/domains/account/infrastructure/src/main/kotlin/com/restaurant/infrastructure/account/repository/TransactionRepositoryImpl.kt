@@ -6,10 +6,12 @@ import com.restaurant.domain.account.vo.AccountId
 import com.restaurant.domain.account.vo.OrderId
 import com.restaurant.domain.account.vo.TransactionId
 import com.restaurant.domain.account.vo.TransactionType
+import com.restaurant.infrastructure.account.entity.AccountTransactionTypeEntity
 import com.restaurant.infrastructure.account.entity.extensions.toDomain
 import com.restaurant.infrastructure.account.entity.extensions.toEntity
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
+import java.time.Instant
 
 /**
  * 트랜잭션 리포지토리 구현체
@@ -51,7 +53,11 @@ class TransactionRepositoryImpl(
         cursor: TransactionId?,
         limit: Int,
     ): List<Transaction> {
-        val entityType = type.toEntity()
+        val entityType =
+            when (type) {
+                TransactionType.DEBIT -> AccountTransactionTypeEntity.DEBIT
+                TransactionType.CREDIT -> AccountTransactionTypeEntity.CREDIT
+            }
 
         val pageable = PageRequest.of(0, limit)
         return jpaTransactionRepository
@@ -74,8 +80,8 @@ class TransactionRepositoryImpl(
         return jpaTransactionRepository
             .findByAccountIdAndTimestampBetweenWithCursor(
                 accountId.value,
-                startTime,
-                endTime,
+                Instant.ofEpochMilli(startTime),
+                Instant.ofEpochMilli(endTime),
                 cursor?.value,
                 pageable,
             ).map { it.toDomain() }
