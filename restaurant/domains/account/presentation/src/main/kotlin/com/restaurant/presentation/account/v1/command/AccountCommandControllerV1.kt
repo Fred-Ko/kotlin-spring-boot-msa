@@ -2,13 +2,13 @@ package com.restaurant.presentation.account.v1.command
 
 import com.restaurant.application.account.command.handler.CancelAccountPaymentCommandHandler
 import com.restaurant.application.account.command.handler.ProcessAccountPaymentCommandHandler
+import com.restaurant.common.presentation.dto.response.BusinessErrorResponse
+import com.restaurant.common.presentation.dto.response.CommandResultResponse
+import com.restaurant.common.presentation.dto.response.InternalServerErrorResponse
+import com.restaurant.common.presentation.dto.response.NotFoundErrorResponse
+import com.restaurant.common.presentation.dto.response.ValidationErrorResponse
 import com.restaurant.presentation.account.v1.dto.request.CancelPaymentRequestV1
 import com.restaurant.presentation.account.v1.dto.request.ProcessPaymentRequestV1
-import com.restaurant.presentation.account.v1.dto.response.BusinessErrorResponse
-import com.restaurant.presentation.account.v1.dto.response.CommandResultResponseV1
-import com.restaurant.presentation.account.v1.dto.response.InternalServerErrorResponse
-import com.restaurant.presentation.account.v1.dto.response.NotFoundErrorResponse
-import com.restaurant.presentation.account.v1.dto.response.ValidationErrorResponse
 import com.restaurant.presentation.account.v1.extensions.request.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -43,7 +43,7 @@ class AccountCommandControllerV1(
     @ApiResponse(
         responseCode = "200",
         description = "결제 처리 성공",
-        content = [Content(schema = Schema(implementation = CommandResultResponseV1::class))],
+        content = [Content(schema = Schema(implementation = CommandResultResponse::class))],
     )
     @ApiResponse(
         responseCode = "400",
@@ -67,7 +67,7 @@ class AccountCommandControllerV1(
         @Valid @RequestBody request: ProcessPaymentRequestV1,
         @Parameter(description = "상관 관계 ID")
         @RequestHeader(name = "X-Correlation-Id", required = false) correlationId: String?,
-    ): ResponseEntity<CommandResultResponseV1> {
+    ): ResponseEntity<CommandResultResponse> {
         val command = request.toCommand(accountId)
         val resultCorrelationId =
             processAccountPaymentCommandHandler.handle(
@@ -76,7 +76,7 @@ class AccountCommandControllerV1(
             )
 
         val response =
-            CommandResultResponseV1(
+            CommandResultResponse(
                 status = "SUCCESS",
                 message = "결제가 성공적으로 처리되었습니다.",
                 correlationId = resultCorrelationId,
@@ -98,7 +98,7 @@ class AccountCommandControllerV1(
     @ApiResponse(
         responseCode = "200",
         description = "결제 취소 성공",
-        content = [Content(schema = Schema(implementation = CommandResultResponseV1::class))],
+        content = [Content(schema = Schema(implementation = CommandResultResponse::class))],
     )
     @ApiResponse(
         responseCode = "400",
@@ -122,7 +122,7 @@ class AccountCommandControllerV1(
         @Valid @RequestBody request: CancelPaymentRequestV1,
         @Parameter(description = "상관 관계 ID")
         @RequestHeader(name = "X-Correlation-Id", required = false) correlationId: String?,
-    ): ResponseEntity<CommandResultResponseV1> {
+    ): ResponseEntity<CommandResultResponse> {
         val command = request.toCommand(accountId)
         val resultCorrelationId =
             cancelAccountPaymentCommandHandler.handle(
@@ -131,7 +131,7 @@ class AccountCommandControllerV1(
             )
 
         val response =
-            CommandResultResponseV1(
+            CommandResultResponse(
                 status = "SUCCESS",
                 message = "결제가 성공적으로 취소되었습니다.",
                 correlationId = resultCorrelationId,

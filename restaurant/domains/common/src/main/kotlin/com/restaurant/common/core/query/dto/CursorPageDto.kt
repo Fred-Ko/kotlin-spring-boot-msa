@@ -1,4 +1,4 @@
-package com.restaurant.application.account.query.dto
+package com.restaurant.common.core.query.dto
 
 /**
  * 커서 기반 페이징 결과 DTO

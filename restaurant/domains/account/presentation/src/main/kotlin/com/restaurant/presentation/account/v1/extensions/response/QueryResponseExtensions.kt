@@ -1,7 +1,7 @@
 package com.restaurant.presentation.account.v1.extensions.response
 
-import com.restaurant.application.account.query.dto.CursorPageDto
 import com.restaurant.application.account.query.dto.TransactionDto
+import com.restaurant.common.core.query.dto.CursorPageDto
 import com.restaurant.presentation.account.v1.query.dto.response.CursorPageResponseV1
 import com.restaurant.presentation.account.v1.query.dto.response.TransactionResponseV1
 

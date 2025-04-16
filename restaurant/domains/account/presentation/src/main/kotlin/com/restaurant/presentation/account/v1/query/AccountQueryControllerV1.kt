@@ -3,13 +3,13 @@ package com.restaurant.presentation.account.v1.query
 import com.restaurant.application.account.query.GetAccountBalanceQuery
 import com.restaurant.application.account.query.GetAccountTransactionsQuery
 import com.restaurant.application.account.query.dto.AccountBalanceDto
-import com.restaurant.application.account.query.dto.CursorPageDto
 import com.restaurant.application.account.query.dto.TransactionDto
 import com.restaurant.application.account.query.handler.GetAccountBalanceQueryHandler
 import com.restaurant.application.account.query.handler.GetAccountTransactionsQueryHandler
-import com.restaurant.presentation.account.v1.dto.response.InternalServerErrorResponse
-import com.restaurant.presentation.account.v1.dto.response.NotFoundErrorResponse
-import com.restaurant.presentation.account.v1.dto.response.ValidationErrorResponse
+import com.restaurant.common.core.query.dto.CursorPageDto
+import com.restaurant.common.presentation.dto.response.InternalServerErrorResponse
+import com.restaurant.common.presentation.dto.response.NotFoundErrorResponse
+import com.restaurant.common.presentation.dto.response.ValidationErrorResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content

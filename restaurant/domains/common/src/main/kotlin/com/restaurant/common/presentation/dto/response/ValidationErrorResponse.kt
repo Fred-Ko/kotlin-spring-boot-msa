@@ -1,5 +1,6 @@
-package com.restaurant.presentation.account.v1.dto.response
+package com.restaurant.common.presentation.dto.response
 
+import com.restaurant.common.presentation.dto.response.FieldValidationError
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 

@@ -5,8 +5,8 @@ import com.restaurant.application.account.extensions.toAccountId
 import com.restaurant.application.account.extensions.toCursor
 import com.restaurant.application.account.extensions.toDto
 import com.restaurant.application.account.query.GetAccountTransactionsQuery
-import com.restaurant.application.account.query.dto.CursorPageDto
 import com.restaurant.application.account.query.dto.TransactionDto
+import com.restaurant.common.core.query.dto.CursorPageDto
 import com.restaurant.domain.account.exception.AccountDomainException
 import com.restaurant.domain.account.repository.AccountRepository
 import com.restaurant.domain.account.repository.TransactionRepository
