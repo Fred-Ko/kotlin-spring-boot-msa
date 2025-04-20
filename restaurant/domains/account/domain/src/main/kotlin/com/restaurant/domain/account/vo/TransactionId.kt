@@ -1,8 +1,5 @@
 package com.restaurant.domain.account.vo
 
-import kotlin.ConsistentCopyVisibility
-
-@ConsistentCopyVisibility
 data class TransactionId private constructor(
     val value: Long,
 ) {

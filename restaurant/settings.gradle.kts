@@ -1,0 +1,27 @@
+rootProject.name = "restaurant"
+
+include("domains:common")
+
+include(":domains:user:application")
+include(":domains:user:apps")
+include(":domains:user:domain")
+include(":domains:user:infrastructure")
+include(":domains:user:presentation")
+
+include(":domains:account:application")
+include(":domains:account:apps")
+include(":domains:account:domain")
+include(":domains:account:infrastructure")
+include(":domains:account:presentation")
+
+// include(":domains:restaurant:application")
+// // include(":domains:restaurant:apps")
+// include(":domains:restaurant:domain")
+// include(":domains:restaurant:infrastructure")
+// include(":domains:restaurant:presentation")
+
+include(":shared:outbox")
+include(":shared:outbox:application")
+include(":shared:outbox:infrastructure")
+// include("libs:outbox")
+// include("support:common")

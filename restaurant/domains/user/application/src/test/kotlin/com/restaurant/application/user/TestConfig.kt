@@ -5,36 +5,53 @@ import com.restaurant.application.user.command.handler.DeleteUserCommandHandler
 import com.restaurant.application.user.command.handler.LoginCommandHandler
 import com.restaurant.application.user.command.handler.RegisterUserCommandHandler
 import com.restaurant.application.user.command.handler.UpdateProfileCommandHandler
+import com.restaurant.application.user.query.handler.GetUserProfileQueryHandler
 import com.restaurant.domain.user.repository.UserRepository
+import org.mockito.Mockito
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.autoconfigure.domain.EntityScan
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan
-import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.security.crypto.password.PasswordEncoder
 
 @SpringBootApplication
-@EnableConfigurationProperties
-@ConfigurationPropertiesScan
-@ComponentScan(basePackages = ["com.restaurant.application.user", "com.restaurant.infrastructure.user", "com.restaurant.domain.user"])
-@EnableJpaRepositories(basePackages = ["com.restaurant.infrastructure.user.repository"])
-@EntityScan(basePackages = ["com.restaurant.infrastructure.user.entity"])
+@ComponentScan(
+    basePackages = ["com.restaurant.application.user"],
+)
 class TestConfig {
     @Bean
-    fun registerUserCommandHandler(userRepository: UserRepository): RegisterUserCommandHandler = RegisterUserCommandHandler(userRepository)
+    fun userRepository(): UserRepository = Mockito.mock(UserRepository::class.java)
 
     @Bean
-    fun loginCommandHandler(userRepository: UserRepository): LoginCommandHandler = LoginCommandHandler(userRepository)
+    fun passwordEncoder(): PasswordEncoder = Mockito.mock(PasswordEncoder::class.java)
 
     @Bean
-    fun changePasswordCommandHandler(userRepository: UserRepository): ChangePasswordCommandHandler =
-        ChangePasswordCommandHandler(userRepository)
+    fun registerUserCommandHandler(
+        userRepository: UserRepository,
+        passwordEncoder: PasswordEncoder,
+    ): RegisterUserCommandHandler = RegisterUserCommandHandler(userRepository, passwordEncoder)
 
     @Bean
-    fun deleteUserCommandHandler(userRepository: UserRepository): DeleteUserCommandHandler = DeleteUserCommandHandler(userRepository)
+    fun loginCommandHandler(
+        userRepository: UserRepository,
+        passwordEncoder: PasswordEncoder,
+    ): LoginCommandHandler = LoginCommandHandler(userRepository, passwordEncoder)
+
+    @Bean
+    fun changePasswordCommandHandler(
+        userRepository: UserRepository,
+        passwordEncoder: PasswordEncoder,
+    ): ChangePasswordCommandHandler = ChangePasswordCommandHandler(userRepository, passwordEncoder)
+
+    @Bean
+    fun deleteUserCommandHandler(
+        userRepository: UserRepository,
+        passwordEncoder: PasswordEncoder,
+    ): DeleteUserCommandHandler = DeleteUserCommandHandler(userRepository, passwordEncoder)
 
     @Bean
     fun updateProfileCommandHandler(userRepository: UserRepository): UpdateProfileCommandHandler =
         UpdateProfileCommandHandler(userRepository)
+
+    @Bean
+    fun getUserProfileQueryHandler(userRepository: UserRepository): GetUserProfileQueryHandler = GetUserProfileQueryHandler(userRepository)
 }

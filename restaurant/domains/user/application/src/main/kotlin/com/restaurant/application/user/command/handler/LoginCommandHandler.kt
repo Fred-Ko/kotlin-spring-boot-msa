@@ -1,16 +1,19 @@
 package com.restaurant.application.user.command.handler
 
 import com.restaurant.application.user.command.LoginCommand
+import com.restaurant.application.user.dto.LoginResult
 import com.restaurant.application.user.exception.UserApplicationException
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
 import org.slf4j.LoggerFactory
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class LoginCommandHandler(
     private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder,
 ) {
     private val log = LoggerFactory.getLogger(LoginCommandHandler::class.java)
 
@@ -18,33 +21,56 @@ class LoginCommandHandler(
     fun handle(
         command: LoginCommand,
         correlationId: String? = null,
-    ): Long {
-        // 이메일 유효성 검증
-        val email =
-            try {
-                Email.of(command.email)
-            } catch (e: IllegalArgumentException) {
-                log.error("유효하지 않은 이메일 형식, correlationId={}, email={}", correlationId, command.email, e)
-                throw UserApplicationException.Authentication.InvalidInput("유효하지 않은 이메일 형식입니다: ${command.email}")
+    ): LoginResult {
+        // VO 생성
+        val email = Email.of(command.email)
+        log.debug("Attempting to login user, correlationId={}, email={}", correlationId, email)
+
+        try {
+            // 사용자 조회
+            val user =
+                userRepository.findByEmail(email)
+                    ?: run {
+                        log.warn("User not found for login, correlationId={}, email={}", correlationId, email)
+                        // 사용자가 없는 경우에도 동일한 인증 실패 메시지를 반환하여 정보 노출 방지
+                        throw UserApplicationException.AuthenticationFailed("이메일 또는 비밀번호가 일치하지 않습니다.")
+                    }
+
+            // 비밀번호 검증
+            if (!passwordEncoder.matches(command.password, user.password.encodedValue)) {
+                log.warn("Invalid password for login, correlationId={}, email={}", correlationId, email)
+                throw UserApplicationException.AuthenticationFailed("이메일 또는 비밀번호가 일치하지 않습니다.")
             }
 
-        // 사용자 조회
-        val user =
-            userRepository.findByEmail(email)
-                ?: run {
-                    log.error("이메일에 해당하는 사용자 없음, correlationId={}, email={}", correlationId, email)
-                    throw UserApplicationException.Authentication.InvalidCredentials()
+            // 로그인 성공 처리 (LoginResult 반환)
+            val userId = user.id.value.toString()
+            log.info("User logged in successfully, correlationId={}, userId={}", correlationId, userId)
+
+            // 실제 구현에서는 JWT 토큰 생성 로직이 들어갈 것임
+            return LoginResult(
+                userId = userId,
+                accessToken = "jwt.access.token.$userId", // 임시 구현
+                refreshToken = "jwt.refresh.token.$userId", // 임시 구현
+            )
+        } catch (e: Exception) {
+            when (e) {
+                is UserApplicationException -> {
+                    // Rule 71: 로깅 시 errorCode 추가
+                    log.warn(
+                        "Application error during login, correlationId={}, email={}, errorCode={}, error: {}",
+                        correlationId,
+                        command.email,
+                        e.errorCode.code,
+                        e.message,
+                    )
+                    throw e
                 }
-
-        // 비밀번호 검증
-        if (!user.checkPassword(command.password)) {
-            log.error("비밀번호 불일치, correlationId={}, email={}", correlationId, email)
-            throw UserApplicationException.Authentication.InvalidCredentials()
+                else -> {
+                    // 예상치 못한 오류 처리
+                    log.error("System error during login, correlationId={}, email={}, error={}", correlationId, command.email, e.message, e)
+                    throw UserApplicationException.SystemError(e)
+                }
+            }
         }
-
-        // 로그인 성공 - 실제로는 여기서 세션이나 JWT 토큰을 생성해야 함
-        log.info("로그인 성공, correlationId={}, email={}", correlationId, email)
-
-        return user.id!!.value
     }
 }

@@ -1,13 +1,14 @@
 package com.restaurant.domain.user.vo
 
-import kotlin.ConsistentCopyVisibility
+import com.restaurant.domain.user.exception.UserDomainException
 
-@ConsistentCopyVisibility
 data class Email private constructor(
     val value: String,
 ) {
     init {
-        require(value.matches(EMAIL_REGEX)) { "유효한 이메일 형식이 아닙니다." }
+        if (!value.matches(EMAIL_REGEX)) {
+            throw UserDomainException.Validation.InvalidEmailFormat(value)
+        }
     }
 
     companion object {

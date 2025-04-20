@@ -1,17 +1,16 @@
 package com.restaurant.domain.user.vo
 
-import kotlin.ConsistentCopyVisibility
+import java.util.UUID
 
-@ConsistentCopyVisibility
 data class UserId private constructor(
-    val value: Long,
+    val value: UUID,
 ) {
-    init {
-        require(value > 0) { "UserId는 0보다 커야 합니다." }
-    }
-
     companion object {
-        fun of(value: Long): UserId = UserId(value)
+        fun of(value: UUID): UserId = UserId(value)
+
+        fun generate(): UserId = UserId(UUID.randomUUID())
+
+        fun fromString(value: String): UserId = UserId(UUID.fromString(value))
     }
 
     override fun toString(): String = value.toString()

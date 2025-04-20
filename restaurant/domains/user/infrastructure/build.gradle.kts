@@ -8,6 +8,8 @@ plugins {
 dependencies {
     implementation(project(":domains:user:domain"))
     implementation(project(":domains:common"))
+    implementation(project(":shared:outbox"))
+    implementation(project(":shared:outbox:application")) // OutboxEventRepository 사용을 위한 의존성 추가
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.mapstruct:mapstruct:1.6.3")

@@ -11,7 +11,6 @@ interface ErrorCode {
 abstract class BaseErrorCode(
     override val code: String,
     override val message: String,
-    override val status: HttpStatus,
 ) : ErrorCode {
     companion object {
         fun fromCode(

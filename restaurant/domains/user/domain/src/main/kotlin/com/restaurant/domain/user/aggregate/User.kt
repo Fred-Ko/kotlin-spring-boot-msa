@@ -1,28 +1,46 @@
 package com.restaurant.domain.user.aggregate
 
-import com.restaurant.domain.user.entity.Address
+import com.restaurant.common.domain.aggregate.AggregateRoot
+import com.restaurant.domain.user.event.UserEvent
+import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.domain.user.model.Address
+import com.restaurant.domain.user.vo.AddressId
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
 import java.time.LocalDateTime
+import java.util.UUID
 
-class User
+data class User
     private constructor(
-        val id: UserId? = null,
+        val id: UserId,
         val email: Email,
         val password: Password,
         val name: Name,
         val addresses: List<Address> = emptyList(),
         val createdAt: LocalDateTime = LocalDateTime.now(),
         val updatedAt: LocalDateTime = LocalDateTime.now(),
-    ) {
+    ) : AggregateRoot() {
         companion object {
             fun create(
                 email: Email,
                 password: Password,
                 name: Name,
-            ): User = User(email = email, password = password, name = name)
+            ): User {
+                val userId = UserId.generate()
+                val user = User(id = userId, email = email, password = password, name = name)
+                val event =
+                    UserEvent.Created(
+                        userId = userId,
+                        email = email.value,
+                        name = name.value,
+                        eventId = UUID.randomUUID().toString(),
+                        occurredAt = user.createdAt,
+                    )
+                user.addDomainEvent(event)
+                return user
+            }
 
             fun reconstitute(
                 id: UserId,
@@ -44,136 +62,168 @@ class User
                 )
         }
 
-        fun updateProfile(name: Name): User =
-            User(
-                id = this.id,
-                email = this.email,
-                password = this.password,
-                name = name,
-                addresses = this.addresses,
-                createdAt = this.createdAt,
-                updatedAt = LocalDateTime.now(),
-            )
+        fun updateProfile(name: Name): User {
+            val updated = this.copy(name = name, updatedAt = LocalDateTime.now())
+            val event =
+                UserEvent.ProfileUpdated(
+                    userId = this.id,
+                    name = name.value,
+                    eventId = UUID.randomUUID().toString(),
+                    occurredAt = updated.updatedAt,
+                )
+            updated.addDomainEvent(event)
+            return updated
+        }
 
-        fun changePassword(newPassword: String): User =
-            User(
-                id = this.id,
-                email = this.email,
-                password = Password.of(newPassword),
-                name = this.name,
-                addresses = this.addresses,
-                createdAt = this.createdAt,
-                updatedAt = LocalDateTime.now(),
-            )
-
-        fun checkPassword(rawPassword: String): Boolean = password.matches(rawPassword)
+        fun changePassword(encodedPassword: Password): User {
+            val updated = this.copy(password = encodedPassword, updatedAt = LocalDateTime.now())
+            val event =
+                UserEvent.PasswordChanged(
+                    userId = this.id,
+                    eventId = UUID.randomUUID().toString(),
+                    occurredAt = updated.updatedAt,
+                )
+            updated.addDomainEvent(event)
+            return updated
+        }
 
         fun addAddress(address: Address): User {
             val newAddresses =
                 if (address.isDefault) {
-                    // 기본 주소로 설정된 경우, 기존의 기본 주소를 일반 주소로 변경
                     addresses.map { it.update(isDefault = false) } + address
                 } else {
-                    // 기본 주소가 하나도 없는 경우, 첫 번째 주소는 기본 주소로 설정
                     if (addresses.isEmpty()) {
                         listOf(address.update(isDefault = true))
                     } else {
                         addresses + address
                     }
                 }
-
-            return User(
-                id = this.id,
-                email = this.email,
-                password = this.password,
-                name = this.name,
-                addresses = newAddresses,
-                createdAt = this.createdAt,
-                updatedAt = LocalDateTime.now(),
-            )
+            val updated = this.copy(addresses = newAddresses, updatedAt = LocalDateTime.now())
+            val event =
+                UserEvent.AddressAdded(
+                    userId = this.id,
+                    addressId = address.addressId,
+                    eventId = UUID.randomUUID().toString(),
+                    occurredAt = updated.updatedAt,
+                )
+            updated.addDomainEvent(event)
+            return updated
         }
 
         fun updateAddress(
-            addressId: Long,
+            addressId: AddressId,
             updatedAddress: Address,
         ): User {
-            // 업데이트할 주소 찾기
+            if (addressId != updatedAddress.addressId) {
+                throw UserDomainException.Validation.InvalidAddressFormat(
+                    "수정하려는 주소의 ID(${addressId.value})와 전달된 주소 데이터의 ID(${updatedAddress.addressId.value})가 일치하지 않습니다.",
+                )
+            }
+
             val existingAddress =
-                addresses.find { it.id == addressId }
-                    ?: throw IllegalArgumentException("주소 ID ${addressId}를 찾을 수 없습니다.")
+                addresses.find { it.addressId == addressId }
+                    ?: throw UserDomainException.Address.NotFound(
+                        userId = this.id.value.toString(),
+                        addressId = addressId.value.toString(),
+                    )
 
             val newAddresses =
                 if (updatedAddress.isDefault) {
-                    // 기본 주소로 설정하는 경우, 다른 모든 주소를 기본이 아니게 변경
                     addresses.map {
                         when {
-                            it.id == addressId -> updatedAddress
+                            it.addressId == addressId -> updatedAddress
                             else -> it.update(isDefault = false)
                         }
                     }
                 } else {
-                    // 기본 주소를 일반 주소로 변경하는 경우, 다른 주소를 기본으로 설정
                     val currentDefault = addresses.find { it.isDefault }
-                    val isCurrentAddressDefault = existingAddress.isDefault
-
-                    if (isCurrentAddressDefault && currentDefault?.id == addressId) {
-                        // 현재 수정하려는 주소가 기본 주소이고, 기본을 해제하는 경우
-                        val addressesWithoutDefault =
-                            addresses.map { if (it.id == addressId) updatedAddress else it }
-
-                        // 새로운 기본 주소 설정 (첫 번째 다른 주소)
-                        val otherAddress = addressesWithoutDefault.find { it.id != addressId }
-                        if (otherAddress != null) {
-                            addressesWithoutDefault.map {
-                                if (it.id == otherAddress.id) it.update(isDefault = true) else it
+                    if (currentDefault?.addressId == addressId) {
+                        val addressesWithoutOriginal = addresses.filter { it.addressId != addressId }
+                        val updatedList = addressesWithoutOriginal + updatedAddress
+                        if (updatedList.size > 1) {
+                            val firstOther = updatedList.first { it.addressId != addressId }
+                            updatedList.map { adr ->
+                                if (adr.addressId == firstOther.addressId) adr.update(isDefault = true) else adr
                             }
                         } else {
-                            addressesWithoutDefault
+                            listOf(updatedAddress.update(isDefault = true))
                         }
                     } else {
-                        // 일반적인 업데이트
-                        addresses.map { if (it.id == addressId) updatedAddress else it }
+                        addresses.map { if (it.addressId == addressId) updatedAddress else it }
                     }
                 }
 
-            return User(
-                id = this.id,
-                email = this.email,
-                password = this.password,
-                name = this.name,
-                addresses = newAddresses,
-                createdAt = this.createdAt,
-                updatedAt = LocalDateTime.now(),
-            )
+            val ensuredAddresses =
+                if (newAddresses.none { it.isDefault } && newAddresses.isNotEmpty()) {
+                    newAddresses.mapIndexed { index, adr -> if (index == 0) adr.update(isDefault = true) else adr }
+                } else {
+                    newAddresses
+                }
+
+            val updated = this.copy(addresses = ensuredAddresses, updatedAt = LocalDateTime.now())
+            val event =
+                UserEvent.AddressUpdated(
+                    userId = this.id,
+                    addressId = addressId,
+                    eventId = UUID.randomUUID().toString(),
+                    occurredAt = updated.updatedAt,
+                )
+            updated.addDomainEvent(event)
+            return updated
         }
 
-        fun removeAddress(addressId: Long): User {
-            // 삭제할 주소 찾기
+        fun removeAddress(addressId: AddressId): User {
             val existingAddress =
-                addresses.find { it.id == addressId }
-                    ?: throw IllegalArgumentException("주소 ID ${addressId}를 찾을 수 없습니다.")
+                addresses.find { it.addressId == addressId }
+                    ?: throw UserDomainException.Address.NotFound(
+                        userId = this.id.value.toString(),
+                        addressId = addressId.value.toString(),
+                    )
 
-            val remainingAddresses = addresses.filter { it.id != addressId }
+            if (addresses.size == 1) {
+                throw UserDomainException.Address.CannotRemoveLastAddress(
+                    addressId = addressId.value.toString(),
+                )
+            }
 
-            // 삭제된 주소가 기본 주소였으면 다른 주소를 기본으로 설정
-            val newAddresses =
-                if (existingAddress.isDefault && remainingAddresses.isNotEmpty()) {
-                    val firstAddress = remainingAddresses.first()
-                    remainingAddresses.map {
-                        if (it.id == firstAddress.id) it.update(isDefault = true) else it
-                    }
+            val newAddresses = addresses.filter { it.addressId != addressId }
+            val ensuredAddresses =
+                if (existingAddress.isDefault && newAddresses.isNotEmpty()) {
+                    newAddresses.mapIndexed { index, adr -> if (index == 0) adr.update(isDefault = true) else adr }
                 } else {
-                    remainingAddresses
+                    newAddresses
                 }
 
-            return User(
-                id = this.id,
-                email = this.email,
-                password = this.password,
-                name = this.name,
-                addresses = newAddresses,
-                createdAt = this.createdAt,
-                updatedAt = LocalDateTime.now(),
-            )
+            val updated = this.copy(addresses = ensuredAddresses, updatedAt = LocalDateTime.now())
+            val event =
+                UserEvent.AddressRemoved(
+                    userId = this.id,
+                    addressId = addressId,
+                    eventId = UUID.randomUUID().toString(),
+                    occurredAt = updated.updatedAt,
+                )
+            updated.addDomainEvent(event)
+            return updated
+        }
+
+        private fun copy(
+            email: Email = this.email,
+            password: Password = this.password,
+            name: Name = this.name,
+            addresses: List<Address> = this.addresses,
+            createdAt: LocalDateTime = this.createdAt,
+            updatedAt: LocalDateTime = this.updatedAt,
+        ): User {
+            val copiedUser =
+                User(
+                    id = this.id,
+                    email = email,
+                    password = password,
+                    name = name,
+                    addresses = addresses,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt,
+                )
+            return copiedUser
         }
     }

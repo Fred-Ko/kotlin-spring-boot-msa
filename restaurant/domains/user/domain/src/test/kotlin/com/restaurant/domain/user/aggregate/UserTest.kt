@@ -1,6 +1,6 @@
 package com.restaurant.domain.user.aggregate
 
-import com.restaurant.domain.user.entity.Address
+import com.restaurant.domain.user.model.Address
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
 import com.restaurant.domain.user.vo.Password
@@ -15,41 +15,45 @@ import java.time.LocalDateTime
 
 class UserTest :
     FunSpec({
+
+        // 테스트용 인코딩된 비밀번호 (실제 인코딩 방식과 무관한 임의 값)
+        val encodedPasswordValue = "encoded_password_123"
+        val passwordVo = Password.fromEncoded(encodedPasswordValue)
+
         test("유효한 정보로 사용자 생성 성공") {
             // given
             val email = Email.of("test@example.com")
-            val password = Password.of("password123")
             val name = Name.of("테스트유저")
 
             // when
-            val user = User.create(email, password, name)
+            val (user, events) = User.create(email, passwordVo, name)
 
             // then
             user.id.shouldBeNull()
             user.email shouldBe email
-            user.password shouldBe password
+            user.password shouldBe passwordVo // 인코딩된 VO 확인
             user.name shouldBe name
             user.createdAt.shouldNotBeNull()
             user.updatedAt.shouldNotBeNull()
+            events.size shouldBe 1 // 이벤트 발생 확인 (선택적)
         }
 
         test("기존 정보로 사용자 복원 성공") {
             // given
             val id = UserId.of(1L)
             val email = Email.of("test@example.com")
-            val password = Password.of("password123")
             val name = Name.of("테스트유저")
             val createdAt = LocalDateTime.now().minusDays(1)
             val updatedAt = LocalDateTime.now()
-            val addresses = emptyList<Address>()
+            val addresses = emptyList<Address>() // model.Address 사용
 
             // when
-            val user = User.reconstitute(id, email, password, name, addresses, createdAt, updatedAt)
+            val user = User.reconstitute(id, email, passwordVo, name, addresses, createdAt, updatedAt)
 
             // then
             user.id shouldBe id
             user.email shouldBe email
-            user.password shouldBe password
+            user.password shouldBe passwordVo
             user.name shouldBe name
             user.createdAt shouldBe createdAt
             user.updatedAt shouldBe updatedAt
@@ -57,86 +61,65 @@ class UserTest :
 
         test("사용자 프로필 업데이트 성공") {
             // given
-            val user =
+            val (user, _) =
                 User.create(
                     Email.of("test@example.com"),
-                    Password.of("password123"),
+                    passwordVo,
                     Name.of("원래이름"),
                 )
             val newName = Name.of("변경된이름")
 
             // when
-            val updatedUser = user.updateProfile(newName)
+            val (updatedUser, events) = user.updateProfile(newName)
 
             // then
             updatedUser.name shouldBe newName
             updatedUser.email shouldBe user.email
             updatedUser.password shouldBe user.password
             updatedUser.createdAt shouldBe user.createdAt
-            // updatedAt은 최소한 원래 시간보다 크거나 같아야 함
             updatedUser.updatedAt shouldBeGreaterThanOrEqualTo user.updatedAt
+            events.size shouldBe 1 // 이벤트 발생 확인 (선택적)
         }
 
         test("사용자 비밀번호 변경 성공") {
             // given
-            val originalPassword = "password123"
-            val user =
+            val (user, _) =
                 User.create(
                     Email.of("test@example.com"),
-                    Password.of(originalPassword),
+                    passwordVo,
                     Name.of("테스트유저"),
                 )
-            val newPassword = "newpassword456"
+            val newEncodedPasswordValue = "new_encoded_password_456"
+            val newPasswordVo = Password.fromEncoded(newEncodedPasswordValue)
 
             // when
-            val updatedUser = user.changePassword(newPassword)
+            val (updatedUser, events) = user.changePassword(newPasswordVo)
 
             // then
-            updatedUser.checkPassword(originalPassword) shouldBe false
-            updatedUser.checkPassword(newPassword) shouldBe true
+            updatedUser.password shouldBe newPasswordVo // 변경된 VO 확인
             updatedUser.email shouldBe user.email
             updatedUser.name shouldBe user.name
             updatedUser.createdAt shouldBe user.createdAt
             updatedUser.updatedAt shouldBeGreaterThanOrEqualTo user.updatedAt
+            events.size shouldBe 1 // 이벤트 발생 확인 (선택적)
         }
 
-        test("올바른 비밀번호 확인 성공") {
-            // given
-            val rawPassword = "password1234"
-            val user =
-                User.create(
-                    Email.of("test@example.com"),
-                    Password.of(rawPassword),
-                    Name.of("테스트유저"),
-                )
-
-            // when & then
-            user.checkPassword(rawPassword) shouldBe true
-            user.checkPassword("wrongpassword") shouldBe false
-        }
-
-        // 실패 케이스 추가
         test("빈 이름으로 사용자 생성 실패") {
             // given
             val email = Email.of("test@example.com")
-            val password = Password.of("password123")
+            // Password.of 제거로 passwordVo 직접 사용
             val emptyName = ""
 
             // when & then
             shouldThrow<IllegalArgumentException> { Name.of(emptyName) }
+            // User.create 호출은 Name 생성에서 실패하므로 별도 테스트 불필요
         }
 
-        test("너무 짧은 비밀번호로 변경 실패") {
+        test("너무 짧은 비밀번호 유효성 검사 실패") {
             // given
-            val user =
-                User.create(
-                    Email.of("test@example.com"),
-                    Password.of("validpassword123"),
-                    Name.of("테스트유저"),
-                )
-            val tooShortPassword = "123" // 최소 길이보다 짧은 비밀번호
+            val tooShortPassword = "123"
 
-            // when & then
-            shouldThrow<IllegalArgumentException> { user.changePassword(tooShortPassword) }
+            // then
+            shouldThrow<IllegalArgumentException> { Password.validateRawPassword(tooShortPassword) }
         }
     })

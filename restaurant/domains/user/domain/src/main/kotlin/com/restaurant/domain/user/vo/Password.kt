@@ -1,38 +1,35 @@
 package com.restaurant.domain.user.vo
 
-import java.security.MessageDigest
-import kotlin.ConsistentCopyVisibility
+import com.restaurant.domain.user.exception.UserDomainException
 
-@ConsistentCopyVisibility
 data class Password private constructor(
     val encodedValue: String,
 ) {
     init {
-        require(encodedValue.isNotBlank()) { "비밀번호는 빈 값일 수 없습니다." }
+        if (encodedValue.isBlank()) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("비밀번호 값(인코딩 또는 raw)은 비어있을 수 없습니다.")
+        }
     }
 
     companion object {
-        private const val SALT = "ddd-user-salt"
-        private const val MIN_LENGTH = 8
+        private const val MIN_RAW_LENGTH = 8
 
-        fun of(rawPassword: String): Password {
-            require(rawPassword.length >= MIN_LENGTH) { "비밀번호는 최소 ${MIN_LENGTH}글자 이상이어야 합니다." }
-            return Password(encode(rawPassword))
+        fun validateRaw(rawPassword: String) {
+            if (rawPassword.isBlank()) {
+                throw UserDomainException.Validation.InvalidPasswordFormat("비밀번호는 비어있을 수 없습니다.")
+            }
+            if (rawPassword.length < MIN_RAW_LENGTH) {
+                throw UserDomainException.Validation.InvalidPasswordFormat("비밀번호는 최소 ${MIN_RAW_LENGTH}글자 이상이어야 합니다.")
+            }
         }
 
-        fun fromEncoded(encodedPassword: String): Password = Password(encodedPassword)
-
-        private fun encode(rawPassword: String): String {
-            val saltedPassword = rawPassword + SALT
-            val messageDigest = MessageDigest.getInstance("SHA-256")
-            val digest = messageDigest.digest(saltedPassword.toByteArray())
-            return digest.fold("") { str, byte -> str + "%02x".format(byte) }
+        fun fromEncoded(encodedPassword: String): Password {
+            if (encodedPassword.isBlank()) {
+                throw UserDomainException.Validation.InvalidPasswordFormat("인코딩된 비밀번호 값은 비어있을 수 없습니다.")
+            }
+            return Password(encodedPassword)
         }
     }
 
-    fun matches(rawPassword: String): Boolean = encodedValue == encode(rawPassword)
-
-    private fun encode(rawPassword: String): String = Companion.encode(rawPassword)
-
-    override fun toString(): String = "********" // 보안상 실제 값 대신 마스킹 처리
+    override fun toString(): String = "********"
 }

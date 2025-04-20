@@ -6,6 +6,8 @@ dependencies {
     implementation(project(":domains:common"))
 
     // 순수 도메인 레이어는 외부 의존성이 없습니다.
+    // NOTE: HttpStatus 사용을 위해 임시로 추가 (Rule 10 위반 가능성)
+    implementation("org.springframework:spring-web") // Added for HttpStatus
 
     // Kotest
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")

@@ -5,7 +5,7 @@ plugins {
     kotlin("plugin.allopen") version "2.1.20" apply false
     kotlin("plugin.noarg") version "2.1.20" apply false
     kotlin("kapt") version "2.1.20" apply false
-    id("org.springframework.boot") version "3.4.4" apply false
+    id("org.springframework.boot") version "3.3.2" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0" apply false
     java
@@ -35,7 +35,7 @@ subprojects {
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "java")
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
-    
+
     configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         version.set("1.5.0")
         debug.set(true)
@@ -49,7 +49,7 @@ subprojects {
         }
         disabledRules.set(setOf("HEADER_KEYWORD", "no-wildcard-imports", "no-blank-line-before-rbrace", "no-empty-file"))
     }
-    
+
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -61,7 +61,7 @@ subprojects {
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         compilerOptions {
-            freeCompilerArgs.set(listOf("-Xjsr305=strict"))
+            freeCompilerArgs.set(listOf("-Xjsr305=strict", "-Xconsistent-data-class-copy-visibility"))
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
@@ -74,6 +74,7 @@ subprojects {
         // Kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
     }
 
     configurations {

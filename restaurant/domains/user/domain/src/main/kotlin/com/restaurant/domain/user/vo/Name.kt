@@ -1,13 +1,14 @@
 package com.restaurant.domain.user.vo
 
-import kotlin.ConsistentCopyVisibility
+import com.restaurant.domain.user.exception.UserDomainException
 
-@ConsistentCopyVisibility
 data class Name private constructor(
     val value: String,
 ) {
     init {
-        require(value.isNotBlank()) { "이름은 공백일 수 없습니다." }
+        if (value.isBlank()) {
+            throw UserDomainException.Validation.InvalidNameFormat(value)
+        }
     }
 
     companion object {

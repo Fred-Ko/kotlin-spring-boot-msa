@@ -1,16 +1,18 @@
 package com.restaurant.presentation.user.v1.command
-
-import com.restaurant.application.user.command.handler.ChangePasswordCommandHandler
-import com.restaurant.application.user.command.handler.DeleteUserCommandHandler
-import com.restaurant.application.user.command.handler.LoginCommandHandler
-import com.restaurant.application.user.command.handler.RegisterUserCommandHandler
 import com.restaurant.application.user.command.handler.UpdateProfileCommandHandler
-import com.restaurant.presentation.user.v1.dto.request.ChangePasswordRequestV1
-import com.restaurant.presentation.user.v1.dto.request.DeleteUserRequestV1
-import com.restaurant.presentation.user.v1.dto.request.LoginRequestV1
-import com.restaurant.presentation.user.v1.dto.request.RegisterUserRequestV1
-import com.restaurant.presentation.user.v1.dto.request.UpdateProfileRequestV1
-import com.restaurant.presentation.user.v1.extensions.request.toCommand
+import com.restaurant.application.user.handler.ChangePasswordCommandHandler
+import com.restaurant.application.user.handler.DeleteUserCommandHandler
+import com.restaurant.application.user.handler.LoginCommandHandler
+import com.restaurant.application.user.handler.RegisterUserCommandHandler
+import com.restaurant.common.presentation.dto.response.CommandResultResponse
+import com.restaurant.presentation.user.extensions.v1.request.toCommand
+import com.restaurant.presentation.user.v1.command.dto.request.ChangePasswordRequestV1
+import com.restaurant.presentation.user.v1.command.dto.request.DeleteUserRequestV1
+import com.restaurant.presentation.user.v1.command.dto.request.LoginRequestV1
+import com.restaurant.presentation.user.v1.command.dto.request.RegisterUserRequestV1
+import com.restaurant.presentation.user.v1.command.dto.request.UpdateProfileRequestV1
+import com.restaurant.presentation.user.v1.command.dto.response.LoginResponseV1
+import com.restaurant.presentation.user.v1.query.UserQueryControllerV1
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -20,21 +22,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
-import org.springframework.http.ProblemDetail
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.net.URI
 import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/users")
-@Tag(name = "사용자 관리", description = "사용자 등록, 로그인, 프로필 관리 등의 API")
+@Tag(name = "사용자 관리", description = "사용자 등록, 로그인, 프로필 관리 API")
 class UserCommandControllerV1(
     private val registerUserCommandHandler: RegisterUserCommandHandler,
     private val loginCommandHandler: LoginCommandHandler,
@@ -44,288 +47,273 @@ class UserCommandControllerV1(
 ) {
     private val log = LoggerFactory.getLogger(UserCommandControllerV1::class.java)
 
+    private fun getOrGenerateCorrelationId(headerValue: String?): String =
+        if (!headerValue.isNullOrBlank()) headerValue else UUID.randomUUID().toString()
+
     @PostMapping("/register")
-    @Operation(summary = "사용자 등록", description = "새로운 사용자를 시스템에 등록합니다.")
+    @Operation(summary = "사용자 등록", description = "신규 사용자를 시스템에 등록합니다. 이메일, 이름, 비밀번호가 필요합니다.")
     @ApiResponses(
-        value =
-            [
-                ApiResponse(
-                    responseCode = "201",
-                    description = "사용자 등록 성공",
-                    content = [Content(mediaType = "application/json")],
-                ),
-                ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 데이터",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-                ApiResponse(
-                    responseCode = "409",
-                    description = "이미 존재하는 사용자",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-            ],
+        value = [
+            ApiResponse(
+                responseCode = "201",
+                description = "사용자 등록 성공",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = CommandResultResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 데이터",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "이미 존재하는 이메일",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+        ],
     )
-    fun register(
+    fun registerUser(
+        @Parameter(hidden = true) @RequestHeader("X-Correlation-Id", required = false) correlationIdHeader: String?,
         @Valid @RequestBody request: RegisterUserRequestV1,
-    ): ResponseEntity<Any> {
-        val correlationId = UUID.randomUUID().toString()
-        val command = request.toCommand()
+    ): ResponseEntity<CommandResultResponse> {
+        val correlationId = getOrGenerateCorrelationId(correlationIdHeader)
+        log.info("사용자 등록 요청: email={}, correlationId={}", request.email, correlationId)
 
-        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
-        registerUserCommandHandler.handle(command, correlationId)
+        // extension 함수 사용
+        val userId = registerUserCommandHandler.handle(request.toCommand(), correlationId)
 
-        // 성공 시 응답
-        val profileUri = "/api/v1/users/profile"
-        return ResponseEntity
-            .created(URI.create(profileUri))
-            .body(
-                mapOf(
-                    "status" to "SUCCESS",
-                    "message" to "회원 가입이 완료되었습니다.",
-                    "correlationId" to correlationId,
-                    "links" to
-                        listOf(
-                            mapOf(
-                                "rel" to "user-profile",
-                                "href" to profileUri,
-                                "method" to "GET",
-                            ),
-                        ),
-                ),
+        log.info("사용자 등록 성공: userId={}, correlationId={}", userId, correlationId)
+
+        val response =
+            CommandResultResponse(
+                status = "SUCCESS",
+                message = "사용자가 성공적으로 등록되었습니다.",
+                correlationId = correlationId,
             )
+        response.add(linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(userId, correlationId)).withRel("user-profile"))
+
+        return ResponseEntity
+            .created(
+                linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(userId, correlationId)).toUri(),
+            ).body(response)
     }
 
     @PostMapping("/login")
-    @Operation(summary = "사용자 로그인", description = "이메일과 비밀번호로 사용자 인증을 수행합니다.")
+    @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다.")
     @ApiResponses(
-        value =
-            [
-                ApiResponse(
-                    responseCode = "200",
-                    description = "로그인 성공",
-                    content = [Content(mediaType = "application/json")],
-                ),
-                ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 데이터",
-                    content =
-                        [
-                            Content(
-                                mediaType = "application/problem+json",
-                                schema =
-                                    Schema(
-                                        implementation =
-                                            ProblemDetail::class,
-                                    ),
-                            ),
-                        ],
-                ),
-                ApiResponse(
-                    responseCode = "401",
-                    description = "인증 실패",
-                    content =
-                        [
-                            Content(
-                                mediaType = "application/problem+json",
-                                schema =
-                                    Schema(
-                                        implementation =
-                                            ProblemDetail::class,
-                                    ),
-                            ),
-                        ],
-                ),
-            ],
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "로그인 성공",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = LoginResponseV1::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 데이터",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "로그인 실패 (이메일 또는 비밀번호 불일치)",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+        ],
     )
     fun login(
+        @Parameter(hidden = true) @RequestHeader("X-Correlation-Id", required = false) correlationIdHeader: String?,
         @Valid @RequestBody request: LoginRequestV1,
-    ): ResponseEntity<Any> {
-        val correlationId = UUID.randomUUID().toString()
-        val command = request.toCommand()
+    ): ResponseEntity<LoginResponseV1> {
+        val correlationId = getOrGenerateCorrelationId(correlationIdHeader)
+        log.info("로그인 요청: email={}, correlationId={}", request.email, correlationId)
 
-        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
-        loginCommandHandler.handle(command, correlationId)
+        val loginResult = loginCommandHandler.handle(request.toCommand(), correlationId)
 
-        // 성공 시 응답 - 실제로는 여기서 JWT 토큰 등을 생성해야 함
-        return ResponseEntity
-            .ok()
-            .body(
-                mapOf(
-                    "status" to "SUCCESS",
-                    "message" to "로그인이 완료되었습니다.",
-                    "correlationId" to correlationId,
-                    "token" to "dummy-token-$correlationId",
-                    "links" to
-                        listOf(
-                            mapOf(
-                                "rel" to "logout",
-                                "href" to "/api/v1/users/logout",
-                                "method" to "POST",
-                            ),
-                        ),
-                ),
+        log.info("로그인 성공: userId={}, correlationId={}", loginResult, correlationId)
+
+        val response =
+            LoginResponseV1(
+                status = "SUCCESS",
+                message = "로그인 성공",
+                userId = loginResult,
+                accessToken = "",
+                refreshToken = "",
+                correlationId = correlationId,
             )
+
+        response.add(
+            linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(loginResult, correlationId)).withRel("user-profile"),
+        )
+
+        return ResponseEntity.ok(response)
     }
 
     @PutMapping("/{userId}/profile")
     @Operation(summary = "프로필 수정", description = "사용자 프로필 정보를 수정합니다.")
     @ApiResponses(
-        value =
-            [
-                ApiResponse(
-                    responseCode = "200",
-                    description = "프로필 수정 성공",
-                    content = [Content(mediaType = "application/json")],
-                ),
-                ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 데이터",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-                ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-            ],
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "프로필 수정 성공",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = CommandResultResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 데이터",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "사용자를 찾을 수 없음",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+        ],
     )
     fun updateProfile(
-        @Parameter(description = "사용자 ID", required = true)
-        @PathVariable userId: Long,
+        @Parameter(hidden = true) @RequestHeader("X-Correlation-Id", required = false) correlationIdHeader: String?,
+        @Parameter(description = "사용자 ID", required = true) @PathVariable userId: String,
         @Valid @RequestBody request: UpdateProfileRequestV1,
-    ): ResponseEntity<Any> {
-        val correlationId = UUID.randomUUID().toString()
-        val command = request.toCommand(userId)
+    ): ResponseEntity<CommandResultResponse> {
+        val correlationId = getOrGenerateCorrelationId(correlationIdHeader)
+        log.info("프로필 수정 요청: userId={}, correlationId={}", userId, correlationId)
 
-        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
-        updateProfileCommandHandler.handle(command, correlationId)
+        updateProfileCommandHandler.handle(request.toCommand(userId), correlationId)
 
-        // 성공 시 응답
-        return ResponseEntity
-            .ok()
-            .body(
-                mapOf(
-                    "status" to "SUCCESS",
-                    "message" to "프로필이 수정되었습니다.",
-                    "correlationId" to correlationId,
-                ),
+        log.info("프로필 수정 성공: userId={}, correlationId={}", userId, correlationId)
+
+        val response =
+            CommandResultResponse(
+                status = "SUCCESS",
+                message = "프로필이 성공적으로 수정되었습니다.",
+                correlationId = correlationId,
             )
+        response.add(linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(userId, correlationId)).withRel("user-profile"))
+
+        return ResponseEntity.ok(response)
     }
 
     @PutMapping("/{userId}/password")
-    @Operation(summary = "비밀번호 변경", description = "사용자 비밀번호를 변경합니다.")
+    @Operation(summary = "비밀번호 변경", description = "사용자 비밀번호를 변경합니다. 현재 비밀번호 확인이 필요합니다.")
     @ApiResponses(
-        value =
-            [
-                ApiResponse(
-                    responseCode = "200",
-                    description = "비밀번호 변경 성공",
-                    content = [Content(mediaType = "application/json")],
-                ),
-                ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 데이터 또는 기존 비밀번호 불일치",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-                ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-            ],
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "비밀번호 변경 성공",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = CommandResultResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 데이터",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "현재 비밀번호가 일치하지 않음",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "사용자를 찾을 수 없음",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+        ],
     )
     fun changePassword(
-        @Parameter(description = "사용자 ID", required = true)
-        @PathVariable userId: Long,
+        @Parameter(hidden = true) @RequestHeader("X-Correlation-Id", required = false) correlationIdHeader: String?,
+        @Parameter(description = "사용자 ID", required = true) @PathVariable userId: String,
         @Valid @RequestBody request: ChangePasswordRequestV1,
-    ): ResponseEntity<Any> {
-        val correlationId = UUID.randomUUID().toString()
-        val command = request.toCommand(userId)
+    ): ResponseEntity<CommandResultResponse> {
+        val correlationId = getOrGenerateCorrelationId(correlationIdHeader)
+        log.info("비밀번호 변경 요청: userId={}, correlationId={}", userId, correlationId)
 
-        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
-        changePasswordCommandHandler.handle(command, correlationId)
+        changePasswordCommandHandler.handle(request.toCommand(userId), correlationId)
 
-        // 성공 시 응답
-        return ResponseEntity
-            .ok()
-            .body(
-                mapOf(
-                    "status" to "SUCCESS",
-                    "message" to "비밀번호가 변경되었습니다.",
-                    "correlationId" to correlationId,
-                ),
+        log.info("비밀번호 변경 성공: userId={}, correlationId={}", userId, correlationId)
+
+        val response =
+            CommandResultResponse(
+                status = "SUCCESS",
+                message = "비밀번호가 성공적으로 변경되었습니다.",
+                correlationId = correlationId,
             )
+        response.add(linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(userId, correlationId)).withRel("user-profile"))
+
+        return ResponseEntity.ok(response)
     }
 
     @DeleteMapping("/{userId}")
-    @Operation(summary = "회원 탈퇴", description = "사용자 계정을 삭제합니다.")
+    @Operation(summary = "사용자 탈퇴", description = "사용자 계정을 삭제합니다. 비밀번호 확인이 필요합니다.")
     @ApiResponses(
-        value =
-            [
-                ApiResponse(
-                    responseCode = "200",
-                    description = "회원 탈퇴 성공",
-                    content = [Content(mediaType = "application/json")],
-                ),
-                ApiResponse(
-                    responseCode = "400",
-                    description = "잘못된 요청 데이터 또는 비밀번호 불일치",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-                ApiResponse(
-                    responseCode = "404",
-                    description = "사용자를 찾을 수 없음",
-                    content = [Content(mediaType = "application/problem+json")],
-                ),
-            ],
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "사용자 탈퇴 성공",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = CommandResultResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 데이터",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "비밀번호가 일치하지 않음",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "사용자를 찾을 수 없음",
+                content = [Content(mediaType = "application/problem+json")],
+            ),
+        ],
     )
     fun deleteUser(
-        @Parameter(description = "사용자 ID", required = true)
-        @PathVariable userId: Long,
+        @Parameter(hidden = true) @RequestHeader("X-Correlation-Id", required = false) correlationIdHeader: String?,
+        @Parameter(description = "사용자 ID", required = true) @PathVariable userId: String,
         @Valid @RequestBody request: DeleteUserRequestV1,
-    ): ResponseEntity<Any> {
-        val correlationId = UUID.randomUUID().toString()
-        val command = request.toCommand(userId)
+    ): ResponseEntity<CommandResultResponse> {
+        val correlationId = getOrGenerateCorrelationId(correlationIdHeader)
+        log.info("사용자 탈퇴 요청: userId={}, correlationId={}", userId, correlationId)
 
-        // Command 실행 - 실패 시 예외 발생하여 UserExceptionHandler에서 처리
-        deleteUserCommandHandler.handle(command, correlationId)
+        deleteUserCommandHandler.handle(request.toCommand(userId), correlationId)
 
-        // 성공 시 응답
-        return ResponseEntity
-            .ok()
-            .body(
-                mapOf(
-                    "status" to "SUCCESS",
-                    "message" to "회원 탈퇴가 완료되었습니다.",
-                    "correlationId" to correlationId,
-                ),
+        log.info("사용자 탈퇴 성공: userId={}, correlationId={}", userId, correlationId)
+
+        val response =
+            CommandResultResponse(
+                status = "SUCCESS",
+                message = "사용자 계정이 성공적으로 삭제되었습니다.",
+                correlationId = correlationId,
             )
+
+        return ResponseEntity.ok(response)
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "로그아웃", description = "현재 사용자 세션을 종료합니다.")
+    @Operation(summary = "로그아웃", description = "현재 사용자 세션을 종료합니다. (토큰 기반 인증에서는 클라이언트 측 토큰 삭제로 처리)")
     @ApiResponses(
-        value =
-            [
-                ApiResponse(
-                    responseCode = "200",
-                    description = "로그아웃 성공",
-                    content = [Content(mediaType = "application/json")],
-                ),
-            ],
-    )
-    fun logout(): ResponseEntity<Any> {
-        val correlationId = UUID.randomUUID().toString()
-
-        // 실제 로그아웃 처리 로직 구현 필요
-
-        return ResponseEntity.ok().body(
-            mapOf(
-                "status" to "SUCCESS",
-                "message" to "로그아웃이 완료되었습니다.",
-                "correlationId" to correlationId,
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "로그아웃 요청 처리됨",
+                content = [Content(mediaType = "application/json", schema = Schema(implementation = CommandResultResponse::class))],
             ),
+        ],
+    )
+    fun logout(
+        @Parameter(hidden = true) @RequestHeader("X-Correlation-Id", required = false) correlationIdHeader: String?,
+    ): ResponseEntity<CommandResultResponse> {
+        val correlationId = getOrGenerateCorrelationId(correlationIdHeader)
+        log.info("로그아웃 요청: correlationId={}", correlationId)
+
+        val response =
+            CommandResultResponse(
+                status = "SUCCESS",
+                message = "로그아웃 요청이 처리되었습니다.",
+                correlationId = correlationId,
+            )
+        response.add(
+            linkTo(methodOn(UserCommandControllerV1::class.java).login(correlationId, LoginRequestV1("", ""))).withRel("login"),
         )
+
+        return ResponseEntity.ok(response)
     }
 }

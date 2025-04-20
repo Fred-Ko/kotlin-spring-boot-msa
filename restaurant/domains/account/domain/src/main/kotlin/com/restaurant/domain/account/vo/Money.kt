@@ -1,9 +1,7 @@
 package com.restaurant.domain.account.vo
 
 import java.math.BigDecimal
-import kotlin.ConsistentCopyVisibility
 
-@ConsistentCopyVisibility
 data class Money private constructor(
     val value: BigDecimal,
 ) {

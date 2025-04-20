@@ -1,7 +1,7 @@
 package com.restaurant.application.user.command
 
 data class RegisterAddressCommand(
-    val userId: Long,
+    val userId: String,
     val street: String,
     val detail: String,
     val zipCode: String,
