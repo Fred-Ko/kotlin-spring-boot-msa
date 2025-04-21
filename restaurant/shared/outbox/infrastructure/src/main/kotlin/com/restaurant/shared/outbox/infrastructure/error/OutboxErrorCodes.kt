@@ -1,6 +1,6 @@
 package com.restaurant.shared.outbox.infrastructure.error
 
-import com.restaurant.common.core.error.ErrorCode
+import com.restaurant.shared.outbox.application.error.OutboxErrorCode // 변경: common 의존성 제거
 import org.springframework.http.HttpStatus
 
 /**
@@ -10,7 +10,8 @@ enum class OutboxInfrastructureErrorCode( // Rule 67
     override val code: String,
     override val message: String,
     override val status: HttpStatus,
-) : ErrorCode {
+) : OutboxErrorCode {
+    // 변경: common 의존성 제거
     DATABASE_OPERATION_FAILED(
         "OUTBOX-INFRA-001",
         "Failed to perform database operation on outbox event.",

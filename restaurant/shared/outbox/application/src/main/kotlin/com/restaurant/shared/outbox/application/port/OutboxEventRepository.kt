@@ -1,6 +1,6 @@
 package com.restaurant.shared.outbox.application.port
 
-import com.restaurant.common.domain.event.DomainEvent
+import com.restaurant.shared.outbox.application.event.OutboxDomainEvent // 변경: common 의존성 제거
 
 /**
  * Port interface for saving domain events to the outbox.
@@ -16,7 +16,7 @@ interface OutboxEventRepository {
      * @param aggregateId The domain ID (usually UUID) of the aggregate as a String.
      */
     fun save(
-        events: List<DomainEvent>,
+        events: List<OutboxDomainEvent>, // 변경: common 의존성 제거
         aggregateType: String,
         aggregateId: String,
     )
@@ -30,7 +30,7 @@ interface OutboxEventRepository {
      * @param aggregateId The domain ID (usually UUID) of the aggregate as a String.
      */
     fun save( // Overload for single event convenience
-        event: DomainEvent,
+        event: OutboxDomainEvent, // 변경: common 의존성 제거
         aggregateType: String,
         aggregateId: String,
     ) = save(listOf(event), aggregateType, aggregateId)

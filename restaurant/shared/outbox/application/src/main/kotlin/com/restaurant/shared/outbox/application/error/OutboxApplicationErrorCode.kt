@@ -1,13 +1,13 @@
 package com.restaurant.shared.outbox.application.error
 
-import com.restaurant.common.core.error.ErrorCode
+import com.restaurant.shared.outbox.application.error.OutboxErrorCode
 import org.springframework.http.HttpStatus
 
 enum class OutboxApplicationErrorCode(
     override val code: String,
     override val message: String,
     override val status: HttpStatus,
-) : ErrorCode {
+) : OutboxErrorCode {
     KAFKA_SEND_FAILED(
         "OUTBOX-APP-001",
         "Failed to send event to Kafka.",

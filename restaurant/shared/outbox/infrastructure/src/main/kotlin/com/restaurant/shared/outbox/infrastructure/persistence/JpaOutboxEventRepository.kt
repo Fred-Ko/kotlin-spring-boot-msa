@@ -3,7 +3,7 @@ package com.restaurant.shared.outbox.infrastructure.persistence
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.restaurant.common.domain.event.DomainEvent
+import com.restaurant.shared.outbox.application.event.OutboxDomainEvent // 변경: common 의존성 제거
 import com.restaurant.shared.outbox.application.port.OutboxEventRepository
 import com.restaurant.shared.outbox.infrastructure.entity.OutboxEventEntity
 import com.restaurant.shared.outbox.infrastructure.exception.OutboxDeserializationException
@@ -23,7 +23,7 @@ class JpaOutboxEventRepository(
 ) : OutboxEventRepository {
     @Transactional
     override fun save(
-        events: List<DomainEvent>,
+        events: List<OutboxDomainEvent>, // 변경: common 의존성 제거
         aggregateType: String,
         aggregateId: String,
     ) {
@@ -37,7 +37,7 @@ class JpaOutboxEventRepository(
     }
 
     private fun createOutboxEntity(
-        event: DomainEvent,
+        event: OutboxDomainEvent, // 변경: common 의존성 제거
         aggregateType: String,
         aggregateId: String,
     ): OutboxEventEntity {
@@ -55,7 +55,8 @@ class JpaOutboxEventRepository(
     }
 
     // Serializes the DomainEvent payload to a String (JSON in this case)
-    private fun serializePayload(event: DomainEvent): String =
+    private fun serializePayload(event: OutboxDomainEvent): String =
+        // 변경: common 의존성 제거
         try {
             objectMapper.writeValueAsString(event)
         } catch (e: Exception) {
@@ -66,7 +67,7 @@ class JpaOutboxEventRepository(
     // Deserialization logic (needed for Poller/Sender later) - Rule 4 Task 4
     // This might need refinement based on how event types are mapped back to classes.
     // A more robust solution might involve storing the FQCN or using a registry.
-    fun <T : DomainEvent> deserializePayload(
+    fun <T : OutboxDomainEvent> deserializePayload( // 변경: common 의존성 제거
         payload: String,
         eventType: String,
     ): T =

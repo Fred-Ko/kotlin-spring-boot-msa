@@ -9,7 +9,7 @@ plugins {
     kotlin("plugin.spring")
     kotlin("kapt")
     // id("org.jlleitschuh.gradle.ktlint")
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1" // Avro plugin
+    // id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1" // Avro plugin - Rule 106/109 위반으로 제거
 }
 
 group = "com.restaurant.shared"
@@ -39,7 +39,6 @@ dependencies {
     implementation(kotlin("reflect"))
 
     // Project Dependencies
-    implementation(project(":domains:common")) // Rule 1
 
     // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -76,16 +75,15 @@ tasks.withType<KotlinCompile> {
         freeCompilerArgs.set(listOf("-Xjsr305=strict"))
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
-    dependsOn(tasks.withType<GenerateAvroJavaTask>())
-    source(tasks.withType<GenerateAvroJavaTask>().map { it.outputs })
+    // dependsOn(tasks.withType<GenerateAvroJavaTask>()) // Avro plugin 제거로 주석 처리
+    // source(tasks.withType<GenerateAvroJavaTask>().map { it.outputs }) // Avro plugin 제거로 주석 처리
 }
-
-tasks.withType<GenerateAvroJavaTask> {
-    isCreateSetters = false
-    fieldVisibility = "PRIVATE"
-    isCreateOptionalGetters = false
-    isGettersReturnOptional = false
-}
+// tasks.withType<GenerateAvroJavaTask> { // Avro plugin 제거로 주석 처리
+//     isCreateSetters = false
+//     fieldVisibility = "PRIVATE"
+//     isCreateOptionalGetters = false
+//     isGettersReturnOptional = false
+// }
 
 tasks.withType<Test> {
     useJUnitPlatform()

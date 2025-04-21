@@ -1,13 +1,14 @@
 package com.restaurant.shared.outbox.application.exception
 
-import com.restaurant.common.core.error.ErrorCode
-import com.restaurant.common.core.exception.ApplicationException
 import com.restaurant.shared.outbox.application.error.OutboxApplicationErrorCode
+import com.restaurant.shared.outbox.application.error.OutboxErrorCode // 변경: common 의존성 제거
+import com.restaurant.shared.outbox.application.exception.OutboxBaseApplicationException // 변경: common 의존성 제거
 
 open class OutboxApplicationException(
-    override val errorCode: ErrorCode,
+    override val errorCode: OutboxErrorCode, // 변경: common 의존성 제거
     message: String,
-) : ApplicationException(message)
+    cause: Throwable? = null,
+) : OutboxBaseApplicationException(message, cause) // 변경: common 의존성 제거
 
 class OutboxKafkaSendException(
     message: String,
