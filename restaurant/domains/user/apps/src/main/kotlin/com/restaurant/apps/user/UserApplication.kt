@@ -14,19 +14,19 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
         "com.restaurant.application.user",
         "com.restaurant.infrastructure.user",
         "com.restaurant.common",
-        "com.restaurant.shared.outbox",
+        "com.restaurant.independent.outbox",
     ],
 )
 @EntityScan(
     basePackages = [
         "com.restaurant.infrastructure.user.entity",
-        "com.restaurant.shared.outbox.infrastructure.entity",
+        "com.restaurant.independent.outbox.infrastructure.entity",
     ],
 )
 @EnableJpaRepositories(
     basePackages = [
         "com.restaurant.infrastructure.user.repository",
-        "com.restaurant.shared.outbox.infrastructure.persistence",
+        "com.restaurant.independent.outbox.infrastructure.persistence",
     ],
 )
 class UserApplication

@@ -15,4 +15,4 @@ data class ValidationErrorResponse(
         val field: String,
         val reason: String,
     )
-} 
+}

@@ -1,18 +1,30 @@
 rootProject.name = "restaurant"
 
-include("domains:common")
+include(
+    // Common
+    ":domains:common",
 
-include(":domains:user:application")
-include(":domains:user:apps")
-include(":domains:user:domain")
-include(":domains:user:infrastructure")
-include(":domains:user:presentation")
+    // Account
+    ":domains:account:domain",
+    ":domains:account:application",
+    ":domains:account:infrastructure",
+    ":domains:account:presentation",
+    ":domains:account:apps",
 
-include(":domains:account:application")
-include(":domains:account:apps")
-include(":domains:account:domain")
-include(":domains:account:infrastructure")
-include(":domains:account:presentation")
+    // User
+    ":domains:user:domain",
+    ":domains:user:application",
+    ":domains:user:infrastructure",
+    ":domains:user:presentation",
+    ":domains:user:apps",
+
+    // Independent modules
+    ":independent:outbox:application",
+    ":independent:outbox:infrastructure",
+
+    // Test
+    ":test"
+)
 
 // include(":domains:restaurant:application")
 // // include(":domains:restaurant:apps")
@@ -20,8 +32,5 @@ include(":domains:account:presentation")
 // include(":domains:restaurant:infrastructure")
 // include(":domains:restaurant:presentation")
 
-include(":shared:outbox")
-include(":shared:outbox:application")
-include(":shared:outbox:infrastructure")
 // include("libs:outbox")
 // include("support:common")

@@ -25,6 +25,44 @@ class GlobalExceptionHandler(
 ) {
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
+    /**
+     * 에러 코드에 따른 HTTP 상태 코드 매핑
+     */
+    private fun determineHttpStatusFromCode(code: String): HttpStatus =
+        when {
+            // 인증/인가 관련 에러
+            code.startsWith("AUTH-") -> HttpStatus.UNAUTHORIZED
+            code.contains("-AUTH-") -> HttpStatus.UNAUTHORIZED
+            code.contains("-FORBIDDEN-") -> HttpStatus.FORBIDDEN
+
+            // 리소스 찾을 수 없음
+            code.contains("-NOT-FOUND") -> HttpStatus.NOT_FOUND
+            code.endsWith("-404") -> HttpStatus.NOT_FOUND
+
+            // 중복/충돌
+            code.contains("-DUPLICATE-") -> HttpStatus.CONFLICT
+            code.contains("-CONFLICT-") -> HttpStatus.CONFLICT
+            code.endsWith("-409") -> HttpStatus.CONFLICT
+
+            // 유효성 검증 실패
+            code.contains("-INVALID-") -> HttpStatus.BAD_REQUEST
+            code.contains("-VALIDATION-") -> HttpStatus.BAD_REQUEST
+            code.endsWith("-400") -> HttpStatus.BAD_REQUEST
+
+            // 비즈니스 규칙 위반
+            code.startsWith("BIZ-") -> HttpStatus.UNPROCESSABLE_ENTITY
+            code.contains("-RULE-") -> HttpStatus.UNPROCESSABLE_ENTITY
+            code.endsWith("-422") -> HttpStatus.UNPROCESSABLE_ENTITY
+
+            // 시스템/인프라 에러
+            code.startsWith("SYS-") -> HttpStatus.INTERNAL_SERVER_ERROR
+            code.contains("-SYSTEM-") -> HttpStatus.INTERNAL_SERVER_ERROR
+            code.endsWith("-500") -> HttpStatus.INTERNAL_SERVER_ERROR
+
+            // 기본값
+            else -> HttpStatus.INTERNAL_SERVER_ERROR
+        }
+
     private fun createProblemDetail(
         status: HttpStatus,
         code: String,
@@ -50,9 +88,9 @@ class GlobalExceptionHandler(
         ex: DomainException,
         request: WebRequest,
     ): ResponseEntity<ProblemDetail> {
-        val status = ex.errorCode.status
         val code = ex.errorCode.code
-        val title = ex.errorCode.code
+        val status = determineHttpStatusFromCode(code)
+        val title = ex.errorCode.message
 
         log.warn(
             "Domain Exception Handled: correlationId={}, code={}, status={}, message={}",
@@ -72,9 +110,9 @@ class GlobalExceptionHandler(
         ex: ApplicationException,
         request: WebRequest,
     ): ResponseEntity<ProblemDetail> {
-        val status = ex.errorCode.status
         val code = ex.errorCode.code
-        val title = ex.errorCode.code
+        val status = determineHttpStatusFromCode(code)
+        val title = ex.errorCode.message
 
         log.error(
             "Application Exception Handled: correlationId={}, code={}, status={}, message={}",

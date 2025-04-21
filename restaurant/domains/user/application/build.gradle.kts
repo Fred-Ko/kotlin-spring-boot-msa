@@ -10,10 +10,15 @@ dependencies {
     implementation(project(":domains:user:infrastructure"))
 
     // Spring Boot 버전을 통일
-    implementation("org.springframework.boot:spring-boot-starter:3.2.5")
-    implementation("org.springframework.boot:spring-boot-starter-web:3.2.5")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.5")
-    implementation("org.springframework.boot:spring-boot-starter-security:3.2.5")
+    implementation("org.springframework.boot:spring-boot-starter:3.3.2")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.3.2")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.2")
+    implementation("org.springframework.boot:spring-boot-starter-security:3.3.2")
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.3.2")
+    implementation("org.slf4j:slf4j-api:2.0.13")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+    implementation("org.springframework.boot:spring-boot-starter-hateoas:3.3.2")
+    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
     implementation("org.mapstruct:mapstruct:1.6.3")
 

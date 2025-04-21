@@ -1,6 +1,6 @@
 package com.restaurant.application.account.exception
 
-import com.restaurant.application.account.common.AccountErrorCode
+import com.restaurant.application.account.error.AccountApplicationErrorCode
 import com.restaurant.common.core.error.ErrorCode
 import com.restaurant.common.core.exception.ApplicationException
 import com.restaurant.domain.account.vo.AccountId
@@ -12,7 +12,7 @@ import com.restaurant.domain.account.vo.TransactionId
  */
 sealed class AccountApplicationException(
     override val message: String,
-    open val errorCode: ErrorCode,
+    override val errorCode: ErrorCode,
 ) : ApplicationException(message) {
     /**
      * 계좌 조회 관련 예외
@@ -26,7 +26,7 @@ sealed class AccountApplicationException(
          */
         data class NotFound(
             val accountId: String,
-            override val errorCode: ErrorCode = AccountErrorCode.NOT_FOUND,
+            override val errorCode: ErrorCode = AccountApplicationErrorCode.ACCOUNT_NOT_FOUND,
         ) : Query("계좌를 찾을 수 없습니다: $accountId", errorCode)
     }
 
@@ -44,7 +44,7 @@ sealed class AccountApplicationException(
             val accountId: AccountId,
             val currentBalance: Money,
             val requiredAmount: Money,
-            override val errorCode: ErrorCode = AccountErrorCode.INSUFFICIENT_BALANCE,
+            override val errorCode: ErrorCode = AccountApplicationErrorCode.INSUFFICIENT_BALANCE,
         ) : Transaction(
                 "계좌 ${accountId.value}의 잔액이 부족합니다. 현재 잔액: ${currentBalance.value}, 필요 금액: ${requiredAmount.value}",
                 errorCode,
@@ -55,7 +55,7 @@ sealed class AccountApplicationException(
          */
         data class NotFound(
             val transactionId: TransactionId,
-            override val errorCode: ErrorCode = AccountErrorCode.TRANSACTION_NOT_FOUND,
+            override val errorCode: ErrorCode = AccountApplicationErrorCode.TRANSACTION_NOT_FOUND,
         ) : Transaction("트랜잭션을 찾을 수 없습니다: ${transactionId.value}", errorCode)
 
         /**
@@ -63,7 +63,7 @@ sealed class AccountApplicationException(
          */
         data class AlreadyCancelled(
             val transactionId: TransactionId,
-            override val errorCode: ErrorCode = AccountErrorCode.TRANSACTION_ALREADY_CANCELLED,
+            override val errorCode: ErrorCode = AccountApplicationErrorCode.TRANSACTION_ALREADY_CANCELLED,
         ) : Transaction("이미 취소된 트랜잭션입니다: ${transactionId.value}", errorCode)
     }
 
@@ -72,6 +72,6 @@ sealed class AccountApplicationException(
      */
     data class SystemError(
         val errorMessage: String,
-        override val errorCode: ErrorCode = AccountErrorCode.SYSTEM_ERROR,
+        override val errorCode: ErrorCode = AccountApplicationErrorCode.SYSTEM_ERROR,
     ) : AccountApplicationException("시스템 오류가 발생했습니다: $errorMessage", errorCode)
 }

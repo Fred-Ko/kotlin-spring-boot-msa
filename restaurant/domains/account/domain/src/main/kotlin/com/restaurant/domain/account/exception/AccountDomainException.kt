@@ -17,7 +17,7 @@ sealed class AccountDomainException(
      */
     sealed class Account(
         message: String,
-        override val errorCode: AccountErrorCode,
+        errorCode: AccountErrorCode,
     ) : AccountDomainException(message, errorCode) {
         /**
          * 계좌를 찾을 수 없을 때 발생하는 예외
@@ -25,7 +25,10 @@ sealed class AccountDomainException(
         data class NotFound(
             val accountId: AccountId,
             override val errorCode: AccountErrorCode = AccountErrorCode.ACCOUNT_NOT_FOUND,
-        ) : Account("계좌를 찾을 수 없습니다: ${accountId.value}", errorCode)
+        ) : Account(
+                message = "계좌를 찾을 수 없습니다: ${accountId.value}",
+                errorCode = errorCode,
+            )
 
         /**
          * 계좌의 잔액이 부족할 때 발생하는 예외
@@ -35,7 +38,10 @@ sealed class AccountDomainException(
             val currentBalance: Money,
             val requiredAmount: Money,
             override val errorCode: AccountErrorCode = AccountErrorCode.INSUFFICIENT_BALANCE,
-        ) : Account("계좌 ${accountId.value}의 잔액이 부족합니다. 잔액: ${currentBalance.value}, 필요 금액: ${requiredAmount.value}", errorCode)
+        ) : Account(
+                message = "계좌 ${accountId.value}의 잔액이 부족합니다. 잔액: ${currentBalance.value}, 필요 금액: ${requiredAmount.value}",
+                errorCode = errorCode,
+            )
     }
 
     /**
@@ -43,7 +49,7 @@ sealed class AccountDomainException(
      */
     sealed class Transaction(
         message: String,
-        override val errorCode: AccountErrorCode,
+        errorCode: AccountErrorCode,
     ) : AccountDomainException(message, errorCode) {
         /**
          * 트랜잭션을 찾을 수 없을 때 발생하는 예외
@@ -51,7 +57,10 @@ sealed class AccountDomainException(
         data class NotFound(
             val transactionId: TransactionId,
             override val errorCode: AccountErrorCode = AccountErrorCode.TRANSACTION_NOT_FOUND,
-        ) : Transaction("트랜잭션을 찾을 수 없습니다: ${transactionId.value}", errorCode)
+        ) : Transaction(
+                message = "트랜잭션을 찾을 수 없습니다: ${transactionId.value}",
+                errorCode = errorCode,
+            )
 
         /**
          * 이미 취소된 결제를 취소하려고 할 때 발생하는 예외
@@ -59,6 +68,9 @@ sealed class AccountDomainException(
         data class AlreadyCancelled(
             val transactionId: TransactionId,
             override val errorCode: AccountErrorCode = AccountErrorCode.TRANSACTION_ALREADY_CANCELLED,
-        ) : Transaction("이미 취소된 결제입니다: ${transactionId.value}", errorCode)
+        ) : Transaction(
+                message = "이미 취소된 결제입니다: ${transactionId.value}",
+                errorCode = errorCode,
+            )
     }
 }

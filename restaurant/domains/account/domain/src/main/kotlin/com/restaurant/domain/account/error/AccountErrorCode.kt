@@ -2,7 +2,7 @@ package com.restaurant.domain.account.error
 
 /**
  * 계좌 도메인 에러 코드
- * 기술적 구현(HTTP 상태 코드)과 분리된 순수한 도메인 에러 코드입니다.
+ * 기술적 구현(HTTP 상태 코드)와 분리된 순수한 도메인 에러 코드입니다.
  */
 enum class AccountErrorCode(
     val code: String,

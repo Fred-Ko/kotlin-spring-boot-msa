@@ -33,6 +33,10 @@ sealed class UserDomainException(
         data class InvalidAddressFormat(
             val reason: String,
         ) : Validation("주소 형식이 올바르지 않습니다: $reason")
+
+        data class InvalidPhoneNumberFormat(
+            val phoneNumber: String,
+        ) : Validation("전화번호 형식이 올바르지 않습니다: $phoneNumber")
     }
 
     // 각 하위 sealed class 또는 data class 에서 errorCode 를 override
