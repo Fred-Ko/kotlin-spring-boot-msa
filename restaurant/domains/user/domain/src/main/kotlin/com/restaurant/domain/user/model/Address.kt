@@ -1,6 +1,6 @@
 package com.restaurant.domain.user.model
 
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.vo.AddressId
 
 data class Address

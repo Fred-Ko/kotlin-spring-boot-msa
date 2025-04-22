@@ -1,42 +1,35 @@
 package com.restaurant.application.user.error
 
-import com.restaurant.common.core.error.ErrorCode
 import com.restaurant.common.core.exception.ApplicationException
 
 /**
  * User 애플리케이션 레이어 관련 예외
  */
 sealed class UserApplicationException(
-    override val errorCode: ErrorCode,
-    override val message: String,
+    override val errorCode: UserApplicationErrorCode,
+    override val message: String = errorCode.message,
     override val cause: Throwable? = null,
-) : ApplicationException(errorCode, message, cause) {
+) : ApplicationException(message, cause) {
     data class UnexpectedError(
-        override val cause: Throwable?,
-    ) : UserApplicationException(
-            UserApplicationErrorCode.UNEXPECTED_ERROR,
-            "An unexpected error occurred in the user application layer.",
-            cause,
-        )
-
-    data class UnexpectedApplicationError(
-        // errorCode가 해당 도메인의 ApplicationErrorCode Enum 참조 (Rule 68)
-        override val errorCode: UserApplicationErrorCode = UserApplicationErrorCode.SYSTEM_ERROR,
-        override val message: String = "An unexpected application error occurred",
+        val errCode: UserApplicationErrorCode = UserApplicationErrorCode.UNEXPECTED_ERROR,
         val originalCause: Throwable? = null,
-    ) : UserApplicationException(errorCode, message, originalCause)
+    ) : UserApplicationException(errCode, errCode.message, originalCause)
 
-    data class ExternalServiceFailure(
-        override val errorCode: UserApplicationErrorCode = UserApplicationErrorCode.EXTERNAL_SERVICE_ERROR,
-        override val message: String = "External service call failed",
-        val externalService: String? = null,
+    data class ExternalServiceError(
         val originalCause: Throwable? = null,
-    ) : UserApplicationException(errorCode, message, originalCause)
+        val errCode: UserApplicationErrorCode = UserApplicationErrorCode.EXTERNAL_SERVICE_ERROR,
+    ) : UserApplicationException(errCode, errCode.message, originalCause)
 
     data class AuthenticationFailed(
-        override val errorCode: UserApplicationErrorCode = UserApplicationErrorCode.AUTHENTICATION_FAILED,
-        override val message: String = "Authentication failed",
-    ) : UserApplicationException(errorCode, message)
+        val errCode: UserApplicationErrorCode = UserApplicationErrorCode.AUTHENTICATION_FAILED,
+    ) : UserApplicationException(errCode, errCode.message)
 
+    data class SystemError(
+        val originalCause: Throwable? = null,
+    ) : UserApplicationException(
+            UserApplicationErrorCode.SYSTEM_ERROR,
+            UserApplicationErrorCode.SYSTEM_ERROR.message,
+            originalCause,
+        )
     // Add other specific application exceptions here
 }

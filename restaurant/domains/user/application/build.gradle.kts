@@ -19,6 +19,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-hateoas:3.3.2")
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
+    // JWT 토큰 생성 및 검증
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
+
     implementation("org.mapstruct:mapstruct:1.6.3")
 
     // MapStruct 어노테이션 프로세서

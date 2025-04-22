@@ -1,12 +1,13 @@
 package com.restaurant.independent.outbox.infrastructure.kafka
 
-import com.restaurant.independent.outbox.infrastructure.entity.OutboxMessageEntity
-import com.restaurant.independent.outbox.infrastructure.error.OutboxErrorCodes
-import com.restaurant.independent.outbox.infrastructure.error.OutboxException
+import com.restaurant.independent.outbox.api.error.OutboxException
+import com.restaurant.independent.outbox.application.port.OutboxMessageSenderPort
+import com.restaurant.independent.outbox.application.port.model.OutboxMessage
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
+import java.util.concurrent.CompletableFuture
 
 /**
  * Outbox 메시지를 Kafka로 전송하는 컴포넌트.
@@ -14,10 +15,10 @@ import org.springframework.stereotype.Component
 @Component
 class OutboxMessageSender(
     private val kafkaTemplate: KafkaTemplate<String, ByteArray>,
-) {
+) : OutboxMessageSenderPort {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun send(message: OutboxMessageEntity) {
+    override fun send(message: OutboxMessage): CompletableFuture<*> {
         try {
             val record =
                 ProducerRecord(
@@ -31,27 +32,27 @@ class OutboxMessageSender(
                     },
                 )
 
-            kafkaTemplate
+            return kafkaTemplate
                 .send(record)
                 .whenComplete { result, ex ->
                     if (ex != null) {
                         log.error("Failed to send message to Kafka. Topic: ${message.topic}, AggregateId: ${message.aggregateId}", ex)
-                        throw OutboxException(
-                            errorCode = OutboxErrorCodes.KAFKA_SEND_ERROR,
-                            message = "Failed to send message to Kafka",
-                            cause = ex,
-                        )
+                        // Don't throw here, handle failure in Poller or JobError logic
+                        // throw OutboxException.KafkaSendFailed(
+                        // cause = ex,
+                        // )
                     } else {
                         log.debug("Successfully sent message to Kafka. Topic: ${message.topic}, Offset: ${result.recordMetadata.offset()}")
                     }
                 }
         } catch (e: Exception) {
             log.error("Error while preparing Kafka message. Topic: ${message.topic}, AggregateId: ${message.aggregateId}", e)
-            throw OutboxException(
-                errorCode = OutboxErrorCodes.KAFKA_MESSAGE_PREPARATION_ERROR,
-                message = "Error while preparing Kafka message",
-                cause = e,
-            )
+            // Don't throw here either
+            // throw OutboxException.KafkaSendFailed(
+            // cause = e,
+            // )
+            // Return a completed future with exception
+            return CompletableFuture.failedFuture<Void>(OutboxException.KafkaSendFailed(cause = e))
         }
     }
 }

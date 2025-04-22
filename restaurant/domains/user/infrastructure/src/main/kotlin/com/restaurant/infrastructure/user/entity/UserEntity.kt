@@ -7,11 +7,11 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import java.time.LocalDateTime
-import java.util.ArrayList
 import java.util.UUID
 
 @Entity
@@ -32,12 +32,26 @@ class UserEntity(
     val version: Long = 0,
 ) {
     // JPA 필드는 private으로 설정
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
-    private var addressEntities: MutableList<AddressEntity> = ArrayList()
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private var addressEntities: MutableList<AddressEntity> = mutableListOf()
 
     // 주소 목록에 대한 불변 뷰 제공 (프로퍼티로 제공)
     val addresses: List<AddressEntity>
         get() = addressEntities.toList()
+
+    fun addAddress(address: AddressEntity) {
+        this.addressEntities.add(address)
+    }
+
+    fun removeAddress(address: AddressEntity) {
+        this.addressEntities.remove(address)
+    }
+
+    fun setAddresses(addresses: List<AddressEntity>) {
+        this.addressEntities.clear()
+        this.addressEntities.addAll(addresses)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

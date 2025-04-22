@@ -1,7 +1,7 @@
 package com.restaurant.application.user.handler
 
 import com.restaurant.application.user.command.LoginCommand
-import com.restaurant.application.user.exception.UserApplicationException
+import com.restaurant.application.user.error.UserApplicationException
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
 import org.slf4j.LoggerFactory
@@ -32,13 +32,13 @@ class LoginCommandHandler(
                     ?: run {
                         log.warn("User not found for login, correlationId={}, email={}", correlationId, email)
                         // 사용자가 없는 경우에도 동일한 인증 실패 메시지를 반환하여 정보 노출 방지
-                        throw UserApplicationException.AuthenticationFailed("이메일 또는 비밀번호가 일치하지 않습니다.")
+                        throw UserApplicationException.AuthenticationFailed()
                     }
 
             // 비밀번호 검증
             if (!passwordEncoder.matches(command.password, user.password.encodedValue)) {
                 log.warn("Invalid password for login, correlationId={}, email={}", correlationId, email)
-                throw UserApplicationException.AuthenticationFailed("이메일 또는 비밀번호가 일치하지 않습니다.")
+                throw UserApplicationException.AuthenticationFailed()
             }
 
             // 로그인 성공 처리 (UserId 반환)
@@ -59,8 +59,14 @@ class LoginCommandHandler(
                 }
                 else -> {
                     // 예상치 못한 오류 처리
-                    log.error("System error during login, correlationId={}, email={}, error={}", correlationId, command.email, e.message, e)
-                    throw UserApplicationException.SystemError(e)
+                    log.error(
+                        "System error during login, correlationId={}, email={}, error={}",
+                        correlationId,
+                        command.email,
+                        e.message,
+                        e,
+                    )
+                    throw UserApplicationException.ExternalServiceError(e)
                 }
             }
         }

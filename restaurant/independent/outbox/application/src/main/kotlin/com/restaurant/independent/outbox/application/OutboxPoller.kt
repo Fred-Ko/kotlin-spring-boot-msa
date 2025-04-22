@@ -1,6 +1,6 @@
 package com.restaurant.independent.outbox.application
 
-import com.restaurant.independent.outbox.application.error.OutboxException
+import com.restaurant.independent.outbox.api.error.OutboxException
 import com.restaurant.independent.outbox.application.port.OutboxMessageRepository
 import com.restaurant.independent.outbox.application.port.OutboxMessageSenderPort
 import com.restaurant.independent.outbox.application.port.model.OutboxMessage
@@ -33,8 +33,8 @@ class OutboxPoller(
     @Transactional
     fun pollMessages() {
         try {
-            // PENDING 상태의 메시지를 조회하고 처리
-            val messages = outboxMessageRepository.findByStatus(OutboxMessageStatus.PENDING, batchSize)
+            // PENDING 상태의 메시지를 락을 걸고 조회 및 PROCESSING 상태로 변경 (동시성 제어)
+            val messages = outboxMessageRepository.findAndMarkForProcessing(OutboxMessageStatus.PENDING, batchSize)
             messages.forEach { message ->
                 try {
                     processMessage(message)
@@ -63,8 +63,7 @@ class OutboxPoller(
             }
         } catch (e: Exception) {
             log.error("Error during message polling", e)
-            throw OutboxException.PollingException(
-                message = "Failed to poll messages: ${e.message}",
+            throw OutboxException.UnexpectedInfrastructureError(
                 cause = e,
             )
         }
@@ -93,8 +92,7 @@ class OutboxPoller(
             log.info("Successfully processed message ${message.id}")
         } catch (e: Exception) {
             log.error("Failed to process message ${message.id}", e)
-            throw OutboxException.MessageSendException(
-                message = "Failed to send message to Kafka: ${e.message}",
+            throw OutboxException.KafkaSendFailed(
                 cause = e,
             )
         }
@@ -120,8 +118,7 @@ class OutboxPoller(
                     "Max retry count ($maxRetries) exceeded for message ${message.id}",
                     error,
                 )
-                throw OutboxException.MaxRetriesExceededException(
-                    message = "Max retry count ($maxRetries) exceeded for message ${message.id}",
+                throw OutboxException.UnexpectedInfrastructureError(
                     cause = error,
                 )
             }

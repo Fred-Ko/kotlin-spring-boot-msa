@@ -1,7 +1,7 @@
 package com.restaurant.application.user.command.handler
 
 import com.restaurant.application.user.command.UpdateAddressCommand
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.model.Address
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.AddressId

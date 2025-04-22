@@ -1,8 +1,8 @@
 package com.restaurant.application.user.handler
 
 import com.restaurant.application.user.command.ChangePasswordCommand
-import com.restaurant.application.user.exception.UserApplicationException
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.application.user.error.UserApplicationException
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Password
 import com.restaurant.domain.user.vo.UserId
@@ -43,7 +43,7 @@ class ChangePasswordCommandHandler(
             // 현재 비밀번호 검증 (Application Layer)
             if (!passwordEncoder.matches(command.currentPassword, user.password.encodedValue)) {
                 log.warn("Password change failed: Current password mismatch, correlationId={}, userId={}", correlationId, userId)
-                throw UserApplicationException.AuthenticationFailed("현재 비밀번호가 일치하지 않습니다.")
+                throw UserApplicationException.AuthenticationFailed()
             }
 
             // 비밀번호 변경 (Aggregate 호출)
@@ -64,7 +64,6 @@ class ChangePasswordCommandHandler(
             )
             throw de
         } catch (e: Exception) {
-            // 예상치 못한 시스템 오류
             log.error(
                 "System error during password change, correlationId={}, userId={}, error={}",
                 correlationId,

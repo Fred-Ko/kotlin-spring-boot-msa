@@ -1,9 +1,10 @@
 package com.restaurant.application.user.handler
 
 import com.restaurant.application.user.command.RegisterUserCommand
-import com.restaurant.application.user.exception.UserApplicationException
+import com.restaurant.application.user.error.UserApplicationErrorCode
+import com.restaurant.application.user.error.UserApplicationException
 import com.restaurant.domain.user.aggregate.User
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.Name
@@ -71,7 +72,13 @@ class RegisterUserCommandHandler(
             throw UserDomainException.User.DuplicateEmail(email.value)
         } catch (e: Exception) {
             // 기타 예상치 못한 오류
-            log.error("사용자 등록 중 시스템 오류 발생, correlationId={}, error={}", correlationId, e.message, e)
+            log.error(
+                "사용자 등록 중 시스템 오류 발생, correlationId={}, errorCode={}, error={}",
+                correlationId,
+                UserApplicationErrorCode.SYSTEM_ERROR.code,
+                e.message,
+                e,
+            )
             // Wrap as ApplicationException.SystemError before propagating
             throw UserApplicationException.SystemError(e)
         }

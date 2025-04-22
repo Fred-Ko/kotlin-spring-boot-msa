@@ -3,7 +3,6 @@ plugins {
     kotlin("plugin.jpa") version "2.1.20"
     kotlin("plugin.allopen") version "2.1.20"
     // id("org.jlleitschuh.gradle.ktlint")
-    // id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1" // Avro plugin - Rule 106/109 위반으로 제거
 }
 
 group = "com.restaurant.independent"
@@ -32,8 +31,6 @@ dependencies {
     // implementation(platform("org.springframework.boot:spring-boot-dependencies:${Versions.SPRING_BOOT}"))
     // implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.kafka:spring-kafka")
-    implementation("io.confluent:kafka-avro-serializer:7.6.0") // Use a compatible version
-    implementation("org.apache.avro:avro:1.11.3") // Use a compatible version
 
     // Kotlin
     // implementation("org.jetbrains.kotlin:kotlin-reflect")

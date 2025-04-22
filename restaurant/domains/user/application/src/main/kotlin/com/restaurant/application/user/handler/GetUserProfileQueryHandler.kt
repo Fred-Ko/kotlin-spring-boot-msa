@@ -3,7 +3,7 @@ package com.restaurant.application.user.handler
 import com.restaurant.application.user.dto.UserProfileDto
 import com.restaurant.application.user.extensions.toUserProfileDto
 import com.restaurant.application.user.query.GetUserProfileQuery
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.UserId
 import org.slf4j.LoggerFactory

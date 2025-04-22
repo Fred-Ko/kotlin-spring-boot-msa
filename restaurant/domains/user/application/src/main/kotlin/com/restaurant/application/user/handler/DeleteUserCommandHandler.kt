@@ -1,8 +1,9 @@
 package com.restaurant.application.user.handler
 
 import com.restaurant.application.user.command.DeleteUserCommand
-import com.restaurant.application.user.exception.UserApplicationException
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.application.user.error.UserApplicationErrorCode
+import com.restaurant.application.user.error.UserApplicationException
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.UserId
 import org.slf4j.LoggerFactory
@@ -38,7 +39,7 @@ class DeleteUserCommandHandler(
             // 비밀번호 검증 (Application Layer)
             if (!passwordEncoder.matches(command.password, user.password.encodedValue)) {
                 log.warn("Password mismatch during user deletion, correlationId={}, userId={}", correlationId, userId)
-                throw UserApplicationException.AuthenticationFailed("비밀번호가 일치하지 않습니다.")
+                throw UserApplicationException.AuthenticationFailed()
             }
 
             // 사용자 삭제
@@ -58,9 +59,10 @@ class DeleteUserCommandHandler(
         } catch (e: Exception) {
             // 시스템 오류
             log.error(
-                "System error during user deletion, correlationId={}, userId={}, error={}",
+                "System error during user deletion, correlationId={}, userId={}, errorCode={}, error={}",
                 correlationId,
                 command.userId,
+                UserApplicationErrorCode.SYSTEM_ERROR.code,
                 e.message,
                 e,
             )

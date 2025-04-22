@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "Address",
+  "namespace": "com.restaurant.infrastructure.user.avro",
+  "fields": [
+    { "name": "addressId", "type": "string" },
+    { "name": "zipCode", "type": "string" },
+    { "name": "street", "type": "string" },
+    { "name": "detail", "type": "string" },
+    { "name": "isDefault", "type": "boolean" }
+  ]
+}

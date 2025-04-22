@@ -1,10 +1,13 @@
 package com.restaurant.independent.outbox.infrastructure.persistence
 
-import com.restaurant.independent.outbox.application.error.OutboxStorageException
+import com.restaurant.independent.outbox.api.error.OutboxException
 import com.restaurant.independent.outbox.application.port.OutboxMessageRepository
 import com.restaurant.independent.outbox.application.port.model.OutboxMessage
 import com.restaurant.independent.outbox.application.port.model.OutboxMessageStatus
-import com.restaurant.independent.outbox.infrastructure.repository.SpringDataJpaOutboxMessageRepository
+import com.restaurant.independent.outbox.infrastructure.extensions.toDomainModel
+import com.restaurant.independent.outbox.infrastructure.extensions.toEntity
+import com.restaurant.independent.outbox.infrastructure.persistence.SpringDataJpaOutboxMessageRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -23,8 +26,7 @@ class OutboxMessageRepositoryImpl(
             val entity = jpaOutboxMessageRepository.save(message.toEntity())
             return entity.toDomainModel()
         } catch (e: Exception) {
-            throw OutboxStorageException(
-                message = "Failed to save outbox message: ${e.message}",
+            throw OutboxException.DatabaseOperationFailed(
                 cause = e,
             )
         }
@@ -36,8 +38,7 @@ class OutboxMessageRepositoryImpl(
             val entities = jpaOutboxMessageRepository.saveAll(messages.map { it.toEntity() })
             return entities.map { it.toDomainModel() }
         } catch (e: Exception) {
-            throw OutboxStorageException(
-                message = "Failed to save outbox messages: ${e.message}",
+            throw OutboxException.DatabaseOperationFailed(
                 cause = e,
             )
         }
@@ -86,12 +87,8 @@ class OutboxMessageRepositoryImpl(
         limit: Int,
     ): List<OutboxMessage> {
         val entities = jpaOutboxMessageRepository.findAndLockByStatus(status, limit)
-        entities.forEach { entity ->
-            entity.status = OutboxMessageStatus.PROCESSING
-            entity.updatedAt = Instant.now()
-            entity.lastAttemptTime = Instant.now()
-        }
-        return jpaOutboxMessageRepository.saveAll(entities).map { it.toDomainModel() }
+        entities.forEach { it.status = OutboxMessageStatus.PROCESSING }
+        return entities.map { it.toDomainModel() }
     }
 
     @Transactional(readOnly = true)
@@ -99,11 +96,14 @@ class OutboxMessageRepositoryImpl(
 
     @Transactional
     override fun incrementRetryCount(id: UUID): OutboxMessage? {
-        val entity = jpaOutboxMessageRepository.findByIdOrNull(id) ?: return null
-        entity.retryCount++
-        entity.updatedAt = Instant.now()
-        entity.lastAttemptTime = Instant.now()
-        return jpaOutboxMessageRepository.save(entity).toDomainModel()
+        val entity = jpaOutboxMessageRepository.findByIdOrNull(id)
+        return if (entity != null) {
+            entity.retryCount++
+            entity.lastAttemptTime = Instant.now()
+            entity.toDomainModel()
+        } else {
+            null
+        }
     }
 
     @Transactional(readOnly = true)

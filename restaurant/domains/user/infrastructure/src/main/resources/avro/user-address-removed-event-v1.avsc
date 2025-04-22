@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "name": "UserAddressRemovedEvent",
+  "namespace": "com.restaurant.infrastructure.user.avro.event",
+  "doc": "Event emitted when an address is removed from a user",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "string",
+      "doc": "Unique identifier for the user (UUID)"
+    },
+    {
+      "name": "addressId",
+      "type": "string",
+      "doc": "Unique identifier for the removed address (UUID)"
+    },
+    {
+      "name": "removedAt",
+      "type": "long",
+      "doc": "Address removal timestamp in milliseconds since Unix epoch"
+    }
+  ]
+}

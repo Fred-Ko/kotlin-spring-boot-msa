@@ -5,7 +5,7 @@ import com.restaurant.common.domain.event.DomainEvent
 abstract class AggregateRoot {
     private val domainEvents: MutableList<DomainEvent> = mutableListOf()
 
-    protected fun addDomainEvent(event: DomainEvent) {
+    internal fun addDomainEvent(event: DomainEvent) {
         domainEvents.add(event)
     }
 

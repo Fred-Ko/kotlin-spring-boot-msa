@@ -1,0 +1,58 @@
+{
+  "type": "record",
+  "name": "UserAddressAddedEvent",
+  "namespace": "com.restaurant.infrastructure.user.avro.event",
+  "doc": "Event emitted when a new address is added to a user",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "string",
+      "doc": "Unique identifier for the user (UUID)"
+    },
+    {
+      "name": "addressId",
+      "type": "string",
+      "doc": "Unique identifier for the address (UUID)"
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "doc": "Nickname for the address"
+    },
+    {
+      "name": "street",
+      "type": "string",
+      "doc": "Street address"
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "doc": "City"
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "doc": "State/Province"
+    },
+    {
+      "name": "zipCode",
+      "type": "string",
+      "doc": "Postal/ZIP code"
+    },
+    {
+      "name": "country",
+      "type": "string",
+      "doc": "Country"
+    },
+    {
+      "name": "isDefault",
+      "type": "boolean",
+      "doc": "Whether this is the default address"
+    },
+    {
+      "name": "createdAt",
+      "type": "long",
+      "doc": "Address creation timestamp in milliseconds since Unix epoch"
+    }
+  ]
+}

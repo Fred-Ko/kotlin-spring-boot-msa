@@ -1,6 +1,6 @@
 package com.restaurant.domain.user.vo
 
-import com.restaurant.domain.user.exception.UserDomainException
+import com.restaurant.domain.user.error.UserDomainException
 
 data class PhoneNumber private constructor(
     val value: String,

@@ -10,31 +10,96 @@ sealed class UserDomainException(
     override val errorCode: ErrorCode,
     override val message: String,
     override val cause: Throwable? = null,
-) : DomainException(message) { // DomainException 생성자에는 message만 전달
-    // Rule 68: Validation 관련 DomainException 하위 타입 정의
-    // Rule 14, 61: VO 유효성 검사 실패 시 상속하는 베이스 예외 타입
-    // sealed class Validation(...) : UserDomainException(...) { ... }
+) : DomainException(message) {
+    // User 관련 예외
+    sealed class User(
+        errorCode: ErrorCode,
+        message: String,
+        cause: Throwable? = null,
+    ) : UserDomainException(errorCode, message, cause) {
+        data class NotFound(
+            val userId: String,
+        ) : User(
+                UserDomainErrorCodes.USER_NOT_FOUND,
+                "User not found with ID: $userId",
+            )
 
-    data class UserNotFound(
-        val userId: String,
-    ) : UserDomainException(
-            UserDomainErrorCodes.USER_NOT_FOUND,
-            "User not found with ID: $userId",
-        )
+        data class DuplicateEmail(
+            val email: String,
+        ) : User(
+                UserDomainErrorCodes.DUPLICATE_EMAIL,
+                "Email already exists: $email",
+            )
 
-    data class DuplicateUsername(
-        val username: String,
-    ) : UserDomainException(
-            UserDomainErrorCodes.DUPLICATE_USERNAME,
-            "Username already exists: $username",
-        )
+        data class InvalidCredentials(
+            override val errorCode: UserDomainErrorCodes = UserDomainErrorCodes.PASSWORD_MISMATCH,
+            override val message: String = "Invalid username or password",
+        ) : User(errorCode, message)
+    }
 
-    data class InvalidCredentials(
-        override val errorCode: UserDomainErrorCodes = UserDomainErrorCodes.PASSWORD_MISMATCH, // INVALID_PASSWORD -> PASSWORD_MISMATCH
-        override val message: String = "Invalid username or password",
-    ) : UserDomainException(errorCode, message, null)
+    // Address 관련 예외
+    sealed class Address(
+        errorCode: ErrorCode,
+        message: String,
+        cause: Throwable? = null,
+    ) : UserDomainException(errorCode, message, cause) {
+        data class NotFound(
+            val userId: String,
+            val addressId: String,
+        ) : Address(
+                UserDomainErrorCodes.ADDRESS_NOT_FOUND,
+                "Address not found for userId: $userId, addressId: $addressId",
+            )
 
-    // Add other specific domain exceptions here
+        data class CannotRemoveLastAddress(
+            val addressId: String,
+        ) : Address(
+                UserDomainErrorCodes.CANNOT_REMOVE_LAST_ADDRESS,
+                "Cannot remove last address: $addressId",
+            )
+    }
+
+    // Validation 관련 예외
+    sealed class Validation(
+        errorCode: ErrorCode,
+        message: String,
+        cause: Throwable? = null,
+    ) : UserDomainException(errorCode, message, cause) {
+        data class InvalidEmailFormat(
+            val email: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_INPUT,
+                "Invalid email format: $email",
+            )
+
+        data class InvalidPasswordFormat(
+            val reason: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_PASSWORD_FORMAT,
+                reason,
+            )
+
+        data class InvalidNameFormat(
+            val name: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_INPUT,
+                "Name cannot be blank: '$name'",
+            )
+
+        data class InvalidAddressFormat(
+            val reason: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_INPUT,
+                reason,
+            )
+
+        data class InvalidPhoneNumberFormat(
+            val phone: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_INPUT,
+                "Invalid phone number format: $phone",
+            )
+    }
 }
 
 // UserDomainErrorCodes Enum에 필요한 추가 코드 (예시)

@@ -1,91 +1,240 @@
 package com.restaurant.infrastructure.user.repository
 
-import com.restaurant.common.domain.event.DomainEvent
-import com.restaurant.common.infrastructure.avro.envelope.EventEnvelope
 import com.restaurant.domain.user.aggregate.User
+import com.restaurant.domain.user.event.UserEvent
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
 import com.restaurant.domain.user.vo.UserId
 import com.restaurant.independent.outbox.application.port.OutboxMessageRepository
 import com.restaurant.independent.outbox.application.port.model.OutboxMessage
-import com.restaurant.infrastructure.user.avro.UserEventPayload
 import com.restaurant.infrastructure.user.extensions.toDomain
 import com.restaurant.infrastructure.user.extensions.toEntity
 import org.apache.avro.io.EncoderFactory
 import org.apache.avro.specific.SpecificDatumWriter
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Repository
 import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
-import java.time.Instant
-import java.util.UUID
-import java.util.concurrent.TimeUnit
-import com.restaurant.infrastructure.user.avro.Address as AvroAddress
+import java.time.ZoneOffset
 
 @Repository
 class UserRepositoryImpl(
     private val jpaRepository: SpringDataJpaUserRepository,
     private val outboxMessageRepository: OutboxMessageRepository,
 ) : UserRepository {
+    private val log = LoggerFactory.getLogger(UserRepositoryImpl::class.java)
+
     override fun save(user: User): User {
+        // Store original domain events
         val domainEvents = user.getDomainEvents().toList()
 
+        // Convert and save the entity
         val entity = user.toEntity()
         val savedEntity = jpaRepository.save(entity)
 
+        // Process domain events
         if (domainEvents.isNotEmpty()) {
-            val aggregateId = user.id.value.toString()
-            val aggregateType = "User"
-            val correlationId = UUID.randomUUID().toString() // TODO: MDC에서 가져오기
+            try {
+                // Create outbox messages for each event
+                val outboxMessages =
+                    domainEvents.map { event ->
+                        // Common values for all events
+                        val correlationId = event.eventId
+                        val eventType = event::class.java.simpleName
+                        val aggregateId = user.id.value.toString()
+                        val aggregateType = "User"
+                        val source = "user"
+                        val timestamp = event.occurredAt.toInstant(ZoneOffset.UTC).toEpochMilli()
 
-            val outboxMessages =
-                domainEvents.map { domainEvent ->
-                    // 1. Create the UserEventPayload (Event content)
-                    val avroPayload = createAvroPayload(user)
-                    val payloadBytes = serializeAvroPayload(avroPayload)
+                        // Create the appropriate Avro event payload based on event type
+                        val (eventPayloadBytes, topic) =
+                            when (event) {
+                                is UserEvent.Created -> {
+                                    // Create Avro record using generated class from schema
+                                    val avroEvent =
+                                        com.restaurant.infrastructure.user.avro.event.UserCreatedEvent(
+                                            userId = user.id.value.toString(),
+                                            email = event.email,
+                                            name = event.name,
+                                            createdAt = timestamp,
+                                        )
 
-                    // 2. Create the Envelope with metadata and the serialized payload
-                    val envelope =
-                        createEnvelope(
-                            eventId = correlationId,
-                            timestamp = Instant.now(),
-                            source = "user",
-                            aggregateType = aggregateType,
+                                    // Serialize the event
+                                    val payloadBytes = serializeAvroEvent(avroEvent)
+
+                                    // Define topic - follow naming convention: {environment}.{domain}.{event-type}.{entity}.{version}
+                                    val topic = "dev.user.domain-event.user.v1"
+
+                                    Pair(payloadBytes, topic)
+                                }
+
+                                is UserEvent.ProfileUpdated -> {
+                                    val avroEvent =
+                                        com.restaurant.infrastructure.user.avro.event.UserProfileUpdatedEvent(
+                                            userId = user.id.value.toString(),
+                                            name = event.name,
+                                            phone = null, // Could add phone if available in the domain event
+                                            updatedAt = timestamp,
+                                        )
+
+                                    val payloadBytes = serializeAvroEvent(avroEvent)
+                                    val topic = "dev.user.domain-event.user.v1"
+
+                                    Pair(payloadBytes, topic)
+                                }
+
+                                is UserEvent.PasswordChanged -> {
+                                    val avroEvent =
+                                        com.restaurant.infrastructure.user.avro.event.UserPasswordChangedEvent(
+                                            userId = user.id.value.toString(),
+                                            changedAt = timestamp,
+                                        )
+
+                                    val payloadBytes = serializeAvroEvent(avroEvent)
+                                    val topic = "dev.user.domain-event.user.v1"
+
+                                    Pair(payloadBytes, topic)
+                                }
+
+                                is UserEvent.AddressAdded -> {
+                                    // Would need address details from the user object
+                                    val address = user.addresses.find { it.addressId == event.addressId }
+                                    if (address != null) {
+                                        val avroEvent =
+                                            com.restaurant.infrastructure.user.avro.event.UserAddressAddedEvent(
+                                                userId = user.id.value.toString(),
+                                                addressId = event.addressId.value.toString(),
+                                                nickname = address.detail, // 주소가 nickname 대신 detail을 사용
+                                                street = address.street,
+                                                city = "", // 모델에 없음
+                                                state = "", // 모델에 없음
+                                                zipCode = address.zipCode,
+                                                country = "", // 모델에 없음
+                                                isDefault = address.isDefault,
+                                                createdAt = timestamp,
+                                            )
+
+                                        val payloadBytes = serializeAvroEvent(avroEvent)
+                                        val topic = "dev.user.domain-event.user.v1"
+
+                                        Pair(payloadBytes, topic)
+                                    } else {
+                                        // Fallback if address not found (shouldn't happen)
+                                        val avroEvent =
+                                            com.restaurant.infrastructure.user.avro.event.UserAddressAddedEvent(
+                                                userId = user.id.value.toString(),
+                                                addressId = event.addressId.value.toString(),
+                                                nickname = "Unknown",
+                                                street = "",
+                                                city = "",
+                                                state = "",
+                                                zipCode = "",
+                                                country = "",
+                                                isDefault = false,
+                                                createdAt = timestamp,
+                                            )
+
+                                        val payloadBytes = serializeAvroEvent(avroEvent)
+                                        val topic = "dev.user.domain-event.user.v1"
+
+                                        Pair(payloadBytes, topic)
+                                    }
+                                }
+
+                                is UserEvent.AddressUpdated -> {
+                                    val avroEvent =
+                                        com.restaurant.infrastructure.user.avro.event.UserAddressUpdatedEvent(
+                                            userId = user.id.value.toString(),
+                                            addressId = event.addressId.value.toString(),
+                                            nickname = null,
+                                            street = null,
+                                            city = null,
+                                            state = null,
+                                            zipCode = null,
+                                            country = null,
+                                            isDefault = null,
+                                            updatedAt = timestamp,
+                                        )
+
+                                    val payloadBytes = serializeAvroEvent(avroEvent)
+                                    val topic = "dev.user.domain-event.user.v1"
+
+                                    Pair(payloadBytes, topic)
+                                }
+
+                                is UserEvent.AddressRemoved -> {
+                                    val avroEvent =
+                                        com.restaurant.infrastructure.user.avro.event.UserAddressRemovedEvent(
+                                            userId = user.id.value.toString(),
+                                            addressId = event.addressId.value.toString(),
+                                            removedAt = timestamp,
+                                        )
+
+                                    val payloadBytes = serializeAvroEvent(avroEvent)
+                                    val topic = "dev.user.domain-event.user.v1"
+
+                                    Pair(payloadBytes, topic)
+                                }
+
+                                else -> {
+                                    log.warn("Unknown event type: ${event::class.java.simpleName}")
+                                    // Default case to handle potential future events
+                                    val topic = "dev.user.domain-event.user.v1"
+                                    val payloadBytes = ByteArray(0)
+                                    Pair(payloadBytes, topic)
+                                }
+                            }
+
+                        // Create envelope for the event payload
+                        val envelopeEvent =
+                            com.restaurant.common.infrastructure.avro.envelope.Envelope(
+                                schemaVersion = "v1",
+                                eventId = correlationId,
+                                timestamp = timestamp,
+                                source = source,
+                                aggregateType = aggregateType,
+                                aggregateId = aggregateId,
+                                eventType = eventType,
+                                payload = eventPayloadBytes,
+                            )
+
+                        // Serialize the envelope
+                        val envelopeBytes = serializeAvroEvent(envelopeEvent)
+
+                        // Create OutboxMessage
+                        OutboxMessage(
+                            payload = envelopeBytes,
+                            topic = topic,
+                            headers =
+                                mapOf(
+                                    "correlationId" to correlationId,
+                                    "aggregateType" to aggregateType,
+                                    "aggregateId" to aggregateId,
+                                    "eventType" to eventType,
+                                ),
                             aggregateId = aggregateId,
-                            eventType = domainEvent::class.java.simpleName,
-                            payloadBytes = payloadBytes,
+                            aggregateType = aggregateType,
                         )
+                    }
 
-                    // 3. Serialize the Envelope
-                    val envelopeBytes = serializeEnvelope(envelope)
-
-                    // 4. Determine Kafka topic
-                    val topic = resolveTopic(domainEvent)
-
-                    // 5. Create headers for Kafka message (duplicating some envelope data for filtering without deserializing)
-                    val headers =
-                        mapOf(
-                            "correlationId" to correlationId,
-                            "aggregateType" to aggregateType,
-                            "aggregateId" to aggregateId,
-                            "eventType" to domainEvent::class.java.simpleName,
-                            "eventId" to correlationId,
-                            "timestamp" to Instant.now().toString(),
-                        )
-
-                    // 6. Create OutboxMessage with full Envelope payload
-                    OutboxMessage(
-                        payload = envelopeBytes,
-                        topic = topic,
-                        headers = headers,
-                        aggregateId = aggregateId,
-                        aggregateType = aggregateType,
-                    )
-                }
-            outboxMessageRepository.saveAll(outboxMessages)
+                // Save to outbox
+                outboxMessageRepository.saveAll(outboxMessages)
+            } catch (e: Exception) {
+                log.error("Failed to process domain events", e)
+            }
         }
 
+        // Clear events and return domain object
         user.clearDomainEvents()
         return savedEntity.toDomain()
+    }
+
+    private fun <T> serializeAvroEvent(event: T): ByteArray {
+        val writer = SpecificDatumWriter<T>((event as Any)::class.java as Class<T>)
+        val out = ByteArrayOutputStream()
+        val encoder = EncoderFactory.get().binaryEncoder(out, null)
+        writer.write(event, encoder)
+        encoder.flush()
+        return out.toByteArray()
     }
 
     override fun findById(id: UserId): User? = jpaRepository.findByDomainId(id.value)?.toDomain()
@@ -96,86 +245,5 @@ class UserRepositoryImpl(
 
     override fun delete(user: User) {
         jpaRepository.deleteByDomainId(user.id.value)
-    }
-
-    private fun createAvroPayload(user: User): UserEventPayload =
-        UserEventPayload
-            .newBuilder()
-            .setUserId(user.id.value.toString())
-            .setEmail(user.email.value)
-            .setName(user.name.value)
-            .setAddresses(
-                user.addresses.map { address ->
-                    AvroAddress
-                        .newBuilder()
-                        .setAddressId(address.id.value.toString())
-                        .setZipCode(address.zipCode)
-                        .setStreet(address.street)
-                        .setDetail(address.detail)
-                        .setIsDefault(address.isDefault)
-                        .build()
-                },
-            ).build()
-
-    private fun serializeAvroPayload(payload: UserEventPayload): ByteArray {
-        val writer = SpecificDatumWriter(UserEventPayload::class.java)
-        val out = ByteArrayOutputStream()
-        val encoder = EncoderFactory.get().binaryEncoder(out, null)
-        writer.write(payload, encoder)
-        encoder.flush()
-        out.close()
-        return out.toByteArray()
-    }
-
-    private fun createEnvelope(
-        eventId: String,
-        timestamp: Instant,
-        source: String,
-        aggregateType: String,
-        aggregateId: String,
-        eventType: String,
-        payloadBytes: ByteArray,
-    ): EventEnvelope {
-        // Convert payload bytes to ByteBuffer as required by Avro
-        val payloadBuffer = ByteBuffer.wrap(payloadBytes)
-
-        // Create metadata map if needed
-        val metadata =
-            mapOf(
-                "createdAt" to timestamp.toString(),
-                "eventType" to eventType,
-            )
-
-        return EventEnvelope
-            .newBuilder()
-            .setSchemaVersion(1)
-            .setEventId(eventId)
-            .setTimestamp(TimeUnit.SECONDS.toNanos(timestamp.epochSecond) + timestamp.nano)
-            .setSource(source)
-            .setAggregateType(aggregateType)
-            .setAggregateId(aggregateId)
-            .setEventType(eventType)
-            .setPayload(payloadBuffer)
-            .setMetadata(metadata)
-            .build()
-    }
-
-    private fun serializeEnvelope(envelope: EventEnvelope): ByteArray {
-        val writer = SpecificDatumWriter(EventEnvelope::class.java)
-        val out = ByteArrayOutputStream()
-        val encoder = EncoderFactory.get().binaryEncoder(out, null)
-        writer.write(envelope, encoder)
-        encoder.flush()
-        out.close()
-        return out.toByteArray()
-    }
-
-    private fun resolveTopic(event: DomainEvent): String {
-        val environment = "dev" // TODO: 설정에서 가져오기
-        val domain = "user"
-        val eventType = "domain-event"
-        val entity = "user"
-        val version = "v1"
-        return "$environment.$domain.$eventType.$entity.$version"
     }
 }

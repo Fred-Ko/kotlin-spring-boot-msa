@@ -1,0 +1,48 @@
+{
+  "type": "record",
+  "name": "Envelope",
+  "namespace": "com.restaurant.common.infrastructure.avro.envelope",
+  "doc": "Common envelope for all domain events",
+  "fields": [
+    {
+      "name": "schemaVersion",
+      "type": "string",
+      "doc": "Version of the envelope schema"
+    },
+    {
+      "name": "eventId",
+      "type": "string",
+      "doc": "Unique identifier for the event, used as correlationId"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "doc": "Event occurrence time in nanoseconds since Unix epoch"
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "doc": "Source domain of the event (e.g., user, order)"
+    },
+    {
+      "name": "aggregateType",
+      "type": "string",
+      "doc": "Type of the aggregate that produced the event (e.g., User)"
+    },
+    {
+      "name": "aggregateId",
+      "type": "string",
+      "doc": "String representation of domain ID of the aggregate"
+    },
+    {
+      "name": "eventType",
+      "type": "string",
+      "doc": "Type of the event (e.g., UserCreated)"
+    },
+    {
+      "name": "payload",
+      "type": "bytes",
+      "doc": "Event payload as serialized bytes"
+    }
+  ]
+}

@@ -3,13 +3,14 @@ plugins {
     kotlin("kapt")
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
+    // Temporarily disable Avro plugin to fix circular dependency
+    // id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 dependencies {
     implementation(project(":domains:user:domain"))
-    implementation(project(":domains:common"))
-    implementation(project(":independent:outbox:application")) // OutboxEventRepository 사용을 위한 의존성 추가
+    implementation(project(":domains:common")) // EventEnvelope 등 공통 Avro 클래스 사용
+    implementation(project(":independent:outbox:api")) // OutboxException 사용을 위한 의존성 추가
 
     implementation("org.springframework.boot:spring-boot-starter:3.3.2")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.2")
@@ -18,7 +19,7 @@ dependencies {
     implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
     implementation("org.mapstruct:mapstruct:1.6.3")
 
-    // Avro & Kafka
+    // Avro & Kafka (직렬화/역직렬화만 필요, 플러그인/코드 생성 불필요)
     implementation("org.apache.avro:avro:1.11.3")
     implementation("io.confluent:kafka-avro-serializer:7.5.3")
     implementation("io.confluent:kafka-schema-registry-client:7.5.3")
@@ -34,27 +35,29 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
-// Avro 플러그인 설정
-avro {
-    isCreateSetters.set(false)
-    fieldVisibility.set("PRIVATE")
-    isCreateOptionalGetters.set(false)
-    isGettersReturnOptional.set(false)
-    outputCharacterEncoding.set("UTF-8")
-    stringType.set("String")
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    source(tasks.withType<com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask>().map { it.outputs })
-}
-
-tasks.named("compileKotlin") {
-    dependsOn("generateAvroJava")
-}
-
 repositories {
     mavenCentral()
     maven {
         url = uri("https://packages.confluent.io/maven/")
     }
 }
+
+sourceSets {
+    main {
+        java.srcDirs("src/main/java")
+        kotlin.srcDirs("src/main/kotlin")
+        resources {
+            srcDirs("src/main/resources")
+            exclude("avro/") // Exclude the avro directory
+        }
+        // Avro generated sources will be added automatically
+    }
+}
+
+// Avro plugin configuration (Kotlin code generation)
+// avro {
+//    isCreateSetters.set(false)
+//    fieldVisibility.set("PRIVATE")
+//    // Default outputDir works for Kotlin if you use the right package in .avsc
+//    // Generated sources: build/generated-src/avro/main/kotlin
+// }

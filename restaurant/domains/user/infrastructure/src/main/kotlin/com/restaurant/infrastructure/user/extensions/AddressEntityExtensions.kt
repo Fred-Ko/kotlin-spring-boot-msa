@@ -27,6 +27,5 @@ fun Address.toEntity(): AddressEntity =
         detail = detail,
         zipCode = zipCode,
         isDefault = isDefault,
-        user = null, // Will be set when added to UserEntity
         // version은 JPA가 관리하거나, 필요시 Domain 객체에서 전달받아 설정
     )

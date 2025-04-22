@@ -1,8 +1,8 @@
 package com.restaurant.domain.user.aggregate
 
 import com.restaurant.common.domain.aggregate.AggregateRoot
+import com.restaurant.domain.user.error.UserDomainException
 import com.restaurant.domain.user.event.UserEvent
-import com.restaurant.domain.user.exception.UserDomainException
 import com.restaurant.domain.user.model.Address
 import com.restaurant.domain.user.vo.AddressId
 import com.restaurant.domain.user.vo.Email

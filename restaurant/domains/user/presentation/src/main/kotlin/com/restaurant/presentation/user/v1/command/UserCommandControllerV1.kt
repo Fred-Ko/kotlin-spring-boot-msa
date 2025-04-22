@@ -147,20 +147,20 @@ class UserCommandControllerV1(
 
         val loginResult = loginCommandHandler.handle(request.toCommand(), correlationId)
 
-        log.info("로그인 성공: userId={}, correlationId={}", loginResult, correlationId)
+        log.info("로그인 성공: userId={}, correlationId={}", loginResult.userId, correlationId)
 
         val response =
             LoginResponseV1(
                 status = "SUCCESS",
                 message = "로그인 성공",
-                userId = loginResult,
-                accessToken = "",
-                refreshToken = "",
+                userId = loginResult.userId,
+                accessToken = loginResult.accessToken,
+                refreshToken = loginResult.refreshToken,
                 correlationId = correlationId,
             )
 
         response.add(
-            linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(loginResult, correlationId)).withRel("user-profile"),
+            linkTo(methodOn(UserQueryControllerV1::class.java).getUserProfile(loginResult.userId, correlationId)).withRel("user-profile"),
         )
 
         return ResponseEntity.ok(response)

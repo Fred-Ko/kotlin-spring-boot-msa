@@ -5,11 +5,11 @@ import com.restaurant.independent.outbox.infrastructure.entity.OutboxMessageEnti
 
 /**
  * OutboxMessage 모델과 OutboxMessageEntity 간의 변환을 위한 확장 함수들.
+ *
+ * - [OutboxMessage.toEntity]: OutboxMessage 도메인 모델을 OutboxMessageEntity로 변환
+ * - [OutboxMessageEntity.toDomainModel]: OutboxMessageEntity를 OutboxMessage 도메인 모델로 변환
  */
 
-/**
- * Converts an OutboxMessage domain model to an OutboxMessageEntity.
- */
 fun OutboxMessage.toEntity(): OutboxMessageEntity =
     OutboxMessageEntity(
         id = this.id,

@@ -1,7 +1,9 @@
 package com.restaurant.independent.outbox.infrastructure.entity
 
 import com.restaurant.independent.outbox.application.port.model.OutboxMessageStatus
+import com.restaurant.independent.outbox.infrastructure.converter.StringMapConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -23,6 +25,7 @@ data class OutboxMessageEntity(
     @Column(nullable = false)
     val topic: String,
     @Column(nullable = false)
+    @Convert(converter = StringMapConverter::class)
     val headers: Map<String, String>,
     @Column(name = "aggregate_id", nullable = false)
     val aggregateId: String,
@@ -30,15 +33,15 @@ data class OutboxMessageEntity(
     val aggregateType: String,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val status: OutboxMessageStatus,
+    var status: OutboxMessageStatus,
     @Column(nullable = false)
-    val retryCount: Int,
+    var retryCount: Int,
     @Column(nullable = false)
     val createdAt: Instant,
     @Column(nullable = false)
-    val updatedAt: Instant,
+    var updatedAt: Instant,
     @Column(nullable = true)
-    val lastAttemptTime: Instant?,
+    var lastAttemptTime: Instant?,
 ) {
     /**
      * ByteArray 필드가 포함된 엔티티의 equals/hashCode 구현

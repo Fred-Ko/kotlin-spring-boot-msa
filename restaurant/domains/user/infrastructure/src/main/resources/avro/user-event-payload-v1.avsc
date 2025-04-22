@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "UserEventPayload",
+  "namespace": "com.restaurant.infrastructure.user.avro.payload",
+  "fields": [
+    { "name": "userId", "type": "string" },
+    { "name": "email", "type": "string" },
+    { "name": "name", "type": "string" },
+    { "name": "addresses", "type": { "type": "array", "items": "com.restaurant.infrastructure.user.avro.Address" } }
+  ]
+}

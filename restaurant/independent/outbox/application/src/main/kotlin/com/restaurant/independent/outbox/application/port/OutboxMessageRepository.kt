@@ -1,6 +1,5 @@
 package com.restaurant.independent.outbox.application.port
 
-import com.restaurant.independent.outbox.application.error.OutboxStorageException
 import com.restaurant.independent.outbox.application.port.model.OutboxMessage
 import com.restaurant.independent.outbox.application.port.model.OutboxMessageStatus
 import java.util.UUID
@@ -16,9 +15,7 @@ interface OutboxMessageRepository {
      *
      * @param message 저장할 메시지
      * @return 저장된 메시지
-     * @throws OutboxStorageException 저장 작업 실패 시
      */
-    @Throws(OutboxStorageException::class)
     fun save(message: OutboxMessage): OutboxMessage
 
     /**
@@ -27,9 +24,7 @@ interface OutboxMessageRepository {
      *
      * @param messages 저장할 메시지 목록
      * @return 저장된 메시지 목록
-     * @throws OutboxStorageException 저장 작업 실패 시
      */
-    @Throws(OutboxStorageException::class)
     fun saveAll(messages: List<OutboxMessage>): List<OutboxMessage>
 
     /**
@@ -88,17 +83,4 @@ interface OutboxMessageRepository {
     fun countByStatus(status: OutboxMessageStatus): Long
 
     fun incrementRetryCount(id: UUID): OutboxMessage?
-
-    /**
-     * 특정 상태의 메시지들을 조회하고 즉시 처리 중 상태로 잠급니다.
-     * 동시성 제어를 위해 사용됩니다.
-     *
-     * @param status 조회할 메시지 상태 (주로 PENDING)
-     * @param limit 조회할 최대 메시지 수
-     * @return 조회된 메시지 목록
-     */
-    fun findAndLockPending(
-        status: OutboxMessageStatus,
-        limit: Int,
-    ): List<OutboxMessage>
 }

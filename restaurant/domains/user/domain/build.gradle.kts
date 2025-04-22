@@ -6,7 +6,6 @@ dependencies {
     implementation(project(":domains:common"))
 
     // 순수 도메인 레이어는 외부 의존성이 없습니다.
-    // NOTE: HttpStatus 사용을 위해 임시로 추가 (Rule 10 위반 가능성)
 
     // Kotest
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
@@ -19,4 +18,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.4")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
     testImplementation("org.assertj:assertj-core:3.27.3")
+
+    // Rule 10 준수: HttpStatus 등 Spring Web 의존성 제거
+    // implementation("org.springframework.boot:spring-boot-starter-web:3.3.2") 의존성 제거함
 }
