@@ -1,10 +1,8 @@
 package com.restaurant.independent.outbox.application.port.model
 
+import com.restaurant.independent.outbox.application.port.model.OutboxMessageStatus // 주석 및 빈 줄 제거, 순서 조정
 import java.time.Instant
 import java.util.UUID
-
-// Add import for OutboxMessageStatus
-import com.restaurant.independent.outbox.application.port.model.OutboxMessageStatus
 
 /**
  * Represents a message to be stored in the outbox.
@@ -14,6 +12,8 @@ import com.restaurant.independent.outbox.application.port.model.OutboxMessageSta
  * @property payload The serialized message content as a byte array
  * @property topic The target Kafka topic for message delivery
  * @property headers Additional message headers including correlationId, aggregateType, aggregateId, etc.
+ * @property aggregateId Domain ID of the aggregate that generated the event (in string format)
+ * @property aggregateType Type of the aggregate that generated the event
  * @property status Current status of the message
  * @property retryCount Number of retry attempts made
  * @property createdAt When the message was created
@@ -25,6 +25,8 @@ data class OutboxMessage(
     val payload: ByteArray,
     val topic: String,
     val headers: Map<String, String>,
+    val aggregateId: String,
+    val aggregateType: String,
     val status: OutboxMessageStatus = OutboxMessageStatus.PENDING,
     val retryCount: Int = 0,
     val createdAt: Instant = Instant.now(),
@@ -41,6 +43,8 @@ data class OutboxMessage(
         if (!payload.contentEquals(other.payload)) return false
         if (topic != other.topic) return false
         if (headers != other.headers) return false
+        if (aggregateId != other.aggregateId) return false
+        if (aggregateType != other.aggregateType) return false
         if (status != other.status) return false
         if (retryCount != other.retryCount) return false
         if (createdAt != other.createdAt) return false
@@ -55,6 +59,8 @@ data class OutboxMessage(
         result = 31 * result + payload.contentHashCode()
         result = 31 * result + topic.hashCode()
         result = 31 * result + headers.hashCode()
+        result = 31 * result + aggregateId.hashCode()
+        result = 31 * result + aggregateType.hashCode()
         result = 31 * result + status.hashCode()
         result = 31 * result + retryCount
         result = 31 * result + createdAt.hashCode()
@@ -68,6 +74,8 @@ data class OutboxMessage(
             "id=$id, " +
             "topic='$topic', " +
             "headers=$headers, " +
+            "aggregateId='$aggregateId', " +
+            "aggregateType='$aggregateType', " +
             "status=$status, " +
             "retryCount=$retryCount, " +
             "createdAt=$createdAt, " +

@@ -62,12 +62,22 @@ class UserCommandControllerV1(
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청 데이터",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "409",
                 description = "이미 존재하는 이메일",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
         ],
     )
@@ -109,12 +119,22 @@ class UserCommandControllerV1(
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청 데이터",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "401",
                 description = "로그인 실패 (이메일 또는 비밀번호 불일치)",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
         ],
     )
@@ -158,12 +178,22 @@ class UserCommandControllerV1(
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청 데이터",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "404",
                 description = "사용자를 찾을 수 없음",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
         ],
     )
@@ -202,17 +232,32 @@ class UserCommandControllerV1(
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청 데이터",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "401",
                 description = "현재 비밀번호가 일치하지 않음",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "404",
                 description = "사용자를 찾을 수 없음",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
         ],
     )
@@ -251,17 +296,32 @@ class UserCommandControllerV1(
             ApiResponse(
                 responseCode = "400",
                 description = "잘못된 요청 데이터",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "401",
                 description = "비밀번호가 일치하지 않음",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
             ApiResponse(
                 responseCode = "404",
                 description = "사용자를 찾을 수 없음",
-                content = [Content(mediaType = "application/problem+json")],
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(implementation = org.springframework.http.ProblemDetail::class),
+                    ),
+                ],
             ),
         ],
     )

@@ -4,7 +4,7 @@ import com.restaurant.independent.outbox.application.error.OutboxStorageExceptio
 import com.restaurant.independent.outbox.application.port.OutboxMessageRepository
 import com.restaurant.independent.outbox.application.port.model.OutboxMessage
 import com.restaurant.independent.outbox.application.port.model.OutboxMessageStatus
-import com.restaurant.independent.outbox.infrastructure.repository.JpaOutboxMessageRepository
+import com.restaurant.independent.outbox.infrastructure.repository.SpringDataJpaOutboxMessageRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -15,7 +15,7 @@ import java.util.UUID
  */
 @Repository
 class OutboxMessageRepositoryImpl(
-    private val jpaOutboxMessageRepository: JpaOutboxMessageRepository,
+    private val jpaOutboxMessageRepository: SpringDataJpaOutboxMessageRepository,
 ) : OutboxMessageRepository {
     @Transactional
     override fun save(message: OutboxMessage): OutboxMessage {

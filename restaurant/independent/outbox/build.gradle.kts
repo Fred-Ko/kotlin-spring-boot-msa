@@ -1,8 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "3.3.2"
-    id("io.spring.dependency-management") version "1.1.7"
     kotlin("jvm") version "2.1.20"
-    kotlin("plugin.spring") version "2.1.20"
     kotlin("plugin.jpa") version "2.1.20"
     kotlin("plugin.allopen") version "2.1.20"
     // id("org.jlleitschuh.gradle.ktlint")
@@ -32,19 +29,19 @@ object Versions {
 
 dependencies {
     // Spring Boot
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:${Versions.SPRING_BOOT}"))
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
+    // implementation(platform("org.springframework.boot:spring-boot-dependencies:${Versions.SPRING_BOOT}"))
+    // implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation("io.confluent:kafka-avro-serializer:7.6.0") // Use a compatible version
+    implementation("org.apache.avro:avro:1.11.3") // Use a compatible version
 
     // Kotlin
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    // implementation("org.jetbrains.kotlin:kotlin-reflect")
+    // implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    // implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging-jvm:${Versions.KOTLIN_LOGGING}")
+    // implementation("io.github.microutils:kotlin-logging-jvm:${Versions.KOTLIN_LOGGING}")
 
     // Project Dependencies
 

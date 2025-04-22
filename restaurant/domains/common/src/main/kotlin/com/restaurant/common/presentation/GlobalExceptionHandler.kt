@@ -1,11 +1,18 @@
 package com.restaurant.common.presentation
 
+// KtLint: import 순서 조정 및 error 패키지 사용
+import com.restaurant.common.core.error.CommonSystemErrorCode // OptimisticLockException 처리에 사용
 import com.restaurant.common.core.exception.ApplicationException
 import com.restaurant.common.core.exception.DomainException
 import com.restaurant.common.core.exception.InfrastructureException
 import com.restaurant.common.core.exception.PresentationException
+import com.restaurant.domain.account.error.AccountDomainException // exception -> error
+import com.restaurant.domain.user.error.UserDomainException // exception -> error
+import com.restaurant.independent.outbox.infrastructure.error.OutboxException
+import jakarta.persistence.OptimisticLockException
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -26,10 +33,51 @@ class GlobalExceptionHandler(
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     /**
+     * MDC(Mapped Diagnostic Context)에서 correlationId를 가져옵니다.
+     * correlationId가 없는 경우 새로 생성합니다.
+     */
+    // KtLint: 함수 본문을 표현식으로 변경
+    private fun getCorrelationIdFromMDC(): String =
+        MDC.get("correlationId") ?: UUID.randomUUID().toString()
+
+    /**
      * 에러 코드에 따른 HTTP 상태 코드 매핑
      */
     private fun determineHttpStatusFromCode(code: String): HttpStatus =
         when {
+            // Account Domain Error Codes
+            code == "ACCOUNT-DOMAIN-001" -> HttpStatus.NOT_FOUND // Account not found
+            code == "ACCOUNT-DOMAIN-002" -> HttpStatus.BAD_REQUEST // Insufficient balance
+
+            // Account Application Error Codes
+            code == "ACCOUNT-APPLICATION-001" -> HttpStatus.NOT_FOUND // Account not found
+            // KtLint: 최대 줄 길이 초과 수정 (주석 분리)
+            code == "ACCOUNT-APPLICATION-002" -> HttpStatus.BAD_REQUEST // Insufficient balance
+                                                                        // (if ApplicationException wraps this, although Rule 70 limits ApplicationException)
+            code == "ACCOUNT-APPLICATION-003" -> HttpStatus.NOT_FOUND // Transaction not found
+            code == "ACCOUNT-APPLICATION-004" -> HttpStatus.BAD_REQUEST // Transaction already cancelled
+            code == "ACCOUNT-APPLICATION-999" -> HttpStatus.INTERNAL_SERVER_ERROR // System error
+
+            // User Domain Error Codes
+            code == "USER-DOMAIN-001" -> HttpStatus.NOT_FOUND // User not found
+            code == "USER-DOMAIN-002" -> HttpStatus.CONFLICT // Duplicate email
+            code == "USER-DOMAIN-003" -> HttpStatus.BAD_REQUEST // Password mismatch
+            code == "USER-DOMAIN-004" -> HttpStatus.NOT_FOUND // Address not found
+            code == "USER-DOMAIN-005" -> HttpStatus.BAD_REQUEST // Max address limit
+            code == "USER-DOMAIN-006" -> HttpStatus.BAD_REQUEST // Default address cannot be removed
+            code == "USER-DOMAIN-007" -> HttpStatus.BAD_REQUEST // Cannot remove last address
+            code == "USER-DOMAIN-008" -> HttpStatus.BAD_REQUEST // Invalid password format
+            code == "USER-DOMAIN-009" -> HttpStatus.BAD_REQUEST // Invalid input (general domain validation)
+
+            // User Application Error Codes
+            code == "USER-APPLICATION-001" -> HttpStatus.BAD_REQUEST // Invalid input (application level validation)
+            code == "USER-APPLICATION-002" -> HttpStatus.UNAUTHORIZED // Authentication failed
+            code == "USER-APPLICATION-003" -> HttpStatus.INTERNAL_SERVER_ERROR // External service error
+            code == "USER-APPLICATION-999" -> HttpStatus.INTERNAL_SERVER_ERROR // System error
+
+            // Outbox Error Codes (assuming OUTBOX-XXX maps to Internal Server Error unless specified)
+            code.startsWith("OUTBOX-") -> HttpStatus.INTERNAL_SERVER_ERROR
+
             // 인증/인가 관련 에러
             code.startsWith("AUTH-") -> HttpStatus.UNAUTHORIZED
             code.contains("-AUTH-") -> HttpStatus.UNAUTHORIZED
@@ -70,7 +118,7 @@ class GlobalExceptionHandler(
         detail: String?,
         request: WebRequest,
     ): ProblemDetail {
-        val correlationId = request.getHeader("X-Correlation-Id") ?: UUID.randomUUID().toString()
+        val correlationId = getCorrelationIdFromRequest(request) ?: getCorrelationIdFromMDC()
         return ProblemDetail.forStatus(status).apply {
             type = URI.create("$problemBaseUrl/${code.lowercase()}")
             this.title = title
@@ -81,7 +129,19 @@ class GlobalExceptionHandler(
         }
     }
 
-    private fun getCorrelationId(request: WebRequest): String = request.getHeader("X-Correlation-Id") ?: "N/A"
+    /**
+     * 요청 헤더에서 correlationId를 가져옵니다.
+     */
+    // KtLint: 함수 본문을 표현식으로 변경
+    private fun getCorrelationIdFromRequest(request: WebRequest): String? =
+        request.getHeader("X-Correlation-Id")
+
+    /**
+     * 요청 헤더 또는 MDC에서 correlationId를 가져옵니다.
+     */
+    // KtLint: 함수 본문을 표현식으로 변경
+    private fun getCorrelationId(request: WebRequest): String =
+        getCorrelationIdFromRequest(request) ?: getCorrelationIdFromMDC()
 
     @ExceptionHandler(DomainException::class)
     fun handleDomainException(
@@ -102,6 +162,17 @@ class GlobalExceptionHandler(
         )
 
         val problem = createProblemDetail(status, code, title, ex.message, request)
+
+        // AccountDomainException 상세 정보 추가 (AccountGlobalExceptionHandler에서 가져옴)
+        when (ex) {
+            is AccountDomainException.Account.InsufficientBalance -> {
+                // KtLint: 들여쓰기 수정
+                problem.setProperty("currentBalance", ex.currentBalance.value)
+                problem.setProperty("requiredAmount", ex.requiredAmount.value)
+            }
+            // UserDomainException.Validation 예외는 별도 핸들러에서 처리
+        }
+
         return ResponseEntity.status(status).body(problem)
     }
 
@@ -252,6 +323,57 @@ class GlobalExceptionHandler(
         return ResponseEntity.status(status).body(problem)
     }
 
+    @ExceptionHandler(OptimisticLockException::class) // jakarta.persistence.OptimisticLockException
+    fun handleOptimisticLockException(
+        ex: OptimisticLockException,
+        request: WebRequest,
+    ): ResponseEntity<ProblemDetail> {
+        val correlationId = getCorrelationId(request)
+        val status = HttpStatus.CONFLICT // Rule 31, 73: OptimisticLockException maps to Conflict
+        // Assuming a common concurrency error code exists or using a generic system error code
+        // CommonSystemErrorCode 사용하도록 수정
+        val code = CommonSystemErrorCode.CONCURRENCY_FAILURE.code
+        val title = "Concurrency Conflict"
+        val detail = "데이터 동시성 충돌이 발생했습니다. 다시 시도해주세요."
+
+        log.warn(
+            "Optimistic Lock Exception Handled: correlationId={}, code={}, status={}, message={}",
+            correlationId,
+            code,
+            status.value(),
+            ex.message ?: "No message", // null 가능성 처리
+            ex,
+        )
+
+        val problem = createProblemDetail(status, code, title, detail, request)
+        return ResponseEntity.status(status).body(problem)
+    }
+
+    @ExceptionHandler(OutboxException::class) // com.restaurant.independent.outbox.infrastructure.error.OutboxException
+    fun handleOutboxException(
+        ex: OutboxException,
+        request: WebRequest,
+    ): ResponseEntity<ProblemDetail> {
+        val correlationId = getCorrelationId(request)
+        // OutboxException은 errorCode를 직접 가지도록 수정했으므로 바로 접근
+        val code = ex.errorCode.code
+        val status = determineHttpStatusFromCode(code)
+        val title = ex.errorCode.message
+        val detail = ex.message // OutboxException 생성자에서 message를 non-null로 받음
+
+        log.error(
+            "Outbox Exception Handled: correlationId={}, code={}, status={}, message={}",
+            correlationId,
+            code,
+            status.value(),
+            ex.message, // null 가능성 없음
+            ex,
+        )
+
+        val problem = createProblemDetail(status, code, title, detail, request)
+        return ResponseEntity.status(status).body(problem)
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGenericException(
         ex: Exception,
@@ -270,6 +392,66 @@ class GlobalExceptionHandler(
         )
 
         val problem = createProblemDetail(status, code, title, detail, request)
+        return ResponseEntity.status(status).body(problem)
+    }
+
+    // Add handler for UserDomainException.Validation
+    @ExceptionHandler(UserDomainException.Validation::class) // com.restaurant.domain.user.error.UserDomainException.Validation
+    fun handleUserValidationException(
+        ex: UserDomainException.Validation,
+        request: WebRequest, // KtLint: 후행 쉼표 추가
+    ): ResponseEntity<ProblemDetail> {
+        val correlationId = getCorrelationId(request)
+        // UserDomainException은 errorCode를 직접 가지므로 바로 접근
+        val code = ex.errorCode.code
+        val status = determineHttpStatusFromCode(code)
+        val title = ex.errorCode.message
+        val detail = ex.message // UserDomainException 생성자에서 message를 non-null로 받음
+
+        log.warn(
+            "User Domain Validation Exception Handled: correlationId={}, code={}, status={}, message={}",
+            correlationId,
+            code,
+            status.value(),
+            ex.message, // null 가능성 없음
+            ex, // KtLint: 후행 쉼표 추가
+        )
+
+        val problem = createProblemDetail(status, code, title, detail, request)
+
+        // Rule 48: 유효성 검사 실패 상세 정보를 invalid-params 필드에 포함
+        when (ex) {
+            is UserDomainException.Validation.InvalidPassword -> {
+                // KtLint: 줄 바꿈 및 후행 쉼표 수정
+                problem.setProperty(
+                    "invalid-params",
+                    listOf(
+                        mapOf("field" to "password", "reason" to ex.message),
+                    ),
+                )
+            }
+            is UserDomainException.Validation.InvalidEmail -> {
+                // KtLint: 줄 바꿈 및 후행 쉼표 수정
+                problem.setProperty(
+                    "invalid-params",
+                    listOf(
+                        mapOf("field" to "email", "reason" to ex.message),
+                    ),
+                )
+            }
+            // 다른 Validation 예외도 필요에 따라 처리
+            else -> {
+                // 일반적인 경우 메시지만 포함
+                // KtLint: 줄 바꿈 및 후행 쉼표 수정
+                problem.setProperty(
+                    "invalid-params",
+                    listOf(
+                        mapOf("field" to "unknown", "reason" to ex.message),
+                    ),
+                )
+            }
+        }
+
         return ResponseEntity.status(status).body(problem)
     }
 }

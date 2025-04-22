@@ -1,6 +1,7 @@
 package com.restaurant.infrastructure.user.repository
 
 import com.restaurant.common.domain.event.DomainEvent
+import com.restaurant.common.infrastructure.avro.envelope.EventEnvelope
 import com.restaurant.domain.user.aggregate.User
 import com.restaurant.domain.user.repository.UserRepository
 import com.restaurant.domain.user.vo.Email
@@ -14,7 +15,10 @@ import org.apache.avro.io.EncoderFactory
 import org.apache.avro.specific.SpecificDatumWriter
 import org.springframework.stereotype.Repository
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.time.Instant
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import com.restaurant.infrastructure.user.avro.Address as AvroAddress
 
 @Repository
@@ -35,21 +39,46 @@ class UserRepositoryImpl(
 
             val outboxMessages =
                 domainEvents.map { domainEvent ->
+                    // 1. Create the UserEventPayload (Event content)
                     val avroPayload = createAvroPayload(user)
-                    val payload = serializeAvroPayload(avroPayload)
+                    val payloadBytes = serializeAvroPayload(avroPayload)
+
+                    // 2. Create the Envelope with metadata and the serialized payload
+                    val envelope =
+                        createEnvelope(
+                            eventId = correlationId,
+                            timestamp = Instant.now(),
+                            source = "user",
+                            aggregateType = aggregateType,
+                            aggregateId = aggregateId,
+                            eventType = domainEvent::class.java.simpleName,
+                            payloadBytes = payloadBytes,
+                        )
+
+                    // 3. Serialize the Envelope
+                    val envelopeBytes = serializeEnvelope(envelope)
+
+                    // 4. Determine Kafka topic
                     val topic = resolveTopic(domainEvent)
+
+                    // 5. Create headers for Kafka message (duplicating some envelope data for filtering without deserializing)
                     val headers =
                         mapOf(
                             "correlationId" to correlationId,
                             "aggregateType" to aggregateType,
                             "aggregateId" to aggregateId,
                             "eventType" to domainEvent::class.java.simpleName,
-                            "eventId" to UUID.randomUUID().toString(),
+                            "eventId" to correlationId,
+                            "timestamp" to Instant.now().toString(),
                         )
+
+                    // 6. Create OutboxMessage with full Envelope payload
                     OutboxMessage(
-                        payload = payload,
+                        payload = envelopeBytes,
                         topic = topic,
                         headers = headers,
+                        aggregateId = aggregateId,
+                        aggregateType = aggregateType,
                     )
                 }
             outboxMessageRepository.saveAll(outboxMessages)
@@ -93,6 +122,49 @@ class UserRepositoryImpl(
         val out = ByteArrayOutputStream()
         val encoder = EncoderFactory.get().binaryEncoder(out, null)
         writer.write(payload, encoder)
+        encoder.flush()
+        out.close()
+        return out.toByteArray()
+    }
+
+    private fun createEnvelope(
+        eventId: String,
+        timestamp: Instant,
+        source: String,
+        aggregateType: String,
+        aggregateId: String,
+        eventType: String,
+        payloadBytes: ByteArray,
+    ): EventEnvelope {
+        // Convert payload bytes to ByteBuffer as required by Avro
+        val payloadBuffer = ByteBuffer.wrap(payloadBytes)
+
+        // Create metadata map if needed
+        val metadata =
+            mapOf(
+                "createdAt" to timestamp.toString(),
+                "eventType" to eventType,
+            )
+
+        return EventEnvelope
+            .newBuilder()
+            .setSchemaVersion(1)
+            .setEventId(eventId)
+            .setTimestamp(TimeUnit.SECONDS.toNanos(timestamp.epochSecond) + timestamp.nano)
+            .setSource(source)
+            .setAggregateType(aggregateType)
+            .setAggregateId(aggregateId)
+            .setEventType(eventType)
+            .setPayload(payloadBuffer)
+            .setMetadata(metadata)
+            .build()
+    }
+
+    private fun serializeEnvelope(envelope: EventEnvelope): ByteArray {
+        val writer = SpecificDatumWriter(EventEnvelope::class.java)
+        val out = ByteArrayOutputStream()
+        val encoder = EncoderFactory.get().binaryEncoder(out, null)
+        writer.write(envelope, encoder)
         encoder.flush()
         out.close()
         return out.toByteArray()

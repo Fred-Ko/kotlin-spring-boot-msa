@@ -6,7 +6,6 @@ plugins {
 
 dependencies {
     implementation(project(":domains:user:application"))
-    implementation(project(":domains:user:domain"))
     implementation(project(":domains:common"))
 
     implementation("org.springframework.boot:spring-boot-starter:3.3.2")

@@ -21,6 +21,35 @@ spring:
       enabled: true
       path: /h2-console
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      client-id: ${spring.application.name}-producer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+      compression-type: snappy
+      max-in-flight-requests-per-connection: 1
+      max-request-size: 1048576
+      request-timeout-ms: 30000
+      enable-idempotence: true
+      properties:
+        schema.registry.url: http://localhost:8081
+    consumer:
+      group-id: ${spring.application.name}-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      isolation-level: read_committed
+      max-poll-records: 500
+      fetch-max-wait-ms: 500
+      properties:
+        schema.registry.url: http://localhost:8081
+
 server:
   port: 8080
 

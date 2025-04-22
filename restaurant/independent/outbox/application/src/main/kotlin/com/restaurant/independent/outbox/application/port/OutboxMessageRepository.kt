@@ -79,4 +79,26 @@ interface OutboxMessageRepository {
         maxRetries: Int,
         limit: Int,
     ): List<OutboxMessage>
+
+    fun findAndMarkForProcessing(
+        status: OutboxMessageStatus,
+        limit: Int,
+    ): List<OutboxMessage>
+
+    fun countByStatus(status: OutboxMessageStatus): Long
+
+    fun incrementRetryCount(id: UUID): OutboxMessage?
+
+    /**
+     * 특정 상태의 메시지들을 조회하고 즉시 처리 중 상태로 잠급니다.
+     * 동시성 제어를 위해 사용됩니다.
+     *
+     * @param status 조회할 메시지 상태 (주로 PENDING)
+     * @param limit 조회할 최대 메시지 수
+     * @return 조회된 메시지 목록
+     */
+    fun findAndLockPending(
+        status: OutboxMessageStatus,
+        limit: Int,
+    ): List<OutboxMessage>
 }

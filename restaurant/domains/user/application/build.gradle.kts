@@ -5,9 +5,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":domains:common"))
     implementation(project(":domains:user:domain"))
-    implementation(project(":domains:user:infrastructure"))
+    implementation(project(":domains:common"))
 
     // Spring Boot 버전을 통일
     implementation("org.springframework.boot:spring-boot-starter:3.3.2")

@@ -10,7 +10,7 @@ enum class UserDomainErrorCodes(
     override val message: String,
 ) : ErrorCode {
     USER_NOT_FOUND("USER-DOMAIN-001", "사용자를 찾을 수 없습니다."),
-    DUPLICATE_EMAIL("USER-DOMAIN-002", "이미 사용중인 이메일입니다."),
+    DUPLICATE_USERNAME("USER-DOMAIN-002", "이미 사용중인 사용자 이름입니다."), // DUPLICATE_EMAIL -> DUPLICATE_USERNAME
     PASSWORD_MISMATCH("USER-DOMAIN-003", "비밀번호가 일치하지 않습니다."),
     ADDRESS_NOT_FOUND("USER-DOMAIN-004", "주소를 찾을 수 없습니다."),
     MAX_ADDRESS_LIMIT_EXCEEDED("USER-DOMAIN-005", "최대 주소 등록 개수를 초과했습니다."),

@@ -24,6 +24,10 @@ data class OutboxMessageEntity(
     val topic: String,
     @Column(nullable = false)
     val headers: Map<String, String>,
+    @Column(name = "aggregate_id", nullable = false)
+    val aggregateId: String,
+    @Column(name = "aggregate_type", nullable = false)
+    val aggregateType: String,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     val status: OutboxMessageStatus,
@@ -49,6 +53,8 @@ data class OutboxMessageEntity(
         if (!payload.contentEquals(other.payload)) return false
         if (topic != other.topic) return false
         if (headers != other.headers) return false
+        if (aggregateId != other.aggregateId) return false
+        if (aggregateType != other.aggregateType) return false
         if (status != other.status) return false
         if (retryCount != other.retryCount) return false
         if (createdAt != other.createdAt) return false
@@ -63,6 +69,8 @@ data class OutboxMessageEntity(
         result = 31 * result + payload.contentHashCode()
         result = 31 * result + topic.hashCode()
         result = 31 * result + headers.hashCode()
+        result = 31 * result + aggregateId.hashCode()
+        result = 31 * result + aggregateType.hashCode()
         result = 31 * result + status.hashCode()
         result = 31 * result + retryCount
         result = 31 * result + createdAt.hashCode()

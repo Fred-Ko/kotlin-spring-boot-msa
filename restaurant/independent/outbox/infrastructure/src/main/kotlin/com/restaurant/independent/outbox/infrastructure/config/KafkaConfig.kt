@@ -15,6 +15,9 @@ class KafkaConfig {
     @Value("\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
 
+    @Value("\${spring.kafka.producer.properties.schema.registry.url}") // Schema Registry URL 주입 추가
+    private lateinit var schemaRegistryUrl: String
+
     @Bean
     fun producerFactory(): ProducerFactory<String, ByteArray> {
         val configProps =
@@ -22,6 +25,8 @@ class KafkaConfig {
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to ByteArraySerializer::class.java,
+                // Schema Registry URL 설정 추가
+                "schema.registry.url" to schemaRegistryUrl,
                 // 추가 설정
                 ProducerConfig.ACKS_CONFIG to "all",
                 ProducerConfig.RETRIES_CONFIG to 3,

@@ -37,14 +37,16 @@ class KafkaConfig(
     private val requestTimeoutMs: Int,
     @Value("\${spring.kafka.producer.enable-idempotence}")
     private val enableIdempotence: Boolean,
+    @Value("\${spring.kafka.producer.properties.schema.registry.url:http://localhost:8081}")
+    private val schemaRegistryUrl: String,
 ) {
     /**
      * Kafka Producer 설정을 생성합니다.
      */
     @Bean
-    fun producerFactory(): ProducerFactory<String, ByteArray> =
-        DefaultKafkaProducerFactory(
-            mapOf<String, Any>(
+    fun producerFactory(): ProducerFactory<String, ByteArray> {
+        val configProps =
+            mutableMapOf<String, Any>(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
                 ProducerConfig.CLIENT_ID_CONFIG to clientId,
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
@@ -60,8 +62,11 @@ class KafkaConfig(
                 ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to enableIdempotence,
                 ProducerConfig.TRANSACTION_TIMEOUT_CONFIG to 900000, // 15 minutes
                 ProducerConfig.TRANSACTIONAL_ID_CONFIG to "outbox-tx-",
-            ),
-        )
+                "schema.registry.url" to schemaRegistryUrl,
+            )
+
+        return DefaultKafkaProducerFactory(configProps)
+    }
 
     /**
      * KafkaTemplate을 생성합니다.

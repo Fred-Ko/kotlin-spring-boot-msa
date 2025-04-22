@@ -19,4 +19,6 @@ interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long> {
     fun findByEmail(email: String): UserEntity?
 
     fun existsByEmail(email: String): Boolean
+
+    fun deleteByDomainId(domainId: UUID)
 }
