@@ -1,14 +1,26 @@
-## 프로젝트 기술 문서 규칙 (불변식) - 최종본
+문서에서 이론과 틀린 부분을 찾아라
+문서에서 모호한 부분을 찾아라
+문서에서 모호한 부분을 찾아라
+문서에서 개선 및 추가해야하는 부분을 찾아라
+
+위 규칙을 따라 문서를 분석하고 수정계획을 제시하라.
+수정 계획은 어떤 부분이 어떤 근거로 어떤 방향으로 수정할지 구체적으로 제시하라.
+내가 결정해줘야 하는게 있다면 나에게 객관식 문제 형태로 질문하라. 선택지에는 유지라는 선택이 있어야한다.
+그리고 옵션별로 코드 예제가 있어야 내가 보고 결정하기 쉽다. 추가적으로 선택지 하단에는 너가 추천하는 방법과 그 근거를 적어야한다.
+
+---
+
+## 프로젝트 기술 문서 규칙 (수정본)
 
 ### 프로젝트 구조
 
-1.  **모든 규칙의 필수 준수**: 프로젝트 기술 문서에 명시된 모든 규칙과 패턴은 선택 사항이 아닌 **절대적** 필수이며, 모든 구성원은 예외 없이 이를 준수해야 한다. 규칙 위반 시 즉시 코드 리뷰에서 반려된다. **단, 극히 예외적인 상황에서 규칙 준수가 프로젝트 목표 달성에 심각한 방해가 된다고 판단될 경우, 아키텍처 위원회(또는 지정된 검토 그룹)의 공식적인 승인을 통해 제한적으로 예외를 허용할 수 있다.**
+1.  **모든 규칙의 필수 준수**: 프로젝트 기술 문서에 명시된 모든 규칙과 패턴은 선택 사항이 아닌 **원칙적으로** 필수이며, 모든 구성원은 예외 없이 이를 준수해야 한다. 규칙 위반 시 즉시 코드 리뷰에서 반려된다. **단, 극히 예외적인 상황에서 규칙 준수가 프로젝트 목표 달성에 심각한 방해가 된다고 판단될 경우, 아키텍처 위원회(또는 지정된 검토 그룹)의 공식적인 승인을 통해 제한적으로 예외를 허용할 수 있다.** 승인된 예외 사항은 결정 근거, 승인 날짜, 승인 주체와 함께 프로젝트 위키의 '아키텍처 결정 기록(ADR)' 섹션 또는 지정된 문서에 명확히 기록되어야 하며, 해당 코드는 관련 ADR 링크 또는 승인 번호를 주석으로 포함하여 참조해야 합니다.
 2.  **레이어별 모듈 분리**: 프로젝트는 반드시 Presentation, Application, Domain, Infrastructure 레이어로 모듈을 분리해야 하며, 각 레이어는 별도의 Gradle 모듈로 관리된다.
 3.  **도메인별 모듈화**: 각 비즈니스 도메인은 `domains/` 최상위 폴더 아래 독립적인 폴더로 구성해야 한다 (예: `domains/user`, `domains/order`). 도메인 간 직접적인 의존성은 명시적으로 금지된다.
-4.  **공통 모듈 및 독립 모듈 관리**: 공통 유틸리티, 공유 추상 클래스, 인터페이스 (`DomainEvent`, `AggregateRoot` 등), 공통 예외 및 ErrorCode 등 시스템 전반에 걸쳐 사용되는 **기반** 개념은 `domains/common` 모듈에 포함되며, 특정 도메인 로직을 포함하지 않아야 한다. `independent/` 폴더 아래에 위치하는 독립 모듈(예: `independent/outbox`)은 특정 기술적 기능이나 크로스 커팅 관심사를 담당한다.
+4.  **공통 모듈 및 독립 모듈 관리**: 공통 유틸리티, 공유 추상 클래스, 인터페이스 (`DomainEvent`, `AggregateRoot` 등), 공통 예외 및 ErrorCode 등 시스템 전반에 걸쳐 사용되는 **기반** 개념은 `domains/common` 모듈에 포함되며, 특정 도메인 로직을 포함하지 않아야 한다. `independent/` 폴더 아래에 위치하는 독립 모듈(예: `independent/outbox`)은 특정 기술적 기능이나 크로스 커팅 관심사를 담당한다. (ErrorCode/Exception 관리에 대한 상세 내용은 Rule 67-77, Avro 클래스 사용 규칙은 Rule 91-136, Outbox 패턴 상세는 Rule 78-90을 참조하십시오.)
 
     ### 독립 모듈 구조 및 설계 가이드
-    - 독립 모듈은 기본적으로 `port/internal/infrastructure` 구조를 권장하지만, 모듈의 복잡도와 역할에 따라 단일 패키지/단일 파일 등 단순 구조도 허용한다.
+    - 독립 모듈은 **재사용성과 명확한 책임 분리가 필요한 경우 `port/internal/infrastructure` 구조를 사용하는 것을 강력히 권장합니다.** 단, 모듈의 복잡도와 역할이 매우 단순하여(예: 순수 유틸리티 함수 모음, 단일 어댑터 래핑) 계층 분리가 불필요하다고 팀/아키텍처 그룹이 합의한 경우, **명확한 근거와 함께** 단일 패키지/파일 등 더 단순한 구조를 채택할 수 있습니다.
     - 구조 선택은 팀/아키텍처 합의에 따라 자율적으로 결정하며, 아래 예시들을 참고해서 일관성과 재사용성을 고려해 설계할 것.
     - 불필요한 계층 분리(오버엔지니어링)는 지양한다.
 
@@ -35,19 +47,6 @@
       - 모듈의 재사용성
       - 유지보수성
       - 팀 내 합의
-    - 불필요한 계층 분리(오버엔지니어링)는 지양
-
-**ErrorCode/Exception 관리**
-- 파일당 하나의 Enum/SealedClass만 정의, 여러 유형 필요시 파일 분리
-
-**Avro 클래스 사용**
-- 별도 AvroAdapter에서만 직접 사용, Repository 등에서는 반드시 AvroAdapter를 통해 접근
-
-**OutboxMessage 헤더**
-- 모든 메타데이터 필드 필수 포함
-
-**Outbox 저장 실패시 예외 래핑**
-- 반드시 ApplicationException으로만 래핑
 
 5.  **Presentation Extensions 폴더 구조 및 사용 원칙**: Presentation 레이어의 확장 함수는 다음 구조를 필수로 준수한다.
     *   **위치**: `presentation/{domain}/src/main/kotlin/com/presentation/{domain}/extensions/` 하위에 위치한다.
@@ -64,59 +63,98 @@
 8.  **확장 함수 위치 원칙**:
     *   **Presentation 레이어**: **모든** 확장 함수는 **예외 없이 Rule 5에서 정의된 구조(`extensions/vX/request/` 또는 `extensions/vX/response/`) 내에 위치해야 한다.** Presentation 레이어 구조의 일관성과 예측 가능성을 위해 다른 위치는 허용되지 않는다.
     *   **기타 레이어 (Application, Domain, Infrastructure)**: 확장 함수는 가능한 해당 클래스가 정의된 모듈이나, 해당 기능을 확장하는 레이어의 `extensions` 폴더에 위치시킨다. 코드의 가독성과 응집성을 고려하여 배치한다.
-9.  **모듈 간 의존성 명확화**: 모듈 간 의존성은 단방향으로 제한된다. Domain 레이어는 다른 레이어를 의존하지 않는다. Application 레이어는 Domain을 의존하며 Infrastructure의 구체적인 구현체 대신 Port 인터페이스를 의존한다. Infrastructure는 Domain만 의존 가능하며, 독립 모듈(예: `independent/outbox`) 또한 자체적인 레이어 구조를 가질 수 있으며, **다른 모듈들은 이 독립 모듈이 정의한 진입점 인터페이스와 DTO를 의존한다**. 독립 모듈은 어떤 특정 도메인 모듈이나 `domains/common` 모듈에도 의존하지 않는다. 모듈 간 `@ComponentScan`은 제한적으로 사용되며, 특히 Application 모듈의 테스트 설정 외에는 지양한다. 의존성 주입은 Spring `@Bean` 또는 `@Component`를 통해 명시적으로 관리한다.
+9.  **모듈 간 의존성 명확화**: 모듈 간 의존성은 단방향으로 제한된다. Domain 레이어는 다른 레이어를 의존하지 않는다. Application 레이어는 Domain을 의존하며 Infrastructure의 구체적인 구현체 대신 Port 인터페이스를 의존한다. Infrastructure는 Domain만 의존 가능하며, 독립 모듈(예: `independent/outbox`) 또한 자체적인 레이어 구조를 가질 수 있으며, **다른 모듈들은 이 독립 모듈이 정의한 진입점 인터페이스와 DTO를 의존한다**(일반적으로 해당 독립 모듈의 `port` 패키지에 정의된 인터페이스 및 관련 데이터 클래스를 의미함). 독립 모듈은 어떤 특정 도메인 모듈이나 `domains/common` 모듈에도 의존하지 않는다. 모듈 간 `@ComponentScan`은 Application 모듈의 `@SpringBootTest` 등 통합 테스트 설정 외에는 **원칙적으로 사용을 금지합니다.** 명시적인 `@Bean` 또는 `@Component` 등록을 통한 의존성 주입을 사용해야 합니다. 예외적으로 `@ComponentScan` 사용이 반드시 필요하다고 판단되는 경우, 아키텍처 위원회의 검토 및 승인을 받아야 합니다. 의존성 주입은 Spring `@Bean` 또는 `@Component`를 통해 명시적으로 관리한다.
 
 ### 핵심 개발 원칙
 
-10. **도메인 레이어 독립성**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조해서는 안 되며, **독립 모듈(`independent/`)의 어떤 패키지(진입점 포함)도 참조해서는 안 됩니다.** 또한, Spring, JPA, Kafka 클라이언트, **HTTP 관련 API (`HttpStatus` 등)** 등 특정 **기술 구현 프레임워크 또는 프로토콜**에 대한 직접적인 의존성(로직, 어노테이션 포함)을 가져서는 안 됩니다. 도메인 순수성을 유지하기 위해 외부 라이브러리 의존성은 신중하게 관리되어야 하며, **일반적으로 다음 목록의 라이브러리 사용은 허용될 수 있습니다**:
+10. **도메인 레이어 독립성**: Domain 레이어는 Presentation, Application, Infrastructure 레이어를 절대 참조해서는 안 되며, **독립 모듈(`independent/`)의 어떤 패키지(진입점 포함)도 참조해서는 안 됩니다.** 또한, Spring, JPA, Kafka 클라이언트, **HTTP 관련 API (`HttpStatus` 등)** 등 특정 **기술 구현 프레임워크 또는 프로토콜**에 대한 직접적인 의존성(로직, 어노테이션 포함)을 가져서는 안 됩니다. 도메인 순수성을 유지하기 위해 외부 라이브러리 의존성은 신중하게 관리되어야 하며, **다음 목록의 라이브러리는 도메인 순수성을 해치지 않는 범위 내에서 사용이 허용됩니다**:
     > *   `kotlin-stdlib`
     > *   `java.time` API
     > *   `org.slf4j:slf4j-api` (로깅 퍼사드 인터페이스)
-    > *   `jakarta.validation:jakarta.validation-api` (표준 유효성 검사 API, 주로 어노테이션 명시 목적)
-    > **[주의]**: 위 목록 외의 라이브러리(특히 Guava, Apache Commons 등 유틸리티 라이브러리 포함) 사용이 반드시 필요한 경우, 해당 라이브러리가 도메인 순수성을 침해하지 않는지, 그리고 프로젝트 내에서 필수적인지 **코드 리뷰를 통해 엄격히 검토하고 승인**받아야 합니다. 특히 비즈니스 로직과 직접 관련 없는 기능 구현을 위한 라이브러리 추가는 최소화합니다. `domains/common` 모듈의 공통 도메인 요소(`AggregateRoot`, `DomainEvent` 인터페이스 등)에 대한 의존성은 허용됩니다. Domain 모델의 고유 식별자는 UUID와 같은 기술 독립적인 타입의 Value Object로 캡슐화하여 사용해야 합니다(예: `UserId`, `OrderId`). 데이터베이스 자동 생성 식별자(예: Long)는 Infrastructure 레이어에서만 관리되며, Domain 모델에 노출되지 않습니다.
-11. **Aggregate, Entity, VO 위치 및 순수성**: Aggregate Root, 하위 Domain Entity, Value Object (VO)는 반드시 Domain 레이어에 정의하며, **특정 기술 구현 프레임워크**(JPA, Spring 등)의 로직이나 어노테이션에 의존하지 않고 순수하게 유지한다.
-    *   **구분 기준**: Domain Entity(Aggregate Root 포함)와 Value Object를 구분하는 핵심 기준은 **'고유 식별자(identity)'의 유무**이다. Domain Entity는 고유 식별자를 가지며 자체 생명주기를 통해 추적/변경 관리되지만, Value Object는 식별자 없이 속성 값으로만 정의된다.
+    > *   `jakarta.validation:jakarta.validation-api` (표준 유효성 검사 API, **단, Domain 객체 필드에는 사용 금지 - Rule 14 참조**)
+    > **[주의]**: 위 목록 외의 라이브러리(특히 Guava, Apache Commons 등 유틸리티 라이브러리 포함) 사용이 반드시 필요한 경우, 해당 라이브러리가 도메인 순수성을 침해하지 않는지, 그리고 프로젝트 내에서 필수적인지 **코드 리뷰를 통해 엄격히 검토하고 승인**받아야 합니다. 특히 비즈니스 로직과 직접 관련 없는 기능 구현을 위한 라이브러리 추가는 최소화합니다. `domains/common` 모듈의 공통 도메인 요소(`AggregateRoot`, `DomainEvent` 인터페이스 등)에 대한 의존성은 허용됩니다. Domain 모델의 고유 식별자는 UUID와 같은 기술 독립적인 타입의 Value Object로 캡슐화하여 사용해야 합니다(예: `UserId`, `OrderId`). 데이터베이스 자동 생성 식별자(예: Long)는 Infrastructure 레이어에서만 관리되며, Domain 모델에 노출되지 않습니다. Infrastructure 레이어의 매핑 로직은 JPA 엔티티의 Long 타입 ID가 Domain Aggregate/Entity/VO 또는 Domain 계층으로 전달되는 DTO에 포함되지 않도록 보장해야 합니다. Domain 계층의 메서드 시그니처에는 DB 자동 생성 ID(Long 타입 등)가 포함되어서는 안 됩니다.
+11. **Aggregate, Entity, VO 위치 및 순수성**: Aggregate Root, 하위 Domain Entity(고유 식별자를 가지는 도메인 객체), Value Object (VO)는 반드시 Domain 레이어에 정의하며, 특정 기술 구현 프레임워크(JPA, Spring 등)의 로직이나 어노테이션에 의존하지 않고 순수하게 유지한다. 특히, 이러한 Domain 레이어 객체(Aggregate Root, Domain Entity, VO)의 필드에는 `jakarta.validation.constraints.*`와 같은 외부 유효성 검사 라이브러리의 어노테이션을 절대로 사용해서는 안 된다. 유효성 검사는 Rule 14(VO) 또는 해당 객체의 메서드/생성 로직 내에서 순수 Kotlin 코드로 구현해야 한다.
+
+    *   **구분 기준**: Domain Entity(Aggregate Root 포함)와 Value Object를 구분하는 핵심 기준은 **'고유 식별자(identity)'의 유무**이다. Domain Entity는 고유 식별자를 가지며 자체 생명주기를 통해 추적/변경 관리되지만, Value Object는 식별자 없이 속성 값으로만 정의된다. (주의: 여기서 Domain Entity는 Infrastructure 레이어의 JPA Entity와는 다른 개념임)
+
     *   **패키지 위치**:
         *   Aggregate Root: `domain/{domain}/aggregate/` 패키지에 위치한다.
         *   하위 Domain Entity (Aggregate Root는 아니지만 고유 식별자를 가지는 엔티티): `domain/{domain}/entity/` 패키지에 위치한다.
         *   Value Object (식별자 X): `domain/{domain}/vo/` 패키지에 위치한다.
+
     *   **불변성**: Aggregate는 불변 객체로 설계한다.
+
     *   **영속화 상세**: 기술적 영속화 관련 상세(DB 자동 생성 ID 매핑, Fetch 전략 등)는 Infrastructure 레이어의 JPA Entity에만 정의한다.
 11.5. **Aggregate Root 식별자 (ID) 정의**: 모든 Aggregate Root 클래스는 해당 Aggregate의 고유 식별자를 나타내는 필드를 가져야 하며, 이 필드는 Rule 10에 따라 Domain ID Value Object 타입으로 정의되어야 한다. 이 식별자 필드는 `val`로 선언되어야 하며, 생성 시점에 할당된 이후 변경될 수 없다. 해당 필드는 **`val`로 선언되어야 하며 (기본적으로 public 가시성)**, 생성 시점에 할당된 이후 변경될 수 없다. ID는 불변 Value Object이므로 외부 레이어에서 읽기 접근이 가능합니다.
 12. **Aggregate VO 사용 제한**: 도메인 내 Aggregate의 Value Object는 Domain 레이어 외부에서 참조하거나 직접 사용하지 않아야 한다. 외부 레이어에서는 DTO로 변환하여 사용한다.
 13. **VO 불변성 및 생성 제어**: 모든 VO는 불변 객체로 설계하며, `private` 생성자와 `companion object`의 `of` 메서드를 통해 생성을 제어해야 한다.
-14. **VO 유효성 검사**: VO의 유효성 검사는 `init` 블록 또는 `of` 팩토리 메서드에서 수행한다. 유효성 검사 실패 시, **Rule 68에 정의된 해당 도메인의 `DomainException` 하위 Validation 관련 예외 타입**(예: `UserDomainException.Validation.InvalidEmail`)을 던져야 한다. **표준 Validation 어노테이션(`jakarta.validation.constraints.*`)을 VO 필드에 명시하는 것은 허용될 수 있으나**, 실제 검증 로직 실행 및 예외 발생 책임은 여전히 `init` 또는 `of` 메서드 내에 있어야 하며 Rule 68의 DomainException을 던져야 한다.
+14. **VO 유효성 검사**: VO의 유효성 검사는 `init` 블록 또는 `of` 팩토리 메서드에서 **순수 Kotlin 코드(표준 라이브러리만 사용)로만** 수행한다. VO 필드에 `jakarta.validation.constraints.*` 등 외부 유효성 검사 라이브러리의 어노테이션을 **사용해서는 안 된다.** 유효성 검사 실패 시, Rule 68에 정의된 해당 도메인의 `DomainException` 하위 Validation 관련 예외 타입(예: `UserDomainException.Validation.InvalidEmail`)을 던져야 한다.
 15. **VO toString 오버라이드**: VO의 `toString()` 메서드는 디버깅 및 로깅을 위해 값 자체를 명확히 표현하도록 재정의하거나, 민감 정보(예: 비밀번호)는 보안을 위해 마스킹 처리할 수 있다. (예: `Password.toString()`은 `********` 반환)
 16. **Aggregate 팩토리 함수**: Aggregate 및 Domain Entity는 `companion object`에 다음 팩토리 함수를 정의한다:
     *   `create`: 신규 생성을 담당하며, 초기 상태 변경에 대한 `DomainEvent`를 발생시켜 Rule 18에 따라 내부 이벤트 목록에 추가한다.
     *   `reconstitute`: 영속성 로딩 후 재구성을 담당하며, Domain 식별자 Value Object를 인자로 받는다. **이 함수는 오직 Infrastructure 레이어의 Repository 구현체 내부에서 영속성 데이터(예: JPA Entity)를 기반으로 Domain Aggregate 객체를 재구성(rehydrate)할 목적으로만 사용되어야 한다.** Application 레이어나 다른 Domain 객체 내에서 **절대로** 직접 호출해서는 안 된다.
 17. **공통 AggregateRoot 상속**: 모든 도메인 Aggregate 클래스는 `domains/common` 모듈의 domain 레이어에 정의된 추상 클래스 `AggregateRoot`를 상속받아야 한다.
-18. **AggregateRoot 이벤트 관리**: `AggregateRoot` 베이스 클래스는 발생한 `DomainEvent` 객체들을 저장하기 위한 컬렉션(예: `private val domainEvents: MutableList<DomainEvent> = mutableListOf()`)을 내부에 가져야 하며, 이벤트를 추가하는 `addDomainEvent(event: DomainEvent)`, 읽기 전용 목록을 노출하는 `fun getDomainEvents(): List<DomainEvent>`, 이벤트 목록을 초기화하는 `fun clearDomainEvents()` 메서드를 제공해야 한다. **`addDomainEvent(event: DomainEvent)` 메서드는 `internal` 가시성을 가져야 하며, Aggregate의 상태 변경 메서드나 `create` 팩토리 함수 내에서만 호출되어야 한다.** Immutable Aggregate의 상태 변경 메서드는 변경된 Aggregate의 *새로운 인스턴스*를 반환한다. 이 새로운 인스턴스는 해당 변경으로 인해 발생한 이벤트를 자신의 내부 이벤트 목록에 포함해야 한다. **Aggregate의 `copy()` 메서드 (또는 유사한 복제 메커니즘) 구현 시, 내부 `domainEvents` 리스트도 함께 복제(새로운 `MutableList` 인스턴스를 생성하여 얕은 복사)해야 하며, 리스트 내의 이벤트 객체는 불변이어야 한다.** 반환되는 새로운 Aggregate 인스턴스가 원본과 독립적인 이벤트 목록을 갖도록 보장해야 한다. `create` 팩토리 함수도 초기 상태 변경에 대한 `DomainEvent`를 생성하여 `addDomainEvent()`를 호출한다. Repository 구현체는 애그리거트 저장 전 최종 Aggregate 인스턴스의 `getDomainEvents()`로 이벤트를 수집하고, **Rule 85 및 139에 따라 이벤트를 처리하여(예: 직렬화, OutboxMessage 생성)** Outbox 저장을 준비한다. 저장 성공 후 `clearDomainEvents()`를 호출한다.
+18. **AggregateRoot 이벤트 관리**: `AggregateRoot` 베이스 클래스는 발생한 `DomainEvent` 객체들을 저장하기 위한 컬렉션(예: `protected val domainEvents: MutableList<DomainEvent> = mutableListOf()`)을 내부에 가져야 하며, 이벤트를 추가하는 `addDomainEvent(event: DomainEvent)`, 읽기 전용 목록을 노출하는 `fun getDomainEvents(): List<DomainEvent>`, 이벤트 목록을 초기화하는 `fun clearDomainEvents()` 메서드를 제공해야 한다. **`addDomainEvent(event: DomainEvent)` 메서드는 `internal` 가시성을 가져야 하며, Aggregate의 상태 변경 메서드나 `create` 팩토리 함수 내에서만 호출되어야 한다.** Immutable Aggregate의 상태 변경 메서드는 변경된 Aggregate의 *새로운 인스턴스*를 반환한다. 이 새로운 인스턴스는 해당 변경으로 인해 발생한 이벤트를 자신의 내부 이벤트 목록에 포함해야 한다. **Aggregate의 `copy()` 메서드 (또는 유사한 복제 메커니즘) 구현 시, 내부 `domainEvents` 리스트도 반드시 함께 복제(새로운 `MutableList` 인스턴스를 생성하여 얕은 복사)해야 하며**, 리스트 내의 이벤트 객체는 불변이어야 한다. 반환되는 새로운 Aggregate 인스턴스가 원본과 독립적인 이벤트 목록을 갖도록 보장해야 한다. `create` 팩토리 함수도 초기 상태 변경에 대한 `DomainEvent`를 생성하여 `addDomainEvent()`를 호출한다. Repository 구현체는 애그리거트 저장 전 최종 Aggregate 인스턴스의 `getDomainEvents()`로 이벤트를 수집하고, **Rule 85 및 139에 따라 이벤트를 처리하여(예: 직렬화, OutboxMessage 생성)** Outbox 저장을 준비한다. 저장 성공 후 `clearDomainEvents()`를 호출한다.
     ```kotlin
-    // 예시: User Aggregate 내에서 이름을 변경하는 메서드 (Immutable)
-    fun changeName(newName: String): User {
-        // 유효성 검사 등 로직 수행...
-        val updatedUser = this.copy( // Kotlin data class의 copy 활용
-            name = newName,
-            // 변경과 관련된 다른 필드 업데이트...
-            version = this.version + 1 // 예시: 버전 관리
-        )
-        // 상태 변경에 따른 도메인 이벤트 발생
-        updatedUser.addDomainEvent(UserEvent.NameChanged(userId = this.id, newName = newName))
-        return updatedUser // 변경된 '새로운' 인스턴스 반환
+    // AggregateRoot 베이스 클래스 예시
+    abstract class AggregateRoot {
+        // 이벤트 관련 메서드 추상화 또는 기본 구현 제공
+        abstract fun getDomainEvents(): List<DomainEvent>
+        abstract fun clearDomainEvents()
+        // internal fun addDomainEvent(event: DomainEvent) { ... } // User 예시처럼 내부 Helper 사용 시 불필요
     }
 
-    // AggregateRoot 내 addDomainEvent (internal 가시성)
-    internal fun addDomainEvent(event: DomainEvent) {
-        this.domainEvents.add(event)
+    // Immutable Aggregate (User data class 예시 - 선택지 1 유지)
+    data class User(
+        val id: UserId,
+        val name: String,
+        val version: Long,
+        // copy()가 이 필드도 처리하도록 private val 및 생성자 파라미터로 관리
+        private val eventsInternal: MutableList<DomainEvent> = mutableListOf()
+    ) : AggregateRoot(/*...*/) {
+
+        fun changeName(newName: String): User {
+            // 유효성 검사 등 로직 수행...
+            val updatedUser = this.copy( // Kotlin data class의 copy 활용
+                name = newName,
+                version = this.version + 1,
+                // 중요: copy() 호출 시 반드시 이벤트 리스트를 새로운 MutableList로 복제하여 전달!
+                eventsInternal = this.eventsInternal.toMutableList()
+            )
+            // 상태 변경에 따른 도메인 이벤트 발생 (새로운 인스턴스에 추가)
+            updatedUser.addDomainEventInternal(UserEvent.NameChanged(userId = this.id, newName = newName))
+            return updatedUser // 변경된 '새로운' 인스턴스 반환
+        }
+
+        // User 클래스 내에서만 호출될 이벤트 추가 도우미 함수 (internal)
+        internal fun addDomainEventInternal(event: DomainEvent) {
+            this.eventsInternal.add(event)
+        }
+
+        // AggregateRoot의 인터페이스 구현 (실제 데이터는 eventsInternal 사용)
+        override fun getDomainEvents(): List<DomainEvent> = eventsInternal.toList()
+        override fun clearDomainEvents() = eventsInternal.clear()
+
+        companion object {
+            fun create(id: UserId, name: String): User {
+                 val user = User(id = id, name = name, version = 0L)
+                 user.addDomainEventInternal(UserEvent.Created(userId = id, name = name))
+                 return user
+            }
+            // reconstitute... (reconstitute 시 eventsInternal은 빈 리스트로 초기화)
+            fun reconstitute(id: UserId, name: String, version: Long): User {
+                 // 영속성 계층에서 로드 시 이벤트는 새로 발생하지 않으므로 빈 리스트 전달
+                 return User(id = id, name = name, version = version, eventsInternal = mutableListOf())
+            }
+        }
     }
     ```
 19. **JPA 엔티티 위치**: JPA 엔티티는 반드시 해당 도메인 모듈의 Infrastructure 레이어 `entity` 패키지에 정의하며, 도메인 로직을 포함하지 않는다. `independent/outbox` 등 독립 모듈의 JPA 엔티티는 해당 모듈의 Infrastructure 레이어에 정의한다. JPA 엔티티는 Domain 모델과 1:1로 매핑되지 않고 영속화 구조를 반영한다. Domain ID (Value Object)와 JPA Long ID는 Infrastructure에서 매핑된다.
-20. **JPA 엔티티 불변성 및 Lazy Loading 공존**: JPA 엔티티의 기본 필드는 가능한 `val`로 선언하여 불변성을 유지하며, Setter 메서드는 절대 사용하지 않는다. 연관 관계 필드는 `@OneToMany`, `@ManyToOne` 등에 `fetch = FetchType.LAZY`를 설정한다. Hibernate 프록시를 통한 지연 로딩 시 Kotlin `val` 필드 접근 문제가 발생할 수 있으므로, 영속성 컨텍스트 외부에서 사용하거나 성능 최적화가 필요한 경우 Projection (인터페이스 기반 DTO) 또는 EntityGraph를 사용하여 필요한 데이터를 명시적으로 조회하도록 설계한다. `lateinit var`나 `@JvmField` 사용은 **최소화해야 합니다.** 지연 로딩 관련 문제는 반드시 Projection (인터페이스 기반 DTO) 또는 EntityGraph를 사용하여 해결하는 것을 **우선적으로 권장합니다.** Projection/EntityGraph 사용이 불가능하거나 명백히 비효율적인 **극히 예외적인 기술적 제약 상황**에서만 사용을 고려할 수 있으며, 이 경우 **반드시 팀 전체의 코드 리뷰와 아키텍처 검토를 거쳐 승인**받아야 하고, 그 사유를 명확히 **주석으로 문서화**해야 합니다. `kotlin-jpa` 및 `kotlin-allopen` 플러그인을 반드시 적용한다. JPA 엔티티 클래스 자체에는 `@ConsistentCopyVisibility` 어노테이션을 사용하지 않는다.
+20. **JPA 엔티티 불변성 및 Lazy Loading 공존**: JPA 엔티티의 기본 필드는 가능한 `val`로 선언하여 불변성을 유지하며, Setter 메서드는 절대 사용하지 않는다. 연관 관계 필드는 `@OneToMany`, `@ManyToOne` 등에 `fetch = FetchType.LAZY`를 설정한다. Hibernate 프록시를 통한 지연 로딩 시 Kotlin `val` 필드 접근 문제가 발생할 수 있으므로, 영속성 컨텍스트 외부에서 사용하거나 성능 최적화가 필요한 경우 Projection (인터페이스 기반 DTO) 또는 EntityGraph를 사용하여 필요한 데이터를 명시적으로 조회하도록 설계한다. `lateinit var`나 `@JvmField` 사용은 **최소화해야 합니다.** 지연 로딩 관련 문제는 반드시 Projection (인터페이스 기반 DTO) 또는 EntityGraph를 사용하여 해결하는 것을 **우선적으로 권장합니다.** Projection/EntityGraph 사용이 불가능하거나 명백히 비효율적인 **극히 예외적인 기술적 제약 상황**에서만 사용을 고려할 수 있으며, 이 경우 **반드시 팀 전체의 코드 리뷰와 아키텍처 검토를 거쳐 승인**받아야 하고, 그 사유를 명확히 **주석으로 문서화**해야 합니다. `kotlin-jpa` 및 `kotlin-allopen` 플러그인을 반드시 적용한다. JPA 엔티티 클래스 자체에는 `@ConsistentCopyVisibility` 어노테이션을 사용하지 않습니다. 관련 결정 배경은 [ADR 링크 또는 팀 위키 문서]를 참조하십시오.
 21. **JPA 엔티티 ID 필드**: JPA 엔티티는 DB 자동 생성 키에 매핑되는 `val id: Long? = null` 필드와 함께, Domain 모델의 고유 식별자(예: `UserId` Value Object가 캡슐화한 `UUID`)에 매핑되는 `val domainId: UUID`와 같은 필드를 포함해야 한다.
 22. **JPA 엔티티 테이블명**: JPA 엔티티의 테이블명은 `@Table` 어노테이션으로 명시하며, 소문자 복수형을 사용한다 (예: `@Table(name = "users")`).
 23. **JPA 엔티티 컬럼 속성**: JPA 엔티티의 컬럼은 `@Column` 어노테이션으로 제약 조건을 명시하며, 데이터베이스 스키마와 일치해야 한다 (예: `@Column(nullable = false, length = 50)`).
-24. **JPA 엔티티와 도메인 매핑**: JPA 엔티티와 도메인 Aggregate/Entity/VO 간 변환은 해당 도메인 모듈 Infrastructure 레이어의 `extensions` 폴더에서 코틀린 확장 함수로 정의한다 (예: `UserEntity.toDomain()`). 이 변환 함수는 Domain ID (Value Object)와 Persistence ID (Long, UUID) 간의 매핑을 처리해야 한다.
+24. **JPA 엔티티와 도메인 매핑**: JPA 엔티티와 도메인 Aggregate/Entity/VO 간 변환은 해당 도메인 모듈 Infrastructure 레이어의 `extensions` 폴더에서 코틀린 확장 함수로 정의한다 (예: `UserEntity.toDomain()`). 이 변환 함수는 Domain ID (Value Object)와 Persistence ID (Long, UUID) 간의 매핑을 처리해야 한다. (Rule 10에 따라 Persistence ID가 Domain 객체로 유입되지 않도록 주의)
 25. **JPA 매핑 파일명**: JPA 매핑 확장 함수 파일은 `{Domain}EntityExtensions.kt` 형식을 따라야 한다 (예: `UserEntityExtensions.kt`).
 26. **JPA 관계 설정**: JPA 엔티티의 관계는 단방향을 우선하며, 양방향 관계는 명확한 필요성(예: 비즈니스 요구사항)이 있을 때만 사용한다.
 27. **JPA Fetch 전략**: JPA 엔티티 관계는 기본적으로 `@ManyToOne`, `@OneToMany` 등에 `fetch = FetchType.LAZY`를 설정하며, Eager 로딩은 성능 검증 후 사용한다. Repository 메서드에 `@EntityGraph`를 사용하여 필요한 연관 엔티티를 함께 로딩한다.
@@ -139,7 +177,7 @@
 41. **비동기 Command 상태 링크**: 비동기 Command 응답은 `job-status` 링크를 포함하며, 이는 `/jobs/{jobId}/status` 형식으로 `jobId`를 기반으로 생성된다.
 42. **다건 조회 페이지네이션**: 다건 조회 API는 반드시 페이지네이션을 구현하며, 응답은 `content`, `page`, `size`, `totalElements`, `totalPages` 필드를 포함한다.
 43. **커서 페이지네이션 우선**: 페이지네이션은 커서 기반 페이지네이션을 기본으로 사용하며, 오프셋 페이지네이션은 성능 검증 후 사용한다.
-44. **Presentation Validation**: `Request DTO`의 유효성 검사는 `jakarta.validation.constraints` 어노테이션(예: `@NotNull`, `@Size`)을 사용하여 수행한다.
+44. **Presentation Validation**: `Request DTO`의 유효성 검사는 `jakarta.validation.constraints` 어노테이션(예: `@NotNull`, `@Size`)을 사용하여 수행한다. (Domain VO에는 사용 금지 - Rule 14 참조)
 45. **Validation 의존성**: 프로젝트는 `spring-boot-starter-validation`을 의존성에 반드시 추가한다.
 46. **Request DTO Validation**: 모든 `Request DTO` 필드는 적절한 검증 어노테이션을 반드시 적용하며, 검증 로직은 어노테이션으로 처리한다.
 47. **Controller `@Valid` 사용**: Controller 메서드는 `Request DTO`에 `@Valid` 어노테이션을 적용하여 유효성 검사를 트리거한다.
@@ -162,7 +200,7 @@
 61. **VO 생성 규칙**: VO는 `companion object`의 `of` 메서드로만 생성하며, `private` 생성자를 사용하여 직접 생성을 차단한다. VO 생성 시 발생하는 유효성 검사 실패는 **Rule 14 및 Rule 68**에 따라 해당 도메인의 `DomainException` 하위 Validation 관련 예외 타입(예: `UserDomainException.Validation.InvalidEmail`)으로 발생되어 상위로 전파되어야 한다.
 62. **JPA 엔티티 관계 Lazy 로딩**: JPA 엔티티 관계는 `FetchType.LAZY`를 기본으로 설정하며, 관계 접근 시 N+1 문제를 방지하기 위해 `@EntityGraph` 또는 JPQL, Projection을 사용한다. Repository 메서드에서 Domain 객체로 변환 시 연관 객체가 필요한 경우, `@EntityGraph`를 사용하여 Eager 로딩하고 Domain 객체로 변환한다.
 63. **데이터베이스 스키마 일치**: JPA 엔티티의 `@Table`, `@Column` 정의는 데이터베이스 스키마와 1:1로 일치해야 하며, 스키마 변경 시 엔티티를 동기화한다.
-64. **로깅 표준화**: 모든 레이어에서 로깅은 SLF4J를 사용하며, `correlationId`를 포함한 구조화된 로깅을 적용한다 (예: `log.info("Processing user creation, correlationId={}", correlationId)`).
+64. **로깅 표준화**: 모든 레이어에서 로깅은 SLF4J를 사용하며, `correlationId`를 포함한 구조화된 로깅을 적용한다 (예: `log.info("Processing user creation, correlationId={}", correlationId)`). 상세 로깅 전략은 Rule 141을 참조한다.
 65. **불변 컬렉션 사용 의무화**: Domain 및 Application 레이어의 모든 공개 메서드 (public, internal) 및 생성자는 `MutableList` 또는 `MutableMap` 타입을 반환하거나 파라미터로 사용해서는 안 된다. 대신 Kotlin의 불변 컬렉션 타입인 `List`, `Map` 또는 Guava의 `ImmutableList`, `ImmutableMap` 등과 같이 불변성이 보장된 컬렉션 타입을 사용해야 한다.
 66. **Infrastructure 경계에서의 Mutable 컬렉션 사용**: Infrastructure 레이어에서 JPA 엔티티와 Domain 객체 또는 DTO 간의 데이터 변환이 발생하는 모듈 경계에서는 데이터 구조 변환을 위해 필요한 경우 mutable 컬렉션 타입의 사용이 제한적으로 허용될 수 있다. 하지만 변환 완료 후 Domain 또는 Application 레이어로 전달될 때는 반드시 불변 컬렉션으로 변환하여 전달해야 한다.
 
@@ -180,7 +218,7 @@
     > 예외 상황 발생 시 적절한 ErrorCode(및 Exception 타입)를 선택하기 위해 다음 질문을 고려하십시오:
     >
     > 1.  **핵심 비즈니스 규칙이나 정책 위반인가?** (예: 사용자 이름 중복, 잔고 부족, VO 유효성 검사 실패)
-    >     *   **Yes** -> 해당 도메인의 `DomainException` 및 `DomainErrorCode` 사용 (예: `UserDomainException.DuplicateUsername`, `OrderDomainException.InsufficientBalance`)
+    >     *   **Yes** -> 해당 도메인의 `DomainException` 및 `DomainErrorCode` 사용 (예: `UserDomainException.DuplicateUsername`, `OrderDomainException.InsufficientBalance`, `UserDomainException.Validation.InvalidEmail`)
     > 2.  **Application 레이어의 책임 범위 내 기술적 문제 또는 외부 요인인가?** (예: 외부 API 호출 실패 후 재시도 소진, 요청 DTO 파싱/변환 오류, 예상치 못한 복구 불가능 오류)
     >     *   **Yes** -> 해당 도메인의 `ApplicationException` 및 `ApplicationErrorCode` 사용 (예: `PaymentApplicationException.ExternalApiFailure`, `UserApplicationException.UnexpectedError`)
     > 3.  **여러 도메인에 걸쳐 발생 가능하거나 특정 도메인과 무관한 시스템 수준의 문제인가?** (예: 낙관적 잠금 충돌, 기본적인 입력 형식 오류(Presentation 단계 처리 후에도 발생 시), 인증/인가 실패)
@@ -193,7 +231,7 @@
     *   **Independent Module Exception**: `independent/{module}` 모듈의 **`infrastructure/exception` 패키지** 내에 **유일하게** 자체적인 베이스 클래스 및 하위 예외를 정의한다 (예: `independent/outbox/infrastructure/exception/OutboxException.kt`). **이 예외 클래스들은 `domains/common` 모듈의 `DomainException` 또는 `ApplicationException`을 상속하지 **않습니다**.** 독립 모듈 내에서 자체적인 ErrorCode 정의 및 예외 클래스 구조(예: `OutboxException`이 `infrastructure/error` 패키지의 `OutboxErrorCodes` Enum을 필드로 가지는 구조)를 가질 수 있습니다.
 69. **Application 계층 예외 전파**: Application 레이어의 Command Handler와 Query Handler는 DomainException 및 그 하위 예외를 절대 `catch` 하거나 다른 예외로 변환하지 않는다. 비즈니스 규칙 위반 발생 시 DomainException은 Application 레이어를 그대로 통과하여 상위 계층(Presentation/GlobalExceptionHandler)으로 전파되어야 한다.
 70. **Application 계층 자체 예외 처리**: Application 핸들러는 자신의 책임 범위 내에서 발생하는 문제(예: Command/Query DTO 기반의 입력값 형식 오류 *전* 처리, 외부 서비스 호출 실패 시 Resilience4j 예외 등 기술적 오류, 복구 불가능한 예상치 못한 시스템 오류)에 대해서만 `UserApplicationException` (sealed class의 적절한 하위 data class)을 발생시키고 상위로 전파한다. Domain 로직 위반으로 인한 예외(예: VO `init` 블록 `require` 실패)를 ApplicationException으로 래핑하지 않도록 한다.
-71. **예외 발생 시 ErrorCode 로깅**: Application 레이어에서 예외 발생 시 SLF4J를 사용하여 예외 정보, `correlationId`와 함께 발생한 예외 객체가 가진 `errorCode.code`를 명시적으로 로깅해야 한다 (예: `log.error("Failed to process command, correlationId={}, errorCode={}, error={}", correlationId, e.errorCode.code, e.message, e)`).
+71. **예외 발생 시 ErrorCode 로깅**: Application 레이어에서 예외 발생 시 SLF4J를 사용하여 예외 정보, `correlationId`와 함께 발생한 예외 객체가 가진 `errorCode.code`를 명시적으로 로깅해야 한다 (예: `log.error("Failed to process command, correlationId={}, errorCode={}, error={}", correlationId, e.errorCode.code, e.message, e)`). 상세 로깅 규칙은 Rule 141 참조.
 72. **예외 메시지 표준화**: 각 도메인의 `ApplicationException` 및 `DomainException` sealed class와 하위 data class는 해당 예외가 가진 `ErrorCode` (Enum)를 참조하여 사용자 친화적인 메시지와 개발자용 디버깅 메시지를 관리하며, 메시지는 단일 언어로 명확히 정의한다. 각 예외 클래스의 기본 메시지는 연결된 `errorCode.message`를 사용하고, 필요시 오버라이드하여 상세 정보를 추가할 수 있다.
 73. **Presentation/Global 예외 처리 및 HTTP 상태 코드 매핑 책임**: Presentation 레이어의 `ControllerAdvice` 또는 `GlobalExceptionHandler`는 Application 레이어에서 전파된 `DomainException`과 `ApplicationException`, Infrastructure 레이어에서 전파된 `OptimisticLockException`, **`independent/outbox` 모듈의 `infrastructure/error` 패키지에서 전파된 Outbox 관련 예외**를 모두 catch한다. **이 핸들러는 catch한 예외(및 그 안의 `errorCode`)의 타입이나 `code` 값, 또는 표준 예외 타입(`OptimisticLockException`, `MethodArgumentNotValidException` 등)을 기반으로, 자체적인 매핑 로직(예: `when` 문, Map 등)을 통해 적절한 `HttpStatus`를 결정하고, 이를 사용하여 Rule 50에 따라 `ResponseEntity`를 생성하는 책임을 진다.** 또한, 예외 객체가 가진 `errorCode` 정보를 사용하여 RFC 9457 `ProblemDetail` 형식의 응답 본문을 구성한다. GlobalExceptionHandler에서 `errorCode` 정보에 접근하기 위해 Common 모듈의 `DomainException` 및 `ApplicationException` 클래스에 `abstract val errorCode: ErrorCode` 추상 프로퍼티를 유지한다. **독립 모듈 예외(`OutboxException` 등)의 경우, 해당 예외는 `common` 모듈의 `ErrorCode` 인터페이스나 기본 예외 클래스를 따르지 않으므로, `GlobalExceptionHandler`는 해당 예외 타입에 대한 명시적인 `catch` 블록을 정의해야 합니다. 이 블록 내에서 예외 객체로부터 필요한 에러 코드(예: `OutboxException`의 `code` 프로퍼티) 및 메시지(`message`) 정보를 **직접 추출하여** `ProblemDetail`을 구성하고 적절한 `HttpStatus`를 결정해야 합니다.** GlobalExceptionHandler는 특히 Rule 68에서 정의된 Validation 관련 `DomainException` 하위 타입을 식별하여, Rule 48의 `invalid-params` 필드 등 유효성 검사 실패에 특화된 응답 상세를 포함할 수 있다. **Outbox 예외의 경우, 해당 예외 타입 및 포함된 에러 정보를 기반으로 `GlobalExceptionHandler` 내 매핑 로직을 통해 적절한 `HttpStatus` 및 `ProblemDetail`을 구성한다.**
 74. **비동기 Command 예외 처리**: 비동기 Command Handler는 예외 발생 시 `jobId`와 함께 예외 정보 및 `ErrorCode`를 별도의 `JobError` 엔티티에 저장하고, 상태 조회 API를 통해 클라이언트가 확인할 수 있도록 한다.
@@ -204,18 +242,18 @@
 ### 트랜잭셔널 아웃박스 패턴 규칙
 
 78. **트랜잭셔널 아웃박스 패턴 도입**: 애플리케이션 상태 변경과 이벤트 발행의 원자성 보장을 위해 트랜잭셔널 아웃박스 패턴을 사용한다. Domain Aggregate에서 발생한 이벤트는 Repository를 통해 저장 시 Database의 Outbox 테이블에 함께 기록된다.
-79. **독립적인 Outbox 모듈 정의**: Outbox 패턴 구현 및 관리를 위해 프로젝트 최상위 레벨의 `independent/` 폴더 내에 별도의 독립 모듈(예: `independent/outbox/`)을 정의한다. 이 모듈은 Rule 4에 명시된 `port`, `internal`, `infrastructure` 구조를 따른다.
-80. **Outbox 모듈 책임 및 독립성**: Outbox 모듈은 `OutboxMessage`의 DB 저장, 주기적 조회, Kafka 전송, 상태 관리, 오류 처리를 담당한다. **Rule 4에 따라 프로젝트 내 어떤 특정 도메인 모듈 또는 `domains/common` 모듈에도 의존하지 않아 이식성(portability)을 가진다.** 자체 예외(`OutboxException`) 및 에러 코드 체계를 **해당 모듈의 `infrastructure/error` 패키지 내에** 정의하며, 이는 `domains/common` 모듈의 `ErrorCode` 인터페이스나 기본 예외 클래스를 따르지 **않습니다** (Rule 67, 68 참조). 내부 Avro 스키마는 `infrastructure/resources/avro/`에 위치한다 (Rule 106 참조).
+79. **독립적인 Outbox 모듈 정의**: Outbox 패턴 구현 및 관리를 위해 프로젝트 최상위 레벨의 `independent/` 폴더 내에 별도의 독립 모듈(예: `independent/outbox/`)을 정의한다. 이 모듈은 Rule 4에 명시된 권장 구조(`port`, `internal`, `infrastructure`)를 따를 수 있다.
+80. **Outbox 모듈 책임 및 독립성**: Outbox 모듈은 `OutboxMessage`의 DB 저장, 주기적 조회, Kafka 전송, 상태 관리, 오류 처리를 담당한다. **Rule 4에 따라 프로젝트 내 어떤 특정 도메인 모듈 또는 `domains/common` 모듈에도 의존하지 않아 이식성(portability)을 가진다.** 자체 예외(`OutboxException`) 및 에러 코드 체계를 **해당 모듈의 `infrastructure/error` 패키지 내에** 정의하며, 이는 `domains/common` 모듈의 `ErrorCode` 인터페이스나 기본 예외 클래스를 따르지 **않습니다** (Rule 67, 68 참조). 내부 Avro 스키마는 `infrastructure/resources/avro/`에 위치할 수 있다 (Rule 106 참조, 단 도메인 이벤트 스키마는 포함하지 않음).
 81. **Outbox 메시지 저장 Port (인터페이스) 및 메시지 구조 정의**: Outbox 모듈의 **`port` 패키지**에 Outbox에 저장될 메시지 목록 저장을 위한 기술 독립적인 Port(인터페이스)를 정의한다 (예: `independent/outbox/port/OutboxMessageRepository.kt`). 이 인터페이스는 `List<OutboxMessage>`를 받아 저장하는 메서드를 제공해야 한다. 저장될 메시지의 구조는 `OutboxMessage` data class로 정의하며, 이는 `independent/outbox/port/dto/OutboxMessage.kt`에 위치한다. `OutboxMessage`는 Kafka 전송에 필요한 모든 정보(raw payload bytes `ByteArray`, target topic name `String`, headers `Map<String, String>` - including `correlationId`, `aggregateType`, `aggregateId` (String), event type name 등)를 포함해야 하며, 프로젝트의 `DomainEvent` 인터페이스나 특정 도메인의 구체적인 `DomainEvent` 클래스 또는 Avro 스키마/생성 클래스에 의존하지 않는다. 이 인터페이스는 `List<OutboxMessage>`를 받아 저장하는 메서드를 제공해야 하며, 저장 실패 시 자체 정의한 예외(예: `OutboxException`)를 던질 수 있다.
 82. **Outbox 메시지 저장 infrastructure (구현체)**: Outbox 메시지 저장 Port의 구현체는 Outbox 모듈의 **`infrastructure` 패키지**에 위치한다 (예: `independent/outbox/infrastructure/persistence/JpaOutboxMessageRepository.kt`). 이 구현체는 JPA 등의 기술을 사용하여 `OutboxEventEntity`를 데이터베이스에 저장하는 로직을 포함한다. `OutboxMessage`를 받아 `OutboxEventEntity`로 변환하여 저장한다.
-83. **Outbox 이벤트 엔티티**: Outbox 메시지를 저장하기 위한 `OutboxEventEntity`는 Outbox 모듈의 **`infrastructure/entity` 패키지**(예: `independent/outbox/infrastructure/entity/OutboxEventEntity.kt`)에 정의한다. 이 엔티티는 Rule 81의 `OutboxMessage` 구조에 대응하여 최소한 이벤트 payload (바이트 배열 `ByteArray`), 이벤트 타입명(`String`), 타겟 Kafka 토픽명(`String`), 생성 시간, 상태 (PENDING, PROCESSING, SENT, FAILED 등), 관련 정보 (correlationId(`String`), aggregateType(`String`), aggregateId(`String`)), 버전 관리 필드, 재시도 횟수(`retryCount`), 마지막 시도 시간(`lastAttemptTime`) 필드를 포함해야 한다. `aggregateId` 필드는 Domain ID Value Object가 캡슐화한 UUID의 문자열 형태를 저장한다.
+83. **Outbox 이벤트 엔티티**: Outbox 메시지를 저장하기 위한 `OutboxEventEntity`는 Outbox 모듈의 **`infrastructure/entity` 패키지**(예: `independent/outbox/infrastructure/entity/OutboxEventEntity.kt`)에 정의한다. 이 엔티티는 Rule 81의 `OutboxMessage` 구조에 대응하여 최소한 이벤트 payload (바이트 배열 `ByteArray`), 이벤트 타입명(`String`), 타겟 Kafka 토픽명(`String`), 생성 시간, 상태 (PENDING, PROCESSING, SENT, FAILED 등), 관련 정보 (correlationId(`String`), aggregateType(`String`), aggregateId(`String`)), 버전 관리 필드, 재시도 횟수(`retryCount`), 마지막 시도 시간(`lastAttemptTime`) 필드를 포함해야 한다. `aggregateId` 필드는 Domain ID Value Object가 캡슐화한 UUID의 문자열 형태를 저장한다. 특히 `headers` 필드는 JPA `@Convert` 어노테이션을 활용하여 Map을 JSON 문자열로 변환하여 단일 TEXT 컬럼에 저장하는 것을 권장한다.
 84. **리포지토리 구현체의 Outbox 의존성**: 각 도메인의 **`infrastructure` 패키지**에 위치한 Repository 구현체(예: `domains/user/infrastructure/repository/UserRepositoryImpl.kt`)는 독립적인 `independent/outbox` 모듈의 Outbox 메시지 저장 Port (`independent/outbox/port/OutboxMessageRepository.kt`)를 의존성으로 주입받아 사용한다. 도메인 `infrastructure`의 Repository 구현체는 Outbox Port 메서드 호출 시 발생할 수 있는 독립 모듈 예외를 try-catch로 감싸고, 해당 예외를 자신의 도메인 컨텍스트에 맞는 `DomainException` 또는 `ApplicationException`으로 래핑하여 다시 던진다.
 85. **Repository 저장 시 이벤트 처리 및 메시지 변환 책임**: Repository 구현체(도메인 `infrastructure` 패키지 내)는 Aggregate 저장 시, 해당 Aggregate의 `aggregateRoot.getDomainEvents()` 메서드를 통해 발생한 이벤트 목록을 읽어옵니다. **각 `DomainEvent` 객체에 대해, 해당 도메인 모듈의 `infrastructure` 패키지는 다음 책임을 모두 수행하여 Rule 81에 정의된 `OutboxMessage` 객체를 생성해야 합니다:**
     1.  Domain Event 객체를 **Rule 120에 정의된 공통 Envelope 구조를 포함하여** Rule 92에 따라 Avro 포맷으로 직렬화하여 최종 Kafka 메시지가 될 raw payload bytes (`ByteArray`)를 생성합니다. 이 과정에서 Rule 106의 해당 도메인 Avro 스키마 및 Rule 109, 111의 자동 생성 Avro Kotlin 클래스를 **Rule 111.5의 사용 범위 제한을 엄격히 준수하여, 메시지 페이로드 생성(직렬화)을 직접 담당하는 `infrastructure` 패키지 내 컴포넌트(예: Repository 구현체 또는 직렬화 전용 클래스/메서드)에서만 사용합니다.**
     2.  Rule 98에 따라 타겟 Kafka 토픽명을 결정한다.
     3.  **Rule 115, 117, 118, 119에 따라 Envelope 헤더 정보를 포함한** Kafka 메시지 헤더(`Map<String, String>`)를 준비합니다. 여기에는 `correlationId`, `aggregateType`, `aggregateId`(Aggregate의 Domain ID Value Object의 문자열 표현) 등이 포함됩니다.
     4.  Rule 81에 정의된 `OutboxMessage` 객체를 생성한다.
-    준비된 `OutboxMessage` 객체 목록을 동일 트랜잭션 내에서 독립적인 `independent/outbox` 모듈의 Outbox 메시지 저장 Port (`outboxMessageRepository.save(listOfOutboxMessages)`)를 호출하여 저장해야 한다. 이벤트 저장이 완료된 후에는 `aggregateRoot.clearDomainEvents()`를 호출하여 Aggregate 내부의 이벤트 목록을 초기화해야 한다.
+    준비된 `OutboxMessage` 객체 목록을 동일 트랜잭션 내에서 독립적인 `independent/outbox` 모듈의 Outbox 메시지 저장 Port (`outboxMessageRepository.save(listOfOutboxMessages)`)를 호출하여 저장해야 한다. 이벤트 저장이 완료된 후에는 `aggregateRoot.clearDomainEvents()`를 호출하여 Aggregate 내부의 이벤트 목록을 초기화해야 한다. **(권장 사항) 코드 복잡도를 관리하기 위해, 특히 이벤트 직렬화 및 OutboxMessage 생성 로직은 `infrastructure` 패키지 내 별도의 Helper 클래스나 메서드(예: `DomainEventAvroSerializer`, `OutboxMessageFactory`)로 분리하는 것을 권장합니다.**
 86. **Outbox 폴링/전송 컴포넌트**: Outbox 모듈의 **`internal` 패키지**에 Outbox 테이블에서 이벤트를 주기적으로 조회하고 처리를 위임하는 핵심 로직 컴포넌트(Outbox 폴러)를 구현한다 (예: `independent/outbox/internal/OutboxPoller.kt`). 실제 Kafka 전송은 `infrastructure` 패키지의 Sender 컴포넌트(Rule 88)를 사용한다.
 87. **Outbox 폴링 동시성 제어**: Outbox 폴러가 이벤트를 읽어올 때 데이터베이스 수준의 잠금(`FOR UPDATE SKIP LOCKED` 등)을 사용하여 동일한 이벤트가 여러 번 처리되지 않도록 해야 한다. 이 잠금 로직은 **`infrastructure` 패키지** 내의 데이터 접근 구현체(예: `JpaOutboxMessageRepository`)에서 관리된다.
 88. **Outbox 메시지 전송**: Outbox 메시지 전송 로직은 **`infrastructure` 패키지** 내 Sender 컴포넌트(예: `independent/outbox/infrastructure/kafka/OutboxMessageSender.kt`)에서 담당한다. 이 Sender는 Outbox Event Entity를 읽어 Entity에 저장된 raw payload bytes를 그대로 Kafka 메시지 payload로 사용하고, Entity에 저장된 target Kafka topic으로 전송한다. **이 과정에서 Sender는 특정 도메인 이벤트 타입, Avro 스키마, 자동 생성 Avro 클래스, `port` DTO, `internal` 로직을 직접 참조하지 않는다.** 필요한 Kafka Serializer 설정(Rule 129)은 `independent/outbox` 모듈의 `infrastructure` 패키지 내에서 관리한다. 전송 시 Kafka 메시지 헤더에 `correlationId`, Aggregate ID 등 Entity에 저장된 정보를 포함한다.
@@ -232,11 +270,18 @@
 96. **분산 트랜잭션**: 분산 트랜잭션 처리가 필요한 경우 Saga 패턴을 적용하며, 상태 변경 명령과 보상 트랜잭션을 Kafka 이벤트를 통해 전달한다. Saga 오케스트레이션/코레오그래피는 `independent/outbox` 패턴을 통해 메시지를 발행한다.
 97. **요청-응답 패턴**: Kafka를 사용한 동기적 요청-응답 패턴은 Kafka Streams 또는 별도 HTTP API 연동을 고려하며, 비동기 이벤트는 `independent/outbox` 모듈을 통해 Kafka 토픽으로 발행한다.
 98. **Kafka 토픽 이름**: Kafka 토픽 이름은 다음 형식을 따른다: `{environment}.{domain}.{event-type}.{entity}.{version}`. 여기서 `{version}`은 해당 토픽이 다루는 이벤트 스키마의 논리적/주요 변경 버전을 나타냅니다. **Schema Registry를 통한 스키마 진화(Backward/Forward 호환성)를 우선적으로 고려하며, 호환성이 유지되는 스키마 변경 시에는 토픽 이름의 version을 변경하지 않습니다.** 토픽명 결정 및 메시지 구성은 Rule 85에 따라 도메인 Infrastructure 레이어에서 수행된다. 여기서 `{version}`은 해당 토픽이 다루는 **메시지 스키마에 파괴적 변경(breaking change)이 발생하여 Schema Registry의 호환성 규칙(예: BACKWARD, FORWARD)만으로는 기존 Consumer/Producer와의 호환성을 유지할 수 없는 경우에만 변경하는 논리적인 버전**을 나타냅니다. 필드 추가/삭제와 같이 Schema Registry를 통해 호환성이 관리될 수 있는 변경의 경우에는 토픽 이름의 `{version}`을 변경하지 않고, Schema Registry 내의 스키마 버전을 통해 관리하는 것을 **원칙**으로 합니다.
+    > **예시 시나리오:**
+    > 1.  초기 `dev.user.domain-event.user.v1` 토픽에 스키마 A (v1 in Schema Registry) 발행.
+    > 2.  스키마 A에 Optional 필드 'email' 추가 -> 스키마 B (v2 in Schema Registry, Backward compatible).
+    >     *   토픽 이름은 `dev.user.domain-event.user.v1` 그대로 유지. Producer는 스키마 B(v2) 사용, Consumer는 스키마 A(v1) 또는 B(v2) 사용 가능.
+    > 3.  스키마 B의 필수 필드 'name' 삭제 -> 스키마 C (v3 in Schema Registry, Breaking change!).
+    >     *   기존 Consumer와 호환 불가. 새로운 토픽 `dev.user.domain-event.user.v2` 생성 및 스키마 C(v3) 등록 필요.
+    >     *   새로운 Producer/Consumer는 `dev.user.domain-event.user.v2` 토픽과 스키마 C(v3) 사용.
 99. **토픽 네이밍 컨벤션 - environment**: `environment`는 운영 환경을 나타낸다 (예: `prod`, `staging`, `dev`).
 100. **토픽 네이밍 컨벤션 - domain**: `domain`은 도메인 이름을 나타낸다 (예: `user`, `order`, `payment`).
 101. **토픽 네이밍 컨벤션 - event-type**: `event-type`은 이벤트 유형을 나타낸다 (예: `domain-event`, `saga`, `request`, `response`).
 102. **토픽 네이밍 컨벤션 - entity**: `entity`는 이벤트가 발생한 주요 엔티티 또는 애그리거트 이름을 나타낸다 (예: `user`, `order`, `transaction`).
-103. **토픽 네이밍 컨벤션 - version**: `version`은 스키마 레지스트리의 물리적 `schemaVersion`이 아닌, **해당 토픽의 스키마에 파괴적 변경이 발생했을 때만 증가시키는 논리적 버전**을 나타냅니다.
+103. **토픽 네이밍 컨벤션 - version**: `version`은 스키마 레지스트리의 물리적 `schemaVersion`이 아닌, **해당 토픽의 스키마에 파괴적 변경이 발생했을 때만 증가시키는 논리적 버전**을 나타냅니다 (Rule 98 참조).
 104. **외부 도메인 이벤트 토픽**: 외부 시스템으로 발행되는 도메인 이벤트는 토픽 유형을 `domain-event`로 한정한다.
 105. **Kafka 토픽 이름 제약**: Kafka 토픽 이름은 소문자와 하이픈(`-`)만 사용하고, 최대 249자로 제한한다.
 106. **Avro 스키마 파일 위치**: Avro 스키마(`.avsc`) 파일은 메시징 포맷 정의이므로, 해당 스키마를 **사용하는**(주로 직렬화/역직렬화하는) 모듈의 **`infrastructure` 패키지 `src/main/resources/avro/`** 디렉터리에 저장한다.
@@ -248,12 +293,12 @@
 109. **Avro Kotlin 클래스 생성**: Gradle 플러그인(`com.github.davidmc24.gradle.plugin.avro`)을 사용하여 Avro 스키마로부터 Kotlin 클래스를 자동 생성한다. 이 자동 생성은 **스키마 파일(`.avsc`)이 위치한 모듈**(예: 도메인 `infrastructure`, `common` `infrastructure`)에서만 발생한다. `independent/outbox` 모듈은 도메인 이벤트나 Envelope 스키마로부터 생성된 클래스에 의존하지 않는다.
 110. **Avro Kotlin 클래스 설정**: Gradle Avro 플러그인 설정 시 `createSetters = false` 및 `fieldVisibility = "PRIVATE"` 옵션을 설정한다.
 111. **자동 생성 Avro Kotlin 클래스 패키지 위치**: 자동 생성된 Avro Kotlin 클래스는 해당 모듈의 빌드 경로(예: `build/generated-src/avro/main/kotlin/`)에 생성된다. 최종 패키지 구조는 해당 모듈의 기본 패키지(예: `com.restaurant.infrastructure.user`, `com.restaurant.common.infrastructure`) 하위에, 스키마 파일에 정의된 **완전한 `namespace` 그대로** 생성되도록 Gradle 플러그인을 설정한다 (예: 스키마 `namespace`가 `com.restaurant.infrastructure.user.avro.event`이면 최종 패키지는 `com.restaurant.infrastructure.user.avro.event`).
-111.5. **자동 생성 Avro Kotlin 클래스 사용 범위 제한**: Avro 스키마로부터 자동 생성된 Kotlin 클래스는 해당 클래스가 생성된 **모듈의 `infrastructure` 패키지 내에서 Kafka 메시지 직렬화/역직렬화를 직접 담당하는 특정 컴포넌트**에서만 사용되어야 한다.
+111.5. **자동 생성 Avro Kotlin 클래스 사용 범위 제한**: Avro 스키마로부터 자동 생성된 Kotlin 클래스는 **해당 클래스가 생성된 모듈의 `infrastructure` 패키지 내에서 Kafka 메시지 직렬화/역직렬화를 직접 담당하는 특정 컴포넌트에서만 사용되어야 합니다.**
     *   **사용처 예시**:
-        *   Domain `infrastructure`의 Repository 구현체 내 이벤트 발행 로직 (Rule 85, 139)
+        *   Domain `infrastructure`의 Repository 구현체 내 이벤트 발행 로직 (Rule 85, 139) 또는 직렬화 Helper 클래스
         *   Kafka Consumer 리스너 구현체 (메시지 수신 및 역직렬화, 해당 Consumer 모듈의 `infrastructure` 내 위치)
-    *   **사용 금지**: Domain Layer, Application Layer, `internal` 패키지, `infrastructure` 패키지의 다른 일반 코드(Service, 다른 Repository 메서드 등)에서는 자동 생성 Avro 클래스를 직접 참조해서는 안 된다.
-    *   **데이터 변환**: 데이터 변환은 Domain 모델 또는 `infrastructure` 내부의 순수 Kotlin 데이터 타입을 사용하며, Avro 클래스는 변환의 최종 단계인 직렬화/역직렬화 시에만 사용된다.
+    *   **사용 금지**: **Domain Layer, Application Layer, `internal` 패키지, `infrastructure` 패키지의 다른 일반 코드(Service, 다른 Repository 메서드 등)에서는 자동 생성 Avro 클래스를 직접 참조해서는 절대로 안 됩니다.**
+    *   **데이터 변환**: 데이터 변환은 Domain 모델 또는 `infrastructure` 내부의 순수 Kotlin 데이터 타입을 사용하며, Avro 클래스는 변환의 최종 단계인 직렬화/역직렬화 시에만 사용됩니다. 이 규칙은 내부 구현 세부사항(Avro)이 상위 레이어로 누수되는 것을 방지하기 위해 **매우 중요합니다.**
 112. **`Envelope` 스키마 파일 위치**: 공통 `Envelope` 스키마 파일은 `domains/common/infrastructure/src/main/resources/avro/envelope.avsc` 에 위치한다.
 113. **`Envelope` 스키마 구조**: `Envelope` 스키마는 `schemaVersion`, `eventId` (Correlation ID), `timestamp`, `source`, `aggregateType`, `aggregateId` 필드를 포함한다.
 114. **`Envelope` 스키마 필드 - schemaVersion**: `Envelope` 스키마의 `schemaVersion` 필드는 Envelope 스키마 자체의 버전 또는 포함된 메시지 스키마의 물리적 버전을 기록한다.
@@ -271,9 +316,9 @@
 126. **Kafka 설정**: Spring Kafka 설정 시 `KafkaTemplate`, `ProducerFactory`, `ConsumerFactory` 빈을 `@Configuration`, `@Bean` 을 사용하여 설정하며, 이러한 설정은 주로 메시지 전송/수신을 직접 담당하는 모듈의 **`infrastructure` 패키지** (예: `independent/outbox` 모듈의 `infrastructure/kafka`, Kafka Consumer 리스너를 포함하는 모듈의 `infrastructure/kafka`)에 위치한다.
 127. **Kafka 설정 - Bootstrap Servers**: Kafka 설정 시 `BOOTSTRAP_SERVERS_CONFIG` 설정을 포함한다.
 128. **Kafka 설정 - Key Serializer**: Kafka 설정 시 `KEY_SERIALIZER_CLASS_CONFIG` 설정을 포함한다 (예: `org.apache.kafka.common.serialization.StringSerializer`).
-129. **Kafka 설정 - Value Serializer**: Kafka 설정 시 `VALUE_SERIALIZER_CLASS_CONFIG` 설정을 포함한다 (예: `io.confluent.kafka.serializers.KafkaAvroSerializer`). **`independent/outbox` 모듈과 같이 이미 직렬화된 바이트 배열(`ByteArray`)을 전송하는 경우, `org.apache.kafka.common.serialization.ByteArraySerializer`를 사용해야 한다.** `io.confluent.kafka.serializers.KafkaAvroSerializer`는 Rule 85, 139에 따라 도메인 `infrastructure`에서 `DomainEvent` 객체를 Avro `ByteArray`로 직렬화하는 과정에서 내부적으로 사용될 수 있으나, Outbox 모듈의 Kafka Producer 설정 자체에는 적용되지 않는다. 전송 시 Kafka 메시지 헤더에 `correlationId`, Aggregate ID 등 Entity에 저장된 정보를 포함한다.
-130. **Kafka 설정 - Schema Registry URL**: Kafka 설정 시 `schema.registry.url` 설정을 포함한다.
-131. **Schema Registry URL 설정**: 스키마 레지스트리 URL 설정은 `application.yml` 파일에 `spring.kafka.properties.schema.registry.url` 속성으로 설정한다.
+129. **Kafka 설정 - Value Serializer**: Kafka 설정 시 `VALUE_SERIALIZER_CLASS_CONFIG` 설정을 포함한다. **`independent/outbox` 모듈과 같이 이미 직렬화된 바이트 배열(`ByteArray`)을 전송하는 경우, Value Serializer로 `org.apache.kafka.common.serialization.ByteArraySerializer`를 사용해야 합니다.** Avro 직렬화를 수행하는 Producer (예: 도메인 `infrastructure`에서 직접 Kafka 발행 시)는 `io.confluent.kafka.serializers.KafkaAvroSerializer`를 사용합니다. Outbox 패턴에서는 Outbox 모듈의 Producer가 `ByteArraySerializer`를 사용하고, 실제 Avro 직렬화는 Rule 85에 따라 Domain `infrastructure`에서 `OutboxMessage` 생성 시점에 이루어집니다.
+130. **Kafka 설정 - Schema Registry URL**: Kafka 설정 시 `schema.registry.url` 설정을 포함한다 (Avro Serializer 사용 시 필수).
+131. **Schema Registry URL 설정**: 스키마 레지스트리 URL 설정은 `application.yml` 파일에 `spring.kafka.properties.schema.registry.url` 속성으로 설정한다. (Rule 142 설정 관리 규칙 참조)
 132. **Schema Registry 호환성**: Avro 스키마 변경 시 Confluent Schema Registry의 호환성 규칙 (기본: Backward)을 준수한다.
 133. **토픽 세분화**: 대규모 트래픽 및 관심사 분리를 고려하여 도메인별/이벤트 유형별로 토픽을 세분화한다.
 134. **통합 테스트**: Kafka와 Schema Registry를 포함한 통합 테스트는 Testcontainers를 사용하여 작성한다.
@@ -296,154 +341,252 @@
         *   Domain 객체(Domain ID VO 포함)와 JPA Entity 간 변환.
         *   조회 시 Domain ID (VO)를 사용하여 JPA Entity의 `domainId` 필드 조회.
         *   Domain Port의 `save` 메서드 반환 타입(Immutable Aggregate의 새 인스턴스 등) 만족.
+        *   **(권장 사항) 코드 복잡도를 관리하기 위해, 특히 이벤트 직렬화 및 OutboxMessage 생성 로직은 `infrastructure` 패키지 내 별도의 Helper 클래스나 메서드(예: `DomainEventAvroSerializer`, `OutboxMessageFactory`)로 분리하는 것을 권장합니다.**
 140. **JPA 리포지토리 사용**: Spring Data JPA 등의 기술별 리포지토리 인터페이스는 **`infrastructure` 패키지**에서 정의하고 사용한다 (예: `interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long>`). Domain 레이어는 이 기술별 인터페이스나 구현체를 직접 참조하지 않는다. Repository 구현체(`UserRepositoryImpl`)는 이 기술별 인터페이스(`SpringDataJpaUserRepository`)를 사용하여 실제 DB 접근을 수행한다.
 
-### 디렉터리 구조
+### 시스템 운영 및 관리 규칙
 
-디렉터리 구조는 레이어별/도메인별 분리 구조를 유지하며, 다음 규칙들을 반영합니다:
-*   독립 모듈 그룹핑 폴더(`independent/`) 및 `outbox/` 모듈 배치 (Rule 4, 79). **독립 모듈은 `port`, `internal`, `infrastructure` 구조를 따름 (Rule 4).**
-*   Avro 스키마 파일 위치 (`infrastructure/resources/avro/`) (Rule 106) 및 자동 생성 클래스 패키지 구조 (Rule 111).
-*   Repository 구현체 네이밍 및 위치 (`infrastructure` 패키지) (Rule 139).
-*   공통 모듈 요소 위치 (`AggregateRoot`, `DomainEvent`, `ErrorCode`, `Exception` 등) (Rule 17, 32, 67, 68).
-*   도메인 모듈 내 이벤트 그룹화 파일 위치 (Rule 34).
-*   Domain Aggregate/Entity/VO 패키지 위치 (Rule 11).
-*   Domain/Application ErrorCode 및 Exception 위치 (Rule 67, 68). **Independent 모듈의 ErrorCode/Exception은 `infrastructure/error`에 위치 (Rule 80).**
-*   Presentation 레이어 확장 함수 폴더/파일명 구조 (Rule 5, 7).
+141. **로깅 전략**:
+    *   모든 레이어에서 로깅은 SLF4J 퍼사드를 통해 수행한다. 구조화된 로깅(예: Logback JSON Encoder 또는 `logstash-logback-encoder` 사용)을 **강력히 권장**한다.
+    *   모든 로그 메시지에는 최소한 `timestamp`, `level`, `thread`, `logger name`, **`correlationId`**(Rule 37 참조)를 포함해야 한다.
+    *   **로그 레벨 기준**:
+        *   `INFO`: 주요 비즈니스 로직의 시작과 종료, 중요한 상태 변경, 외부 시스템 호출 결과 등 정상적인 시스템 흐름 추적에 필요한 정보를 기록한다. 너무 상세하거나 빈번한 로그는 지양한다.
+        *   `WARN`: 예상되었지만 잠재적으로 문제가 될 수 있는 상황(예: 재시도 가능한 일시적 오류 발생, deprecated 기능 사용, 구성 문제 등)이나 주의가 필요한 상태를 기록한다.
+        *   `ERROR`: 처리되지 않은 예외, 복구 불가능한 오류, 비즈니스 로직 실패, 외부 시스템과의 통신 실패 등 시스템 운영에 영향을 미치는 오류 상황을 기록한다. **발생한 예외 객체와 스택 트레이스를 반드시 포함**해야 한다. Rule 71에 따라 해당 오류의 `errorCode`도 함께 기록한다.
+        *   `DEBUG`, `TRACE`: 개발 및 문제 해결 단계에서 상세한 내부 동작을 추적하기 위한 목적으로만 사용한다. 운영 환경에서는 기본 로그 레벨을 `INFO` 또는 `WARN`으로 설정한다.
+    *   **민감 정보 로깅 금지**: 개인 식별 정보(PII), 비밀번호, API 키, 토큰 등 민감한 데이터는 로그에 **절대로** 기록해서는 안 된다. 필요한 경우 마스킹 또는 대체 값(예: 사용자 ID)을 사용한다.
+    *   로그 메시지는 명확하고 간결하게 작성하며, 어떤 상황에서 발생했는지 이해하기 쉬워야 한다.
 
-**(참고: `domain/{domain}/model` 패키지는 Rule 11에 따라 `aggregate/`, `entity/`, `vo/`로 대체되었습니다.)**
-
-**독립 모듈인 `independent/outbox`는 프로젝트 내의 어떤 특정 도메인 모듈 또는 `domains/common` 모듈에도 의존하지 않습니다.** `independent/outbox`는 Rule 4에 따라 `port`, `internal`, `infrastructure` 구조를 가집니다. `port` 패키지는 외부 모듈과의 계약(인터페이스, DTO)을 정의합니다. `internal` 패키지는 핵심 로직을 구현합니다. `infrastructure` 패키지는 Persistence/Kafka 관련 기술 구현, 엔티티, 설정, 자체 예외/에러 코드(`infrastructure/error/`) 등을 포함합니다. Domain 모듈의 `infrastructure`(또는 `infrastructure`) 레이어는 `independent/outbox`의 `port`를 의존하며, Domain Event를 Outbox에 저장하기 전에 **자신의 책임 하에 Kafka 메시지 형식(Avro bytes, topic, headers 등)으로 변환하여 `OutboxMessage` 객체를 구성하고** 이를 `OutboxMessageRepository`(`port` 인터페이스)에 전달합니다. Outbox 모듈은 저장된 raw bytes와 메타데이터를 그대로 Kafka로 전송합니다.
-
-**Presentation 레이어의 DTO 및 확장 함수 폴더 구조는 규칙 5, 7, 8, 58, 59에 따라 명시된 구조를 필수로 준수합니다.**
+142. **설정 관리**:
+    *   Spring Profiles (`application-{profile}.yml` 또는 `.properties`)를 사용하여 개발(dev), 스테이징(staging), 운영(prod) 등 환경별 설정을 명확히 분리하여 관리한다.
+    *   데이터베이스 접속 정보(비밀번호), 외부 API 키, 메시징 큐 자격 증명 등 민감한 설정 정보는 소스 코드 저장소(Git 등)에 직접 포함하거나 설정 파일에 평문으로 저장하는 것을 **엄격히 금지한다.**
+    *   민감 정보 관리를 위해 다음 방법 중 하나 이상을 사용해야 한다:
+        *   **환경 변수**: 운영 환경에서 환경 변수를 통해 주입한다.
+        *   **Secret Management System**: HashiCorp Vault, AWS Secrets Manager, Kubernetes Secrets 등과 같은 외부 시스템을 사용하여 민감 정보를 안전하게 관리하고 애플리케이션 실행 시점에 주입한다.
+        *   **설정 서버 암호화**: Spring Cloud Config Server를 사용하는 경우, 설정 파일 내 민감 정보를 암호화하여 저장하고 클라이언트 애플리케이션에서 복호화하여 사용한다.
+    *   일반 설정 값(타임아웃, 재시도 횟수 등)은 해당 환경의 `application-{profile}.yml` 파일에 명시적으로 정의한다.
+    *   애플리케이션 재시작 없이 설정 값을 변경해야 하는 요구사항이 있는 경우, Spring Cloud Config, Spring Cloud Kubernetes/Consul 등 동적 설정 로딩 기능을 지원하는 기술 도입을 고려한다.
 
 ```
 restaurant/
-├── build.gradle.kts
-├── settings.gradle.kts
-├── config/                         # (선택) 전역 설정 파일 (예: application.yml)
-│   └── src/main/resources/
-│       └── application.yml
-├── independent/                   # 독립 모듈 그룹 (Rule 4, 79)
-│   └── outbox/                    # Outbox 모듈 - port/internal/infrastructure 구조 (Rule 4)
-│       ├── port/                  # Public Interface - 외부 노출, 공통/기술 의존 X (Rule 4, 81)
-│       │   ├── dto/
-│       │   │   └── OutboxMessage.kt
-│       │   └── OutboxMessageRepository.kt
-│       ├── internal/              # 핵심 로직, 기술 독립 (Rule 4, 86, 90)
-│       │   └── OutboxPoller.kt
-│       ├── infrastructure/               # 기술 구현 세부 (Rule 4, 80~90, 106, 126)
-│       │   ├── entity/
-│       │   │   └── OutboxEventEntity.kt
-│       │   ├── persistence/
-│       │   │   ├── JpaOutboxMessageRepository.kt
-│       │   │   └── SpringDataJpaOutboxEventRepository.kt
-│       │   ├── kafka/
-│       │   │   ├── OutboxMessageSender.kt
-│       │   │   └── KafkaConfig.kt
-│       │   ├── error/                 # Separate error package (Rule 67, 80)
-│       │   │   └── OutboxErrorCodes.kt
-│       │   ├── exception/             # Separate exception package (Rule 68, 80)
-│       │   │   └── OutboxException.kt
-│       │   └── resources/
-│       │       └── avro/
-│       │           └── outbox-internal-v1.avsc
-│       └── build.gradle.kts
-├── domains/
-│   ├── common/                    # 도메인/인프라 공용 모듈
+├── build.gradle.kts                      # 루트 빌드 스크립트
+├── settings.gradle.kts                   # 모듈 정의
+├── domains/                              # 도메인 루트 (Rule 3)
+│   ├── common/                           # 공통 모듈 (Rule 4)
 │   │   ├── build.gradle.kts
-│   │   └── src/main/
-│   │       ├── kotlin/com/restaurant/common/
-│   │       │   ├── core/
-│   │       │   │   ├── error/             # Separate error package (Rule 67)
-│       │       │   │   │   ├── CommonSystemErrorCode.kt
-│       │       │   │   │   └── ErrorCode.kt
-│       │       │   │   └── exception/         # Separate exception package (Rule 68)
-│       │       │   │       ├── ApplicationException.kt
-│       │       │   │       └── DomainException.kt
-│       │       │   ├── domain/
-│       │       │   │   ├── aggregate/
-│       │       │   │   │   └── AggregateRoot.kt
-│       │       │   │   └── event/
-│       │       │   │       └── DomainEvent.kt
-│       │       │   └── infrastructure/       # Removed 'mapper' directory
-│       │       └── resources/avro/
-│       │           └── envelope-common-v1.avsc
-│   └── user/                      # user 도메인 모듈
+│   │   ├── core/                         # 핵심 공통 요소 ('domain' 대신 사용 가능성 - Rule 67/68 참조)
+│   │   │   └── src/
+│   │   │       └── main/
+│   │   │           └── kotlin/
+│   │   │               └── com/
+│   │   │                   └── restaurant/
+│   │   │                       └── common/
+│   │   │                           └── core/
+│   │   │                               ├── aggregate/
+│   │   │                               │   └── AggregateRoot.kt # Rule 17 (추상 클래스)
+│   │   │                               ├── domain/              # 도메인 관련 공통 인터페이스/클래스
+│   │   │                               │   └── event/
+│   │   │                               │       └── DomainEvent.kt # Rule 32 (인터페이스)
+│   │   │                               ├── error/               # Rule 67 (공통 에러코드)
+│   │   │                               │   ├── CommonSystemErrorCode.kt
+│   │   │                               │   └── ErrorCode.kt     # Rule 67 (인터페이스)
+│   │   │                               └── exception/           # Rule 68 (공통 기본 예외)
+│   │   │                                   ├── ApplicationException.kt
+│   │   │                                   └── DomainException.kt
+│   │   └── infrastructure/                 # 공통 인프라 (Avro Envelope 등)
+│   │       └── src/
+│   │           └── main/
+│   │               ├── kotlin/
+│   │               │   └── com/
+│   │               │       └── restaurant/
+│   │               │           └── common/
+│   │               │               └── infrastructure/
+│   │               │                   └── avro/ # Rule 111.5 (사용 제한, 생성은 여기서)
+│   │               │                       └── # 빌드 디렉토리에 자동 생성된 클래스 위치
+│   │               └── resources/
+│   │                   └── avro/             # Rule 106, 112 (Envelope 스키마)
+│   │                       └── envelope-common-v1.avsc
+│   └── user/                             # 사용자 도메인 (Rule 3)
 │       ├── build.gradle.kts
-│       ├── presentation/         # Presentation Layer
+│       ├── presentation/                   # Presentation 레이어 (Rule 2)
 │       │   ├── build.gradle.kts
-│       │   └── src/main/
-│       │       ├── kotlin/com/restaurant/presentation/user/
-│       │       │   ├── v1/
-│       │       │   │   ├── dto/
-│       │       │   │   │   ├── request/
-│       │       │   │   │   │   └── CreateUserRequest.kt
-│       │       │   │   │   └── response/
-│       │       │   │   │       ├── CommandResultResponse.kt
-│       │       │   │   │       └── UserProfileResponse.kt
-│       │       │   │   └── controller/
-│       │       │   │       └── UserControllerV1.kt
-│       │       │   └── extensions/v1/
-│       │       │       ├── request/
-│       │       │       │   ├── UserCommandRequestExtensions.kt
-│       │       │       │   └── UserQueryRequestExtensions.kt
-│       │       │       └── response/
-│       │       │           ├── UserCommandResponseExtensions.kt
-│       │       │           └── UserQueryResponseExtensions.kt
-│       │       └── resources/
-│       ├── application/          # Application Layer
+│       │   └── src/
+│       │       └── main/
+│       │           ├── kotlin/
+│       │           │   └── com/
+│       │           │       └── restaurant/
+│       │           │           └── user/
+│       │           │               └── presentation/
+│       │           │                   └── v1/             # API 버전 관리 (Rule 57)
+│       │           │                       ├── controller/             # Rule 54 (Swagger 어노테이션)
+│       │           │                       │   └── UserController.kt
+│       │           │                       ├── dto/
+│       │           │                       │   ├── request/
+│       │           │                       │   │   └── CreateUserRequest.kt # Rule 44, 46 (Validation)
+│       │           │                       │   │   └── UpdateUserRequest.kt
+│       │           │                       │   └── response/
+│       │           │                       │       ├── CommandResultResponse.kt # Rule 35 (공통 사용 가능)
+│       │           │                       │       └── UserProfileResponse.kt # Rule 39 (HATEOAS)
+│       │           │                       └── extensions/       # Rule 5 (확장 함수 위치)
+│       │           │                           ├── request/    # Rule 5 (Request DTO 변환)
+│       │           │                           │   └── UserCommandRequestExtensions.kt # Rule 7, 58
+│       │           │                           └── response/   # Rule 5 (Response DTO 변환)
+│       │           │                               └── UserQueryResponseExtensions.kt # Rule 7, 58
+│       │           └── resources/
+│       │               └── application.yml     # 프레젠테이션 관련 설정 (optional)
+│       ├── application/                    # Application 레이어 (Rule 2)
 │       │   ├── build.gradle.kts
-│       │   └── src/main/kotlin/com/restaurant/application/user/
-│       │       ├── command/
-│       │       │   ├── CreateUserCommand.kt
-│       │       │   └── handler/
-│       │       │       └── CreateUserCommandHandler.kt
-│       │       ├── query/
-│       │       │   ├── GetUserQuery.kt
-│       │       │   └── handler/
-│       │       │       └── GetUserQueryHandler.kt
-│       │       ├── dto/
-│       │       ├── error/             # Separate error package (Rule 67)
-│       │       │   └── UserApplicationErrorCode.kt
-│       │       ├── exception/         # Separate exception package (Rule 68)
-│       │       │   └── UserApplicationException.kt
-│       │       └── port/
-│       │           ├── UserCommandPort.kt
-│       │           └── UserQueryPort.kt
-│       ├── domain/               # Domain Layer
+│       │   └── src/
+│       │       └── main/
+│       │           └── kotlin/
+│       │               └── com/
+│       │                   └── restaurant/
+│       │                       └── user/
+│       │                           └── application/
+│       │                               ├── port/             # 애플리케이션 서비스 Port (선택적)
+│       │                               │   └── in/           # UseCase 인터페이스
+│       │                               │       ├── CreateUserUseCase.kt
+│       │                               │       └── GetUserQuery.kt
+│       │                               ├── service/          # 또는 handler/ 패키지
+│       │                               │   ├── CreateUserService.kt # UseCase 구현
+│       │                               │   └── GetUserService.kt    # Query 구현
+│       │                               ├── dto/
+│       │                               │   ├── command/      # Command DTO
+│       │                               │   │   └── CreateUserCommand.kt
+│       │                               │   └── query/        # Query DTO 및 결과 DTO
+│       │                               │       ├── GetUserByIdQuery.kt
+│       │                               │       └── UserProfileDto.kt # Application 반환 DTO
+│       │                               ├── error/            # Rule 67 (애플리케이션 에러코드)
+│       │                               │   └── UserApplicationErrorCode.kt
+│       │                               └── exception/        # Rule 68 (애플리케이션 예외)
+│       │                                   └── UserApplicationException.kt
+│       ├── domain/                         # Domain 레이어 (Rule 2)
 │       │   ├── build.gradle.kts
-│       │   └── src/main/kotlin/com/restaurant/domain/user/
-│       │       ├── aggregate/
-│       │       │   └── User.kt
-│       │       ├── entity/
-│       │       ├── vo/
-│       │       │   ├── UserId.kt
-│       │       │   ├── UserName.kt
-│       │       │   └── Email.kt
-│       │       ├── error/             # Separate error package (Rule 67)
-│       │       │   └── UserDomainErrorCodes.kt
-│       │       ├── exception/         # Separate exception package (Rule 68)
-│       │       │   └── UserDomainException.kt
-│       │       ├── event/
-│       │       │   └── UserEvents.kt
-│       │       └── repository/
-│       │           └── UserRepository.kt
-│       └── infrastructure/       # Infrastructure Layer
+│       │   └── src/
+│       │       └── main/
+│       │           └── kotlin/
+│       │               └── com/
+│       │                   └── restaurant/
+│       │                       └── user/
+│       │                           └── domain/
+│       │                               ├── aggregate/      # Rule 11 (Aggregate Root 위치)
+│       │                               │   └── User.kt       # Rule 11, 11.5, 16, 18
+│       │                               ├── entity/         # Rule 11 (하위 도메인 엔티티, 필요시)
+│       │                               │   └── # UserPreferences.kt (예시)
+│       │                               ├── vo/             # Rule 11 (Value Object 위치)
+│       │                               │   ├── UserId.kt     # Rule 10, 13, 14, 15
+│       │                               │   ├── Email.kt
+│       │                               │   └── Password.kt
+│       │                               ├── event/          # Rule 33 (도메인 이벤트 위치)
+│       │                               │   └── UserEvents.kt # Rule 34 (Sealed Class 사용)
+│       │                               ├── error/          # Rule 67 (도메인 에러코드)
+│       │                               │   └── UserDomainErrorCodes.kt
+│       │                               ├── exception/      # Rule 68 (도메인 예외)
+│       │                               │   └── UserDomainException.kt # Rule 14 (Validation 예외 포함)
+│       │                               └── repository/     # Rule 137 (도메인 Repository Port/Interface)
+│       │                                   └── UserRepository.kt
+│       └── infrastructure/                 # Infrastructure 레이어 (Rule 2)
 │           ├── build.gradle.kts
-│           └── src/main/
-│               ├── kotlin/com/restaurant/infrastructure/user/
-│               │   ├── entity/
-│               │   │   └── UserEntity.kt
-│               │   ├── repository/
-│               │   │   ├── SpringDataJpaUserRepository.kt
-│               │   │   └── UserRepositoryImpl.kt
-│               │   ├── extensions/
-│               │   │   └── UserEntityExtensions.kt
-│               │   └── config/
-│               └── resources/avro/
-│                   └──
-
-# 다른 도메인 모듈들(order 등)도 유사한 구조를 가짐
+│           ├── build/                      # 빌드 결과물 (자동 생성 소스 포함)
+│           │   └── generated-src/
+│           │       └── avro/
+│           │           └── main/
+│           │               └── kotlin/
+│           │                   └── com/
+│           │                       └── restaurant/
+│           │                           └── user/
+│           │                               └── infrastructure/
+│           │                                   └── avro/     # Rule 111 (자동 생성 클래스 패키지)
+│           │                                       └── event/
+│           │                                           └── UserCreatedEventV1.kt # 자동 생성된 클래스
+│           └── src/
+│               └── main/
+│                   ├── kotlin/
+│                   │   └── com/
+│                   │       └── restaurant/
+│                   │           └── user/
+│                   │               └── infrastructure/
+│                   │                   ├── persistence/    # 영속성 관련 구현
+│                   │                   │   ├── entity/       # Rule 19 (JPA 엔티티 위치)
+│                   │                   │   │   └── UserEntity.kt # Rule 21, 22, 23, 31
+│                   │                   │   ├── repository/   # Rule 140 (기술 종속 Repository)
+│                   │                   │   │   ├── SpringDataJpaUserRepository.kt # Spring Data JPA 인터페이스
+│                   │                   │   │   └── UserRepositoryImpl.kt # Rule 139 (Domain Port 구현체)
+│                   │                   │   └── extensions/   # Rule 24 (매핑 확장 함수)
+│                   │                   │       └── UserEntityExtensions.kt # Rule 25
+│                   │                   ├── serialization/    # Rule 85, 139 (직렬화 Helper, 권장)
+│                   │                   │   ├── DomainEventAvroSerializer.kt # Avro 클래스 사용 (Rule 111.5)
+│                   │                   │   └── OutboxMessageFactory.kt    # OutboxMessage 생성
+│                   │                   └── config/         # Rule 126 (User 모듈 Kafka 설정, 필요시)
+│                   │                       └── # KafkaProducerConfig.kt (예시)
+│                   └── resources/
+│                       ├── application-infra.yml # 인프라 관련 설정 (optional)
+│                       └── avro/             # Rule 106 (도메인 이벤트 스키마)
+│                           └── user-domain-event-v1.avsc # Rule 107
+├── independent/                          # 독립 모듈 루트 (Rule 4)
+│   └── outbox/                           # 아웃박스 모듈 (Rule 79)
+│       ├── build.gradle.kts
+│       ├── port/                         # Rule 4, 81 (외부 노출 인터페이스/DTO)
+│       │   └── src/
+│       │       └── main/
+│       │           └── kotlin/
+│       │               └── com/
+│       │                   └── restaurant/
+│       │                       └── outbox/
+│       │                           └── port/
+│       │                               ├── dto/            # Rule 81 (Port DTO)
+│       │                               │   └── OutboxMessage.kt
+│       │                               └── OutboxMessageRepository.kt # Rule 81 (Port 인터페이스)
+│       ├── internal/                     # Rule 4, 86 (내부 로직)
+│       │   └── src/
+│       │       └── main/
+│       │           └── kotlin/
+│       │               └── com/
+│       │                   └── restaurant/
+│       │                       └── outbox/
+│       │                           └── internal/
+│       │                               └── OutboxPoller.kt # Rule 86, 89, 90 (폴러 로직)
+│       └── infrastructure/             # Rule 4 (기술 구현)
+│           └── src/
+│               └── main/
+│                   ├── kotlin/
+│                   │   └── com/
+│                   │       └── restaurant/
+│                   │           └── outbox/
+│                   │               └── infrastructure/
+│                   │                   ├── persistence/    # Rule 82 (DB 저장 구현)
+│                   │                   │   ├── entity/       # Rule 83 (Outbox 엔티티)
+│                   │                   │   │   └── OutboxEventEntity.kt
+│                   │                   │   └── JpaOutboxMessageRepository.kt # Rule 82, 87 (Port 구현, 잠금)
+│                   │                   ├── kafka/          # Rule 88 (Kafka 전송 구현)
+│                   │                   │   ├── OutboxMessageSender.kt # Rule 88 (메시지 전송)
+│                   │                   │   └── config/       # Rule 126 (Outbox Kafka 설정)
+│                   │                   │       └── KafkaOutboxProducerConfig.kt # Rule 129 (ByteArraySerializer)
+│                   │                   ├── error/          # Rule 67, 80 (자체 에러코드)
+│                   │                   │   └── OutboxErrorCodes.kt
+│                   │                   └── exception/      # Rule 68, 80 (자체 예외)
+│                   │                       └── OutboxException.kt
+│                   └── resources/
+│                       └── application-outbox.yml # Outbox 관련 설정
+├── config/                             # 전역 설정 (선택적)
+│   └── src/
+│       └── main/
+│           ├── kotlin/
+│           │   └── com/
+│           │       └── restaurant/
+│           │           └── config/
+│           │               ├── GlobalExceptionHandler.kt # Rule 51, 73
+│           │               └── SwaggerConfig.kt        # Rule 53
+│           └── resources/
+│               └── application.yml         # 루트 애플리케이션 설정 (Rule 142)
+└── apps/                                 # 애플리케이션 실행 모듈 (선택적)
+    └── user-app/                       # 사용자 서비스 실행 모듈
+        └── src/
+            └── main/
+                └── kotlin/
+                    └── com/
+                        └── restaurant/
+                            └── user/
+                                └── app/
+                                    └── UserApplication.kt # @SpringBootApplication
 ```
-
-</rewritten_file>
