@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: user-app
+  profiles:
+    active: local
+  config:
+    import: optional:configserver:http://localhost:8888
+
+# --- Development Profile (application-dev.yml) ---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    properties:
+      schema.registry.url: http://localhost:8081
+    consumer:
+      group-id: user-app-consumer-group
+
+kafka:
+  topic:
+    user:
+      domain-event: dev.user.domain-event.user.v1
+
+logging:
+  level:
+    root: INFO
+    com.restaurant: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# --- Staging/Production Profile (별도 파일 또는 외부 설정 관리) ---
+# 민감 정보(DB 비밀번호, API 키 등)는 환경 변수 또는 Secret Manager 사용
+# 예시:
+# spring.datasource.password: ${DB_PASSWORD}
+# spring.kafka.properties.schema.registry.url: ${SCHEMA_REGISTRY_URL}
+
+server:
+  port: 8081
+
+# Swagger/OpenAPI 설정
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v1/api-docs
+
+app:
+  problem:
+    base-url: https://test-api.restaurant.com/probs
+
+# Outbox Polling configuration (Example)
+outbox:
+  polling:
+    enabled: true
+    fixed-delay: 1000 # Poll every 1 second
+    batch-size: 100

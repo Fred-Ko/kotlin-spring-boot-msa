@@ -1,18 +1,19 @@
 package com.restaurant.common.core.error
 
 /**
- * 일반적인 시스템 수준의 오류에 대한 오류 코드 정의
- * 규칙 67에 따라 시스템 오류 코드 정의
+ * Common system-level error codes.
  */
 enum class CommonSystemErrorCode(
     override val code: String,
     override val message: String,
 ) : ErrorCode {
-    SYSTEM_ERROR("COMMON-SYSTEM-999", "An unexpected system error occurred."),
-    CONCURRENCY_FAILURE("COMMON-SYSTEM-500", "Concurrency conflict. Please try again."),
-    EXTERNAL_SERVICE_ERROR("COMMON-SYSTEM-501", "External service call failed."),
-    DATABASE_ERROR("COMMON-SYSTEM-502", "Database operation failed."),
-    NETWORK_ERROR("COMMON-SYSTEM-503", "Network communication error."),
-    RESOURCE_NOT_FOUND("COMMON-SYSTEM-404", "Requested resource could not be found."),
-    VALIDATION_ERROR("COMMON-SYSTEM-400", "Input validation failed."),
+    INTERNAL_ERROR("COMMON-SYS-001", "An internal system error occurred"),
+    INVALID_REQUEST("COMMON-SYS-002", "The request is invalid"),
+    RESOURCE_NOT_FOUND("COMMON-SYS-003", "The requested resource was not found"),
+    UNAUTHORIZED("COMMON-SYS-004", "Unauthorized access"),
+    FORBIDDEN("COMMON-SYS-005", "Access forbidden"),
+    VALIDATION_ERROR("COMMON-SYS-006", "Validation error"),
+    OPTIMISTIC_LOCK_ERROR("COMMON-SYS-007", "The resource was modified by another request"),
+    OUTBOX_ERROR("COMMON-SYS-008", "Error processing outbox message"),
+    EXTERNAL_SERVICE_ERROR("COMMON-SYS-009", "External service error"),
 }

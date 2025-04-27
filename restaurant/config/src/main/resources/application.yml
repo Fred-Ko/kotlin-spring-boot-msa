@@ -1,0 +1,144 @@
+# ===================================================================
+# Common Application Settings
+# ===================================================================
+server:
+  port: 8080 # Default port, can be overridden by app modules
+
+spring:
+  application:
+    name: restaurant-config # Default name for config module context
+
+# Common settings, can be overridden
+logging:
+  level:
+    root: INFO
+    com.restaurant: DEBUG # More detailed logging for our code
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG # Log SQL statements
+    org.hibernate.type.descriptor.sql: TRACE # Log SQL parameters
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# ===================================================================
+# Resilience4j Default Settings (Rule 12, 76, 77)
+# ===================================================================
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s # Rule 76 (5 seconds)
+        failureRateThreshold: 50 # Percentage
+        eventConsumerBufferSize: 10
+    instances:
+      # Define specific circuit breakers here if needed, e.g.:
+      # externalUserService:
+      #   baseConfig: default
+      #   waitDurationInOpenState: 10s
+
+  retry:
+    configs:
+      default:
+        maxAttempts: 3 # Rule 75, 77
+        waitDuration: 500ms # Initial wait duration
+        retryExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+        ignoreExceptions:
+          - com.restaurant.common.domain.exception.DomainException # Don't retry business rule violations
+          - com.restaurant.common.domain.exception.ApplicationException # Don't retry fatal app errors unless specified
+        # Consider enabling exponential backoff (Rule 77)
+        # enableExponentialBackoff: true
+        # exponentialBackoffMultiplier: 2
+    instances:
+      # Define specific retry instances here if needed
+      # externalApiRetry:
+      #   baseConfig: default
+      #   maxAttempts: 4
+
+# ===================================================================
+# Outbox Polling Settings (Example - Adjust as needed)
+# ===================================================================
+app:
+  outbox:
+    poller:
+      enabled: true
+      fixed-delay-ms: 1000 # Poll every 1 second
+      batch-size: 50 # Number of messages to fetch per poll
+      max-retries: 3 # Max send retries per message
+    polling:
+      pendingMessagesInterval: 5000 # Default interval for pending (ms)
+      failedMessagesInterval: 60000 # Default interval for failed (ms)
+      batchSize: 100 # Default batch size
+      maxRetries: 3 # Default max retries
+
+# ===================================================================
+# Springdoc OpenAPI / Swagger Settings (Rule 53)
+# ===================================================================
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    groups-order: DESC
+    operations-sorter: alpha
+
+# ===================================================================
+# Environment Specific Settings (Example: dev profile)
+# ===================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update # DDL generation for dev (Rule 14)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  datasource:
+    url: jdbc:h2:mem:restaurantdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+# Add other profiles (staging, prod) below, overriding necessary properties
+# ---
+# spring:
+#   config:
+#     activate:
+#       on-profile: prod
+#   datasource:
+#     url: jdbc:postgresql://prod-db-host:5432/restaurantdb
+#     username: prod_user
+#     password: ${DB_PASSWORD} # Use env var or secret management (Rule 142)
+#     driver-class-name: org.postgresql.Driver
+#   jpa:
+#     hibernate:
+#       ddl-auto: none
+#   kafka:
+#     bootstrap-servers: prod-kafka-broker1:9092,prod-kafka-broker2:9092
+#     properties:
+#       schema.registry.url: http://prod-schema-registry:8081
+
+# Basic application configuration for config module (if needed)
+# Usually, global settings are in the root application.yml
+# or specific settings for config module features.
+
+# Example: Base URI for ProblemDetail type field
+# problem:
+#   base-uri: /errors

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Include Spring Boot's base configuration -->
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="unknown-app"/>
+
+    <!-- Define a console appender using Logstash JSON encoder -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <providers>
+                <!-- Default providers -->
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <logLevel/>
+                <loggerName/>
+                <threadName/>
+                <message/>
+                <stackTrace/>
+                <!-- Include MDC properties -->
+                <mdc/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- File Appender (Optional) -->
+    <!--
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/archived/app.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+             <includeMdcKeyName>correlationId</includeMdcKeyName>
+             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+             <timeZone>UTC</timeZone>
+             <customFields>{"app_name":"${APP_NAME}"}</customFields>
+             <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <version>[ignore]</version>
+                <level>level</level>
+                <thread>thread</thread>
+                <logger>logger</logger>
+                <message>message</message>
+                <stackTrace>stack_trace</stackTrace>
+             </fieldNames>
+        </encoder>
+    </appender>
+    -->
+
+    <!-- Configure the root logger -->
+    <root level="INFO">
+        <!-- Use the JSON console appender -->
+        <appender-ref ref="JSON_CONSOLE"/>
+        <!-- Optionally keep the standard Spring Boot console appender -->
+        <!-- <appender-ref ref="CONSOLE" /> -->
+        <!-- Optionally add a file appender -->
+        <!-- <appender-ref ref="FILE" /> -->
+    </root>
+
+    <!-- Example: Set specific logger level -->
+    <logger name="com.restaurant" level="DEBUG" additivity="false">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </logger>
+
+    <!-- Turn off verbose logging from Kafka clients unless needed -->
+    <logger name="org.apache.kafka" level="WARN" additivity="false">
+         <appender-ref ref="JSON_CONSOLE"/>
+    </logger>
+    <logger name="org.springframework.kafka" level="WARN" additivity="false">
+         <appender-ref ref="JSON_CONSOLE"/>
+    </logger>
+
+</configuration> 

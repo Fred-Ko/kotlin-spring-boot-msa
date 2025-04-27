@@ -1,14 +1,14 @@
-package com.restaurant.application.user.command.handler
+package com.restaurant.application.user.handler
 
-import com.restaurant.application.user.TestConfig
-import com.restaurant.application.user.command.RegisterUserCommand
-import com.restaurant.application.user.common.UserErrorCode
-import com.restaurant.application.user.exception.UserApplicationException
-import com.restaurant.domain.user.aggregate.User
-import com.restaurant.domain.user.repository.UserRepository
-import com.restaurant.domain.user.vo.Email
-import com.restaurant.domain.user.vo.Name
-import com.restaurant.domain.user.vo.Password
+import com.restaurant.user.application.TestConfig
+import com.restaurant.user.application.common.UserErrorCode
+import com.restaurant.user.application.dto.command.RegisterUserCommand
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.domain.aggregate.User
+import com.restaurant.user.domain.repository.UserRepository
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.Name
+import com.restaurant.user.domain.vo.Password
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension

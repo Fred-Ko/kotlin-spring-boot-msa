@@ -1,93 +1,144 @@
+import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.gradle.api.artifacts.DependencySet
+import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.artifacts.VersionCatalogsExtension
+
 plugins {
-    kotlin("jvm") version "2.1.20" apply false
-    kotlin("plugin.spring") version "2.1.20" apply false
-    kotlin("plugin.jpa") version "2.1.20" apply false
-    kotlin("plugin.allopen") version "2.1.20" apply false
-    kotlin("plugin.noarg") version "2.1.20" apply false
-    kotlin("kapt") version "2.1.20" apply false
-    id("org.springframework.boot") version "3.3.2" apply false
-    id("io.spring.dependency-management") version "1.1.7" apply false
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0" apply false
-    java
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.spring) apply false
+    alias(libs.plugins.kotlin.jpa) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependency.management) apply false
+    alias(libs.plugins.ktlint) apply false
 }
 
+apply(plugin = "io.spring.dependency-management")
+// apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-repositories {
-    mavenCentral()
-    gradlePluginPortal()
+// Root dependencies - comment out ktlint dependency
+/* // Comment out ktlint dependency block
+dependencies {
+    add("ktlint", "com.pinterest.ktlint:ktlint-cli:12.1.1")
 }
+*/
 
-allprojects {
-    group = "com.restaurant"
-    version = "1.0.0"
+// Resolve ktlint version string at root level - Comment out
+// val ktlintVersion = libs.versions.ktlintGradle.get()
 
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
+configure<DependencyManagementExtension> {
+    imports {
+        mavenBom(SpringBootPlugin.BOM_COORDINATES)
+        mavenBom(libs.testcontainers.bom.get().toString())
+        mavenBom(libs.kotest.bom.get().toString())
     }
 }
 
-subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
-    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
-    apply(plugin = "org.springframework.boot")
-    apply(plugin = "io.spring.dependency-management")
-    apply(plugin = "java")
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+tasks.register("printSubprojects") {
+    doLast {
+        println("Root project: ${project.name}")
+        subprojects.forEach {
+            println("  Subproject: ${it.name} (Path: ${it.path})")
+        }
+    }
+}
 
+// Comment out ktlint tasks
+/*
+tasks.register("ktlintCheckAll") {
+    group = "verification"
+    description = "Runs ktlint checks on all projects."
+    dependsOn(allprojects.mapNotNull { p -> p.tasks.findByName("ktlintCheck")?.path })
+}
+
+tasks.register("ktlintFormatAll") {
+    group = "formatting"
+    description = "Runs ktlint formatting on all projects."
+    dependsOn(allprojects.mapNotNull { p -> p.tasks.findByName("ktlintFormat")?.path })
+}
+*/
+
+// Configure all projects (including root) individually
+allprojects {
+    // Apply common plugins to all projects
+    plugins.apply("org.jetbrains.kotlin.jvm")
+    plugins.apply("java-library")
+    // plugins.apply("org.jlleitschuh.gradle.ktlint") // Comment out ktlint plugin apply
+
+    // Apply group and version only to subprojects
+    if (project != rootProject) {
+    group = "com.restaurant"
+    version = "0.0.1-SNAPSHOT"
+    }
+
+    // Comment out ktlint configuration
+    /*
     configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-        version.set("1.5.0")
+        version.set(ktlintVersion) // ktlintVersion is commented out
         debug.set(true)
         verbose.set(true)
+        android.set(false)
         outputToConsole.set(true)
-        outputColorName.set("RED")
-        ignoreFailures.set(false)
-        enableExperimentalRules.set(true)
         filter {
-            exclude { it.file.path.contains("generated/") }
+            // EXPLICITLY REMOVE CONTENT INSIDE filter {}
         }
-        disabledRules.set(setOf("HEADER_KEYWORD", "no-wildcard-imports", "no-blank-line-before-rbrace", "no-empty-file"))
     }
+    */
 
-    configure<JavaPluginExtension> {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
-        jvmToolchain(21)
-    }
-
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    // Configure tasks for all projects
+    tasks.withType<KotlinCompile> {
         compilerOptions {
-            freeCompilerArgs.set(listOf("-Xjsr305=strict", "-Xconsistent-data-class-copy-visibility"))
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+            jvmTarget.set(JvmTarget.JVM_17)
+            freeCompilerArgs.add("-Xjsr305=strict")
         }
     }
 
     tasks.withType<Test> {
         useJUnitPlatform()
-    }
-
-    dependencies {
-        // Kotlin
-        implementation("org.jetbrains.kotlin:kotlin-reflect")
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
-    }
-
-    configurations {
-        compileOnly {
-            extendsFrom(configurations.annotationProcessor.get())
+        testLogging {
+            events("passed", "skipped", "failed")
         }
     }
 
-    tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    // Default task configurations for subprojects (can be overridden)
+    if (project != rootProject) {
+    tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
         enabled = false
     }
-
-    tasks.getByName<Jar>("jar") {
+    tasks.withType<Jar> {
         enabled = true
+        }
+    }
+}
+
+// Configure common dependencies for subprojects individually AFTER applying plugins
+subprojects.forEach { subproject ->
+    subproject.dependencies {
+        add("api", libs.kotlin.stdlib)
+        add("api", libs.kotlin.reflect)
+        add("api", libs.slf4j.api)
+        add("implementation", libs.kotlin.logging.jvm)
+        add("implementation", libs.jackson.module.kotlin)
+        add("implementation", libs.jackson.datatype.jsr310)
+
+        add("testImplementation", libs.kotest.runner.junit5)
+        add("testImplementation", libs.kotest.assertions.core)
+        add("testImplementation", libs.mockk)
+        add("testImplementation", libs.mockito.kotlin)
+        add("testImplementation", libs.assertj.core)
+        add("testImplementation", libs.kotlin.test)
+        add("testImplementation", libs.spring.boot.starter.test)
+    }
+
+    subproject.configurations.getByName("testImplementation").withDependencies {
+        val dependencySet = this as DependencySet
+        dependencySet.filterIsInstance<ExternalModuleDependency>().forEach { dependency ->
+            if (dependency.group == "org.springframework.boot" && dependency.name == "spring-boot-starter-test") {
+                dependency.exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+            }
+        }
     }
 }

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="restaurant-app"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+    <!-- Define MDC Key -->
+    <variable name="correlationIdKey" value="correlationId" />
+
+    <!-- Console Appender with JSON output including MDC -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Include standard fields -->
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <version/> <!-- Logback version -->
+                <logLevel/>
+                <loggerName/>
+                <threadName/>
+                <message/>
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <shortenedClassNameLength>20</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </stackTrace>
+                <mdc> <!-- Rule 141: Include MDC properties -->
+                    <includeMdcKeyName>${correlationIdKey}</includeMdcKeyName>
+                </mdc>
+                <context/>
+                <logstashMarkers/>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+         <file>logs/app.log</file>
+         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+             <fileNamePattern>logs/archived/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+             <maxHistory>30</maxHistory>
+         </rollingPolicy>
+         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+             <providers>
+                <timestamp><timeZone>UTC</timeZone></timestamp>
+                <logLevel/><loggerName/><threadName/>
+                <mdc><includeMdcKeyName>correlationId</includeMdcKeyName></mdc>
+                <message/><stackTrace/><context/><version/><logstashMarkers/><arguments/>
+             </providers>
+             <customFields>{"app_name":"${APP_NAME}"}</customFields>
+         </encoder>
+    </appender>
+
+    <!-- Configure Log Levels (can also use application.yml) -->
+    <logger name="com.restaurant" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE_JSON" />
+        <!-- <appender-ref ref="FILE_JSON" /> -->
+    </logger>
+
+    <logger name="org.springframework" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE_JSON" />
+        <!-- <appender-ref ref="FILE_JSON" /> -->
+    </logger>
+
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+         <appender-ref ref="CONSOLE_JSON" />
+         <!-- <appender-ref ref="FILE_JSON" /> -->
+    </logger>
+
+     <logger name="org.hibernate.type.descriptor.sql" level="TRACE" additivity="false">
+         <appender-ref ref="CONSOLE_JSON" />
+         <!-- <appender-ref ref="FILE_JSON" /> -->
+    </logger>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE_JSON" />
+        <!-- <appender-ref ref="FILE_JSON" /> -->
+    </root>
+
+</configuration> 

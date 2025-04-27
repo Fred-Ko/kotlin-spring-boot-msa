@@ -1,0 +1,52 @@
+{
+  "type": "record",
+  "name": "Envelope",
+  "namespace": "com.restaurant.common.infrastructure.avro.envelope",
+  "doc": "Common envelope for all domain events (Rule 113)",
+  "fields": [
+    {
+      "name": "schemaVersion",
+      "type": "string",
+      "doc": "Version of the specific event schema contained in payloadBytes (e.g., 'user-domain-event-v1')"
+    },
+    {
+      "name": "eventId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "doc": "Unique identifier for the event, also used as correlationId (Rule 115)"
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-nanos"
+      },
+      "doc": "Event occurrence time in epoch nanoseconds (Rule 116)"
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "doc": "Originating domain (e.g., 'user', 'order') (Rule 117)"
+    },
+    {
+      "name": "aggregateType",
+      "type": "string",
+      "doc": "Type of the aggregate root (e.g., 'User') (Rule 118)"
+    },
+    {
+      "name": "aggregateId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "doc": "Domain ID of the aggregate root (UUID string) (Rule 119)"
+    },
+    {
+      "name": "payloadBytes",
+      "type": "bytes",
+      "doc": "Avro serialized bytes of the specific domain event (Rule 85, 120)"
+    }
+  ]
+}

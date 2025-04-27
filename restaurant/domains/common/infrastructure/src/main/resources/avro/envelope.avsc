@@ -1,48 +1,46 @@
 {
+  "namespace": "com.restaurant.common.infrastructure.avro.envelope",
   "type": "record",
   "name": "Envelope",
-  "namespace": "com.restaurant.common.infrastructure.avro.envelope",
-  "doc": "Common envelope for all domain events",
+  "doc": "Common message envelope containing metadata and payload.",
   "fields": [
     {
       "name": "schemaVersion",
       "type": "string",
-      "doc": "Version of the envelope schema"
+      "doc": "Version of the payload schema or envelope schema."
     },
     {
       "name": "eventId",
       "type": "string",
-      "doc": "Unique identifier for the event, used as correlationId"
+      "doc": "Unique event identifier, often used as correlation ID."
     },
     {
       "name": "timestamp",
-      "type": "long",
-      "doc": "Event occurrence time in nanoseconds since Unix epoch"
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-nanos"
+      },
+      "doc": "Event occurrence time in epoch nanoseconds."
     },
     {
       "name": "source",
       "type": "string",
-      "doc": "Source domain of the event (e.g., user, order)"
+      "doc": "Originating domain or service."
     },
     {
       "name": "aggregateType",
       "type": "string",
-      "doc": "Type of the aggregate that produced the event (e.g., User)"
+      "doc": "Type of the aggregate root."
     },
     {
       "name": "aggregateId",
       "type": "string",
-      "doc": "String representation of domain ID of the aggregate"
+      "doc": "Identifier of the aggregate root (e.g., UUID string)."
     },
     {
-      "name": "eventType",
-      "type": "string",
-      "doc": "Type of the event (e.g., UserCreated)"
-    },
-    {
-      "name": "payload",
+      "name": "payloadBytes",
       "type": "bytes",
-      "doc": "Event payload as serialized bytes"
+      "doc": "Serialized payload of the specific event."
     }
   ]
 }

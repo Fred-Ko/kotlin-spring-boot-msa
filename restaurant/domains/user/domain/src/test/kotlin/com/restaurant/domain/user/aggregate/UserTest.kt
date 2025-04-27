@@ -1,10 +1,10 @@
 package com.restaurant.domain.user.aggregate
 
-import com.restaurant.domain.user.model.Address
-import com.restaurant.domain.user.vo.Email
-import com.restaurant.domain.user.vo.Name
-import com.restaurant.domain.user.vo.Password
-import com.restaurant.domain.user.vo.UserId
+import com.restaurant.user.domain.model.Address
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.Name
+import com.restaurant.user.domain.vo.Password
+import com.restaurant.user.domain.vo.UserId
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo

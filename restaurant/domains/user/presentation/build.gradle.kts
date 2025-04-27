@@ -1,26 +1,26 @@
 plugins {
-    kotlin("jvm")
-    kotlin("kapt")
-    kotlin("plugin.spring")
+    // kotlin("jvm") // Provided by subprojects block
+    alias(libs.plugins.kotlin.spring) // Apply spring plugin
 }
 
 dependencies {
+    // Keep module-specific dependencies
     implementation(project(":domains:user:application"))
-    implementation(project(":domains:common"))
+    implementation(project(":config"))
 
-    implementation("org.springframework.boot:spring-boot-starter:3.3.2")
-    implementation("org.springframework.boot:spring-boot-starter-web:3.3.2")
-    implementation("org.springframework.boot:spring-boot-starter-validation:3.3.2")
-    implementation("org.slf4j:slf4j-api:2.0.13")
-    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
+    // Keep presentation-specific dependencies
+    implementation(libs.spring.boot.starter.web) // Use alias
+    implementation(libs.spring.boot.starter.hateoas) // Use alias
+    implementation(libs.spring.boot.starter.validation) // Use alias
+    implementation(libs.springdoc.openapi.starter.webmvc.ui) // Use alias
 
-    // HATEOAS 지원
-    implementation("org.springframework.boot:spring-boot-starter-hateoas:3.3.2")
+    // Common dependencies (kotlin, slf4j, jackson, test deps) are handled by subprojects block
+    // implementation(libs.kotlin.stdlib)
+    // implementation(libs.kotlin.logging.jvm)
+    // implementation(libs.jackson.module.kotlin)
+    // implementation(libs.jackson.datatype.jsr310)
+    // implementation(libs.jakarta.validation.api)
+    // implementation(libs.jakarta.servlet.api)
 
-    // OpenAPI 3.0 & Swagger UI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
-
-    // 테스트
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.3.2")
-    testImplementation("io.mockk:mockk:1.13.17")
+    // Test dependencies handled by subprojects block
 }

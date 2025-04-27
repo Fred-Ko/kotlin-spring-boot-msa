@@ -1,28 +1,19 @@
 package com.restaurant.common.core.error
 
 /**
- * 모든 에러 코드가 구현해야 하는 공통 인터페이스
+ * Base interface for all error codes in the system.
+ * Error codes should follow the format: {DOMAIN}-{LAYER}-{CODE}
  */
 interface ErrorCode {
     /**
-     * 에러 코드 (예: USER-001)
+     * The unique code for this error.
+     * Format: {DOMAIN}-{LAYER}-{CODE}
+     * Example: USER-DOMAIN-001, USER-APP-002
      */
     val code: String
 
     /**
-     * 에러 메시지
+     * A human-readable message describing this error.
      */
     val message: String
-}
-
-abstract class BaseErrorCode(
-    override val code: String,
-    override val message: String,
-) : ErrorCode {
-    companion object {
-        fun fromCode(
-            errorCodes: List<ErrorCode>,
-            code: String?,
-        ): ErrorCode? = errorCodes.find { it.code == code }
-    }
 }
