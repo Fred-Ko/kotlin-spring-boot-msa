@@ -1,45 +1,23 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.gradle.api.tasks.compile.JavaCompile
-
 plugins {
-    // Common plugins (jvm, spring, dependency-management, java-library) applied via subprojects block in root
-    id("org.jetbrains.kotlin.plugin.jpa") // Required for JPA entities
-    id("org.jetbrains.kotlin.plugin.allopen") // Required for JPA entities
+    kotlin("jvm")
+    kotlin("plugin.jpa")
+    kotlin("plugin.allopen")
+    `java-library`
 }
 
-// Configure allopen for JPA entities
 allOpen {
     annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.persistence.MappedSuperclass")
 }
 
 dependencies {
-    // Module dependencies
-    api(project(":domains:user:domain")) // Expose domain types if needed by application layer through this module? Use implementation if not.
-    implementation(project(":domains:common")) // For common exceptions, ErrorCode interface etc.
-    implementation(project(":independent:outbox:port")) // To save OutboxMessage DTOs
-    implementation(project(":domains:user:infrastructure:messaging")) // To use OutboxMessageFactory
-
-    // Spring and JPA
-    implementation(libs.spring.boot.starter.data.jpa)
-    implementation(libs.spring.tx) // For @Transactional
-    implementation(libs.spring.context) // For @Repository, @Value etc.
-
-    // Database Driver (example H2)
-    runtimeOnly(libs.h2)
-
-    // Common libs (kotlin, slf4j, jackson, test libs) provided by root subprojects block
+    api(project(":domains:user:domain"))
+    implementation(project(":domains:common"))
+    implementation(project(":independent:outbox"))
+    implementation(project(":domains:user:infrastructure:messaging"))
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.5")
+    runtimeOnly("com.h2database:h2:2.2.224")
+    implementation("org.springframework:spring-context:6.1.6")
+    implementation("org.springframework:spring-tx:6.1.6")
 }
-
-// Disable Java compile task if no Java sources are present
-tasks.withType<JavaCompile> {
-    enabled = false
-}
-
-// Ensure Kotlin compiler settings if not fully covered by root
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "17" // Match root build.gradle.kts setting
-    }
-} 

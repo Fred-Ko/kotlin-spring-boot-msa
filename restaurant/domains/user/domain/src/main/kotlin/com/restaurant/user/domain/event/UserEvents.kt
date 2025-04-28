@@ -1,7 +1,8 @@
 package com.restaurant.user.domain.event
 
-import com.restaurant.common.core.domain.event.DomainEvent
-import com.restaurant.user.domain.vo.*
+import com.restaurant.common.domain.event.DomainEvent
+import com.restaurant.user.domain.vo.AddressId
+import com.restaurant.user.domain.vo.UserId
 import java.time.Instant
 import java.util.UUID
 

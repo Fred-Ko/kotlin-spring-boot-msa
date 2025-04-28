@@ -13,6 +13,8 @@ data class UserProfileDto(
     val addresses: List<AddressDto>,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val status: String,
+    val version: Long,
 ) {
     data class AddressDto(
         val id: String, // UUID String

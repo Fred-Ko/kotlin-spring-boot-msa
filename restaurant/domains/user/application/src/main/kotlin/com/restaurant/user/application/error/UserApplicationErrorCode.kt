@@ -1,6 +1,6 @@
 package com.restaurant.user.application.error
 
-import com.restaurant.common.core.error.ErrorCode
+import com.restaurant.common.error.ErrorCode
 
 /**
  * User Application 레이어 관련 에러 코드 Enum

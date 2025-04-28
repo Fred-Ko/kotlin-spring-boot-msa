@@ -1,38 +1,18 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.gradle.api.tasks.compile.JavaCompile
-
 plugins {
-    // Common plugins (jvm, spring, dependency-management, java-library) applied via subprojects block in root
-    id("org.jetbrains.kotlin.plugin.serialization") // Required for Avro DTOs
+    kotlin("jvm")
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
+    `java-library`
 }
 
 dependencies {
-    // Module dependencies
-    api(project(":domains:user:domain")) // Expose domain events if needed? Use implementation.
-    implementation(project(":domains:common")) // For common exceptions, ErrorCode interface etc.
-    implementation(project(":domains:common:infrastructure")) // For Envelope DTO
-    implementation(project(":independent:outbox:port")) // To create OutboxMessage DTO
-
-    // Serialization
-    implementation(libs.avro4k.core)
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlinx.serialization.json) // If JSON is used by converter/factory
-
-    // Spring
-    implementation(libs.spring.context) // For @Component, @Value etc.
-    // implementation(libs.spring.kafka) // Only if using KafkaTemplate directly here
-
-    // Common libs (kotlin, slf4j, jackson, test libs) provided by root subprojects block
+    api(project(":domains:user:domain"))
+    implementation(project(":domains:common"))
+    implementation("org.apache.avro:avro:1.12.2")
+    implementation("io.confluent:kafka-avro-serializer:7.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+    implementation("com.github.avro-kotlin.avro4k:avro4k-core:1.9.1")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("org.slf4j:slf4j-api:2.0.13")
+    implementation("org.springframework:spring-context:6.1.6")
 }
-
-// Disable Java compile task if no Java sources are present
-tasks.withType<JavaCompile> {
-    enabled = false
-}
-
-// Ensure Kotlin compiler settings if not fully covered by root
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "17" // Match root build.gradle.kts setting
-    }
-} 
+// Avro Kotlin 클래스 생성 설정 및 sourceSets 주석 필요시 추가

@@ -1,9 +1,6 @@
 package com.restaurant.user.domain.vo
 
 import com.restaurant.user.domain.exception.UserDomainException
-import io.github.oshai.kotlinlogging.KotlinLogging
-
-private val log = KotlinLogging.logger {}
 
 /**
  * 비밀번호 Value Object

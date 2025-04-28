@@ -1,17 +1,19 @@
 package com.restaurant.user.infrastructure.messaging.serialization
 
 import com.restaurant.common.config.filter.CorrelationIdFilter
-import com.restaurant.common.core.domain.event.DomainEvent
+import com.restaurant.common.domain.event.DomainEvent
 import com.restaurant.common.infrastructure.avro.dto.Envelope
 import com.restaurant.outbox.port.dto.OutboxMessage
 import com.restaurant.user.domain.event.UserEvent
-import com.restaurant.user.infrastructure.avro.dto.* // Import all user Avro DTOs
+import com.restaurant.user.infrastructure.avro.dto.UserCreatedAvro
+import com.restaurant.user.infrastructure.avro.dto.UserUpdatedAvro
+import com.restaurant.user.infrastructure.avro.dto.UserDeletedAvro
 import io.github.avro4k.Avro
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.serializer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.UUID
 
 private val log = KotlinLogging.logger {}
 
@@ -105,7 +107,6 @@ class OutboxMessageFactory(
          log.error(e) { "Error mapping UserEvent to Avro DTO: ${event::class.simpleName}" }
          null
     }
-
 
     // Serializes the provided Avro DTO object into a ByteArray
     private fun serializePayload(payloadDto: Any): ByteArray? = try {

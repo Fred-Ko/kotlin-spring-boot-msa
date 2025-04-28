@@ -3,7 +3,6 @@ package com.restaurant.user.infrastructure.persistence.repository
 import com.restaurant.common.config.filter.CorrelationIdFilter
 import com.restaurant.outbox.port.OutboxMessageRepository
 import com.restaurant.user.domain.aggregate.User
-import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.UserId
@@ -18,7 +17,8 @@ import org.slf4j.MDC
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
+import java.util.Optional
+import java.util.UUID
 
 private val log = KotlinLogging.logger {}
 

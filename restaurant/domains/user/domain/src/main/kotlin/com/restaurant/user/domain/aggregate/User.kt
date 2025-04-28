@@ -1,21 +1,24 @@
 package com.restaurant.user.domain.aggregate
 
-import com.restaurant.common.core.aggregate.AggregateRoot
-import com.restaurant.common.core.domain.event.DomainEvent
+import com.restaurant.common.domain.aggregate.AggregateRoot
+import com.restaurant.common.domain.event.DomainEvent
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.event.UserEvent
+import com.restaurant.user.domain.vo.Username
+import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.vo.Password
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.Name
+import com.restaurant.user.domain.vo.PhoneNumber
+import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.exception.UserDomainException
-import com.restaurant.user.domain.vo.*
 import java.time.Instant
-import java.util.UUID
-import com.restaurant.user.domain.aggregate.UserStatus
-import com.restaurant.user.domain.aggregate.UserType
 
 /**
  * User Aggregate Root
  */
 data class User(
-    val id: UserId, // Rule 11.5: val, public
+    val id: UserId,
     val username: Username,
     val password: Password, // Assume this is the encoded password
     val email: Email,
@@ -27,13 +30,15 @@ data class User(
     val defaultAddressId: AddressId? = null,
     val version: Long,
     val createdAt: Instant,
-    val updatedAt: Instant,
-    // Rule 18: Manage events internally, ensure copy handles it
-    private val eventsInternal: MutableList<DomainEvent> = mutableListOf()
+    val updatedAt: Instant
 ) : AggregateRoot() {
+    @Transient
+    private val _domainEvents: MutableList<DomainEvent> = mutableListOf()
 
-    init {
-        // Validation moved to factory methods or specific action methods
+    override fun getDomainEvents(): List<DomainEvent> = _domainEvents.toList()
+    override fun clearDomainEvents() = _domainEvents.clear()
+    internal fun addDomainEvent(event: DomainEvent) {
+        this._domainEvents.add(event)
     }
 
     fun changePassword(newPassword: Password): User {
@@ -41,12 +46,21 @@ data class User(
         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
 
         val updatedUser = this.copy(
-            password = newPassword, // Assume newPassword is already encoded if needed
+            id = this.id,
+            username = this.username,
+            password = newPassword, 
+            email = this.email,
+            name = this.name,
+            phoneNumber = this.phoneNumber,
+            userType = this.userType,
+            status = this.status,
+            addresses = this.addresses,
+            defaultAddressId = this.defaultAddressId,
             version = this.version + 1,
-            updatedAt = Instant.now(),
-            eventsInternal = this.eventsInternal.toMutableList() // Rule 18: Copy events
+            createdAt = this.createdAt,
+            updatedAt = Instant.now()
         )
-        updatedUser.addDomainEventInternal(UserEvent.PasswordChanged(userId = this.id, changedAt = updatedUser.updatedAt))
+        updatedUser.addDomainEvent(UserEvent.PasswordChanged(userId = this.id, changedAt = updatedUser.updatedAt))
         return updatedUser
     }
 
@@ -54,130 +68,168 @@ data class User(
          if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
 
         val updatedUser = this.copy(
+            id = this.id,
+            username = this.username,
+            password = this.password, 
+            email = this.email,
             name = newName,
             phoneNumber = newPhoneNumber,
+            userType = this.userType,
+            status = this.status,
+            addresses = this.addresses,
+            defaultAddressId = this.defaultAddressId,
             version = this.version + 1,
-            updatedAt = Instant.now(),
-            eventsInternal = this.eventsInternal.toMutableList() // Rule 18: Copy events
+            createdAt = this.createdAt,
+            updatedAt = Instant.now()
         )
-        updatedUser.addDomainEventInternal(UserEvent.ProfileUpdated(userId = this.id, name = newName.value, phoneNumber = newPhoneNumber?.value, updatedAt = updatedUser.updatedAt))
+        updatedUser.addDomainEvent(UserEvent.ProfileUpdated(userId = this.id, name = newName.value, phoneNumber = newPhoneNumber?.value, updatedAt = updatedUser.updatedAt))
         return updatedUser
     }
 
-     fun addAddress(addressData: Address): User {
-         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
-         if (addresses.size >= MAX_ADDRESSES) throw UserDomainException.Address.LimitExceeded(MAX_ADDRESSES)
-         if (addresses.any { it.id == addressData.id }) throw UserDomainException.Address.DuplicateAddressId(addressData.id.value.toString())
+    fun addAddress(addressData: Address): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        if (addresses.size >= User.MAX_ADDRESSES) throw UserDomainException.Address.LimitExceeded(User.MAX_ADDRESSES)
+        if (addresses.any { it.addressId == addressData.addressId }) throw UserDomainException.Address.DuplicateAddressId(addressData.addressId.value.toString())
 
-         val newAddresses = addresses + addressData
-         // If new address is default, unset others. If no default exists, set new one as default.
-         val newDefaultAddressId = if (addressData.isDefault) addressData.id else if (this.defaultAddressId == null) addressData.id else this.defaultAddressId
+        val newAddresses = addresses + addressData
+        val newDefaultAddressId = if (addressData.isDefault) addressData.id else if (this.defaultAddressId == null) addressData.id else this.defaultAddressId
 
-         val finalAddresses = newAddresses.map { addr ->
-             if (addr.id == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
-         }
+        val finalAddresses = newAddresses.map { addr ->
+            if (addr.id == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
+        }
 
+        val updatedUser = this.copy(
+            id = this.id,
+            username = this.username,
+            password = this.password, 
+            email = this.email,
+            name = this.name,
+            phoneNumber = this.phoneNumber,
+            userType = this.userType,
+            status = this.status,
+            addresses = finalAddresses,
+            defaultAddressId = newDefaultAddressId,
+            version = this.version + 1,
+            createdAt = this.createdAt,
+            updatedAt = Instant.now()
+        )
 
-         val updatedUser = this.copy(
-             addresses = finalAddresses,
-             defaultAddressId = newDefaultAddressId,
-             version = this.version + 1,
-             updatedAt = Instant.now(),
-             eventsInternal = this.eventsInternal.toMutableList() // Rule 18: Copy events
-         )
+        updatedUser.addDomainEvent(
+            UserEvent.AddressAdded(
+                userId = this.id,
+                address = addressData.toData(), 
+                addedAt = updatedUser.updatedAt
+            )
+        )
+        return updatedUser
+    }
 
-         updatedUser.addDomainEventInternal(
-             UserEvent.AddressAdded(
-                 userId = this.id,
-                 address = addressData.toData(), // Assuming toData() exists in Address Entity
-                 addedAt = updatedUser.updatedAt
-             )
-         )
-         return updatedUser
-     }
+    fun updateAddress(addressId: AddressId, updatedAddressData: Address): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        if (addressId != updatedAddressData.id) throw UserDomainException.Address.IdMismatch(addressId.value.toString(), updatedAddressData.id.value.toString())
 
-     fun updateAddress(addressId: AddressId, updatedAddressData: Address): User {
-         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
-         if (addressId != updatedAddressData.id) throw UserDomainException.Address.IdMismatch(addressId.value.toString(), updatedAddressData.id.value.toString())
+        val addressIndex = addresses.indexOfFirst { it.id == addressId }
+        if (addressIndex == -1) throw UserDomainException.Address.NotFound(addressId.value.toString())
 
-         val addressIndex = addresses.indexOfFirst { it.id == addressId }
-         if (addressIndex == -1) throw UserDomainException.Address.NotFound(addressId.value.toString())
+        val newAddresses = addresses.toMutableList()
+        newAddresses[addressIndex] = updatedAddressData
 
-         val newAddresses = addresses.toMutableList()
-         newAddresses[addressIndex] = updatedAddressData
+        // Determine the new default ID
+        val newDefaultAddressId = if (updatedAddressData.isDefault) {
+            updatedAddressData.id // New one is default
+        } else if (defaultAddressId == addressId) {
+            // Default is being updated and is no longer default, pick another if possible
+            newAddresses.filterNot { it.id == addressId }.firstOrNull()?.id
+        } else {
+            defaultAddressId // Keep the old default
+        }
 
-         // Determine the new default ID
-         val newDefaultAddressId = if (updatedAddressData.isDefault) {
-             updatedAddressData.id // New one is default
-         } else if (defaultAddressId == addressId) {
-             // Default is being updated and is no longer default, pick another if possible
-             newAddresses.filterNot { it.id == addressId }.firstOrNull()?.id
-         } else {
-             defaultAddressId // Keep the old default
-         }
+        // Ensure only one default address
+        val finalAddresses = newAddresses.map { addr ->
+            if (addr.id == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
+        }
 
-         // Ensure only one default address
-          val finalAddresses = newAddresses.map { addr ->
-              if (addr.id == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
-          }
+        val updatedUser = this.copy(
+            id = this.id,
+            username = this.username,
+            password = this.password, 
+            email = this.email,
+            name = this.name,
+            phoneNumber = this.phoneNumber,
+            userType = this.userType,
+            status = this.status,
+            addresses = finalAddresses,
+            defaultAddressId = newDefaultAddressId,
+            version = this.version + 1,
+            createdAt = this.createdAt,
+            updatedAt = Instant.now()
+        )
 
-         val updatedUser = this.copy(
-             addresses = finalAddresses.toList(),
-             defaultAddressId = newDefaultAddressId,
-             version = this.version + 1,
-             updatedAt = Instant.now(),
-             eventsInternal = this.eventsInternal.toMutableList() // Rule 18: Copy events
-         )
+        updatedUser.addDomainEvent(
+            UserEvent.AddressUpdated(
+                userId = this.id,
+                address = updatedAddressData.toData(), 
+                updatedAt = updatedUser.updatedAt
+            )
+        )
+        return updatedUser
+    }
 
-         updatedUser.addDomainEventInternal(
-             UserEvent.AddressUpdated(
-                 userId = this.id,
-                 address = updatedAddressData.toData(), // Assuming toData() exists
-                 updatedAt = updatedUser.updatedAt
-             )
-         )
-         return updatedUser
-     }
+    fun deleteAddress(addressId: AddressId): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        val addressToRemove = addresses.find { it.id == addressId }
+            ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
 
+        if (addresses.size == 1) throw UserDomainException.Address.CannotDeleteLast()
+        if (addressToRemove.isDefault) throw UserDomainException.Address.CannotDeleteDefault()
 
-     fun deleteAddress(addressId: AddressId): User {
-         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
-         val addressToRemove = addresses.find { it.id == addressId }
-             ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
+        val remainingAddresses = addresses.filterNot { it.id == addressId }
 
-         if (addresses.size == 1) throw UserDomainException.Address.CannotDeleteLast()
-         if (addressToRemove.isDefault) throw UserDomainException.Address.CannotDeleteDefault()
-
-         val remainingAddresses = addresses.filterNot { it.id == addressId }
-
-         val updatedUser = this.copy(
-             addresses = remainingAddresses,
-             // defaultAddressId remains the same as we cannot delete the default
-             version = this.version + 1,
-             updatedAt = Instant.now(),
-             eventsInternal = this.eventsInternal.toMutableList() // Rule 18: Copy events
-         )
-         updatedUser.addDomainEventInternal(
-             UserEvent.AddressDeleted(
-                 userId = this.id,
-                 addressId = addressId.value.toString(),
-                 deletedAt = updatedUser.updatedAt
-             )
-         )
-         return updatedUser
-     }
+        val updatedUser = this.copy(
+            id = this.id,
+            username = this.username,
+            password = this.password, 
+            email = this.email,
+            name = this.name,
+            phoneNumber = this.phoneNumber,
+            userType = this.userType,
+            status = this.status,
+            addresses = remainingAddresses,
+            defaultAddressId = this.defaultAddressId,
+            version = this.version + 1,
+            createdAt = this.createdAt,
+            updatedAt = Instant.now()
+        )
+        updatedUser.addDomainEvent(
+            UserEvent.AddressDeleted(
+                userId = this.id,
+                addressId = addressId.value.toString(),
+                deletedAt = updatedUser.updatedAt
+            )
+        )
+        return updatedUser
+    }
 
     fun withdraw(): User {
         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
         if (userType == UserType.ADMIN) throw UserDomainException.User.AdminCannotBeWithdrawn()
 
         val updatedUser = this.copy(
+            id = this.id,
+            username = this.username,
+            password = this.password, 
+            email = this.email,
+            name = this.name,
+            phoneNumber = this.phoneNumber,
+            userType = this.userType,
             status = UserStatus.WITHDRAWN,
+            addresses = this.addresses,
+            defaultAddressId = this.defaultAddressId,
             version = this.version + 1,
-            updatedAt = Instant.now(),
-            eventsInternal = this.eventsInternal.toMutableList() // Rule 18: Copy events
+            createdAt = this.createdAt,
+            updatedAt = Instant.now()
         )
-        updatedUser.addDomainEventInternal(UserEvent.Withdrawn(userId = this.id, withdrawnAt = updatedUser.updatedAt))
+        updatedUser.addDomainEvent(UserEvent.Withdrawn(userId = this.id, withdrawnAt = updatedUser.updatedAt))
         return updatedUser
     }
 
@@ -185,17 +237,8 @@ data class User(
         return this.status == UserStatus.ACTIVE
     }
 
-    // Rule 18: Internal helper to add events
-    internal fun addDomainEventInternal(event: DomainEvent) {
-        this.eventsInternal.add(event)
-    }
-
-    // Rule 18: Implementation for AggregateRoot interface
-    override fun getDomainEvents(): List<DomainEvent> = eventsInternal.toList()
-    override fun clearDomainEvents() = eventsInternal.clear()
-
     companion object {
-        private const val MAX_ADDRESSES = 5
+        const val MAX_ADDRESSES = 5
 
         // Rule 16: Create factory method
         fun create(
@@ -220,7 +263,6 @@ data class User(
                  if (addr.id == defaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
              }
 
-
             val user = User(
                 id = id,
                 username = username,
@@ -237,7 +279,7 @@ data class User(
                 version = 0L // Initial version
             )
             // Rule 16, 18: Add creation event
-            user.addDomainEventInternal(UserEvent.Created(
+            user.addDomainEvent(UserEvent.Created(
                 userId = id,
                 username = username.value,
                 email = email.value,
@@ -245,7 +287,6 @@ data class User(
                 phoneNumber = phoneNumber?.value,
                 userType = userType.name, // Send enum name
                 registeredAt = user.createdAt
-                // address data can be added if needed
             ))
             return user
         }
@@ -279,8 +320,7 @@ data class User(
                 defaultAddressId = defaultAddressId,
                 version = version,
                 createdAt = createdAt,
-                updatedAt = updatedAt,
-                eventsInternal = mutableListOf() // Rule 16: Events are cleared on reconstitution
+                updatedAt = updatedAt
             )
         }
     }

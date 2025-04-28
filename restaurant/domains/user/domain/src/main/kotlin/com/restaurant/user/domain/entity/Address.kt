@@ -2,6 +2,7 @@ package com.restaurant.user.domain.entity
 
 import com.restaurant.user.domain.event.UserEvent
 import com.restaurant.user.domain.exception.UserDomainException
+
 import com.restaurant.user.domain.vo.AddressId
 import java.time.Instant
 
@@ -50,7 +51,7 @@ data class Address private constructor(
     /**
      * Converts Address entity to AddressData DTO for domain events.
      */
-    fun toData(): UserEvent.AddressData = // Added as per instruction
+    fun toData(): UserEvent.AddressData = 
         UserEvent.AddressData(
             addressId = this.addressId.value.toString(),
             street = this.street,
@@ -100,7 +101,7 @@ data class Address private constructor(
             version: Long
         ): Address {
             // No validation needed on reconstitute, assuming data is valid
-            return Address(addressId, street, detail, zipCode, isDefault, createdAt, updatedAt, version)
+            return Address(id, street, detail, zipCode, isDefault, createdAt, updatedAt, version)
         }
     }
 

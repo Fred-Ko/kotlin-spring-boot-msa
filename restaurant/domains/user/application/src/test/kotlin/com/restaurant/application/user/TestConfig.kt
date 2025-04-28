@@ -1,11 +1,11 @@
 package com.restaurant.application.user
 
-import com.restaurant.user.application.handler.ChangePasswordCommandHandler
-import com.restaurant.user.application.handler.DeleteUserCommandHandler
-import com.restaurant.user.application.handler.GetUserProfileQueryHandler
-import com.restaurant.user.application.handler.LoginCommandHandler
-import com.restaurant.user.application.handler.RegisterUserCommandHandler
-import com.restaurant.user.application.handler.UpdateProfileCommandHandler
+import com.restaurant.user.application.usecase.ChangePasswordCommandHandler
+import com.restaurant.user.application.usecase.DeleteUserCommandHandler
+import com.restaurant.user.application.usecase.GetUserProfileQueryHandler
+import com.restaurant.user.application.usecase.LoginCommandHandler
+import com.restaurant.user.application.usecase.RegisterUserCommandHandler
+import com.restaurant.user.application.usecase.UpdateProfileCommandHandler
 import com.restaurant.user.domain.repository.UserRepository
 import org.mockito.Mockito
 import org.springframework.boot.autoconfigure.SpringBootApplication

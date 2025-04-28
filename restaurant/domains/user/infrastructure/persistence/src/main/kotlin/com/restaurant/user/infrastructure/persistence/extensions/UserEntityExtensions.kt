@@ -4,7 +4,8 @@ import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.aggregate.UserStatus
 import com.restaurant.user.domain.aggregate.UserType
 import com.restaurant.user.domain.entity.Address
-import com.restaurant.user.domain.vo.*
+import com.restaurant.user.domain.vo.AddressId
+import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.infrastructure.persistence.entity.AddressEntity
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 import java.util.stream.Collectors

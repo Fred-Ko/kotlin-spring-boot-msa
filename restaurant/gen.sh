@@ -109,6 +109,7 @@ echo -e "==============================================================" >>$OUTP
 - 파일을 생성 할때는 위치가 올바른지 확인하기 위해서 파일 구조도를 참고하도록 한다.
 - 이동으로 처리할 일을 삭제후 생성으로 처리하지 말아라.
 - 의존성 버전은 항상 tools 이용해서 최신 스테이블 버전을 활용하도록 한다.
+- 확인하고 싶은 디렉토리 구조가 있다면 tree 명령어로 최대한 효율적이게 진행하라. 단 bin,build 는 제외한다.
 ```
 EOF
 echo -e "\n--------------------------------------------------------------------\n\n" >>$OUTPUT_FILE
@@ -137,23 +138,29 @@ echo -e "==============================================================\n" >>$OU
 
 echo -e "\n==============================================================" >>$OUTPUT_FILE
 echo -e "\n# Project Structure\n" >>$OUTPUT_FILE
-tree domains independent \
+tree domains independent apps \
   -I 'build|bin|test' \
   -P '*.kt|*.kts|*.gradle' \
   >>$OUTPUT_FILE
 echo -e "==============================================================\n\n" >>$OUTPUT_FILE
 
 # Collect and append Kotlin/Gradle files with enhanced separators
-find domains/user domains/common settings.gradle.kts build.gradle.kts \
+find domains/user domains/common settings.gradle.kts build.gradle.kts apps independent \
   -type d \( -name build -o -name bin -o -name test \) -prune -o \
-  -type f \( -name "*.kt" -o -name "*.kts" -o -name "*.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle.kts" \) -print |
-  sort -u |
-  while read -r file; do
+  -type f \( -name "*.kt" -o -name "*.kts" -o -name "*.gradle" -o -name "settings.gradle.kts" -o -name "build.gradle.kts" \) -print | \
+  sort -u | \
+  while IFS= read -r file; do
     {
       echo -e "\n\n===================================================================="
       echo -e " File: $file"
-      echo -e " Path: $(realpath --relative-to=. "$file")"
-      echo -e " Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
+      # Use realpath if available, fallback to readlink -f for compatibility
+      if command -v realpath >/dev/null 2>&1; then
+        echo -e " Path: $(realpath --relative-to=. "$file" 2>/dev/null || echo "$file")"
+      else
+        echo -e " Path: $(readlink -f "$file" 2>/dev/null || echo "$file")"
+      fi
+      # Use portable date format
+      echo -e " Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S')"
       echo -e "===================================================================="
       cat "$file"
       echo -e "\n--------------------------------------------------------------------\n"

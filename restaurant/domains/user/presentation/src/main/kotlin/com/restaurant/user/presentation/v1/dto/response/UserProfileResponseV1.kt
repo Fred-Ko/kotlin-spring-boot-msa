@@ -34,4 +34,6 @@ data class UserProfileResponseV1(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
     @Schema(description = "계정 최종 수정 시간", example = "2023-01-01 12:00:00")
     val updatedAt: Instant,
+    val status: String,
+    val version: Long,
 ) : RepresentationModel<UserProfileResponseV1>() // Inherit from RepresentationModel

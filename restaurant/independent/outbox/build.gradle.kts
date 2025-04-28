@@ -1,20 +1,24 @@
 plugins {
-    // REMOVED: Plugins should be applied in submodules (port, internal, infrastructure) where needed
-    // id("org.jetbrains.kotlin.plugin.jpa")
-    // id("org.jetbrains.kotlin.plugin.allopen")
-    // id("org.jetbrains.kotlin.plugin.noarg")
-    kotlin("jvm") // Keep JVM plugin if common config applied here
+    kotlin("jvm")
+    kotlin("plugin.jpa")
+    kotlin("plugin.allopen")
+    `java-library`
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.persistence.MappedSuperclass")
 }
 
 dependencies {
     // REMOVED: Dependencies belong in submodules
     // implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     // implementation("org.springframework.kafka:spring-kafka")
-    // implementation("org.springframework:spring-context-support")
-    // implementation("jakarta.persistence:jakarta.persistence-api")
-    // implementation("com.fasterxml.jackson.core:jackson-databind")
-    // runtimeOnly("com.h2database:h2")
-    // runtimeOnly("org.postgresql:postgresql")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.5")
+    implementation("org.springframework.kafka:spring-kafka:3.1.2")
+    runtimeOnly("com.h2database:h2:2.2.224")
+    runtimeOnly("org.postgresql:postgresql:42.7.3")
     // testImplementation("org.springframework.boot:spring-boot-starter-test")
     // testImplementation("org.springframework.kafka:spring-kafka-test")
     // testImplementation("org.testcontainers:junit-jupiter")
@@ -31,4 +35,4 @@ dependencies {
 //
 // noArg {
 //     annotation("jakarta.persistence.Entity")
-// } 
+// }

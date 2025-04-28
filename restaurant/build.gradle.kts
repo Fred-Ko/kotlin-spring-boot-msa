@@ -7,91 +7,48 @@ import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.VersionCatalogsExtension
 
 plugins {
-    alias(libs.plugins.kotlin.jvm) apply false
-    alias(libs.plugins.kotlin.spring) apply false
-    alias(libs.plugins.kotlin.jpa) apply false
-    alias(libs.plugins.kotlin.serialization) apply false
-    alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.spring.dependency.management) apply false
-    alias(libs.plugins.ktlint) apply false
+    id("org.jetbrains.kotlin.jvm") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.jpa") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.allopen") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.spring") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20" apply false
+    id("org.springframework.boot") version "3.3.5" apply false
+    id("io.spring.dependency-management") version "1.1.6" apply false
 }
 
 apply(plugin = "io.spring.dependency-management")
-// apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-// Root dependencies - comment out ktlint dependency
-/* // Comment out ktlint dependency block
-dependencies {
-    add("ktlint", "com.pinterest.ktlint:ktlint-cli:12.1.1")
-}
-*/
-
-// Resolve ktlint version string at root level - Comment out
-// val ktlintVersion = libs.versions.ktlintGradle.get()
 
 configure<DependencyManagementExtension> {
     imports {
         mavenBom(SpringBootPlugin.BOM_COORDINATES)
-        mavenBom(libs.testcontainers.bom.get().toString())
-        mavenBom(libs.kotest.bom.get().toString())
+        mavenBom("org.testcontainers:testcontainers-bom:1.19.7")
+        mavenBom("io.kotest:kotest-bom:5.8.1")
     }
 }
 
 tasks.register("printSubprojects") {
     doLast {
-        println("Root project: ${project.name}")
+        println("Root project: ${'$'}{project.name}")
         subprojects.forEach {
-            println("  Subproject: ${it.name} (Path: ${it.path})")
+            println("  Subproject: ${'$'}{it.name} (Path: ${'$'}{it.path})")
         }
     }
 }
 
-// Comment out ktlint tasks
-/*
-tasks.register("ktlintCheckAll") {
-    group = "verification"
-    description = "Runs ktlint checks on all projects."
-    dependsOn(allprojects.mapNotNull { p -> p.tasks.findByName("ktlintCheck")?.path })
-}
 
-tasks.register("ktlintFormatAll") {
-    group = "formatting"
-    description = "Runs ktlint formatting on all projects."
-    dependsOn(allprojects.mapNotNull { p -> p.tasks.findByName("ktlintFormat")?.path })
-}
-*/
-
-// Configure all projects (including root) individually
 allprojects {
-    // Apply common plugins to all projects
+
     plugins.apply("org.jetbrains.kotlin.jvm")
-    plugins.apply("java-library")
-    // plugins.apply("org.jlleitschuh.gradle.ktlint") // Comment out ktlint plugin apply
 
-    // Apply group and version only to subprojects
     if (project != rootProject) {
-    group = "com.restaurant"
-    version = "0.0.1-SNAPSHOT"
+        group = "com.restaurant"
+        version = "0.0.1-SNAPSHOT"
     }
 
-    // Comment out ktlint configuration
-    /*
-    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-        version.set(ktlintVersion) // ktlintVersion is commented out
-        debug.set(true)
-        verbose.set(true)
-        android.set(false)
-        outputToConsole.set(true)
-        filter {
-            // EXPLICITLY REMOVE CONTENT INSIDE filter {}
-        }
-    }
-    */
-
-    // Configure tasks for all projects
     tasks.withType<KotlinCompile> {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
             freeCompilerArgs.add("-Xjsr305=strict")
         }
     }
@@ -102,35 +59,26 @@ allprojects {
             events("passed", "skipped", "failed")
         }
     }
-
-    // Default task configurations for subprojects (can be overridden)
-    if (project != rootProject) {
-    tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
-        enabled = false
-    }
-    tasks.withType<Jar> {
-        enabled = true
-        }
-    }
 }
 
-// Configure common dependencies for subprojects individually AFTER applying plugins
+
+
 subprojects.forEach { subproject ->
     subproject.dependencies {
-        add("api", libs.kotlin.stdlib)
-        add("api", libs.kotlin.reflect)
-        add("api", libs.slf4j.api)
-        add("implementation", libs.kotlin.logging.jvm)
-        add("implementation", libs.jackson.module.kotlin)
-        add("implementation", libs.jackson.datatype.jsr310)
+        add("api", "org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
+        add("api", "org.jetbrains.kotlin:kotlin-reflect:1.9.24")
+        add("api", "org.slf4j:slf4j-api:2.0.13")
+        add("implementation", "io.github.microutils:kotlin-logging-jvm:3.0.5")
+        add("implementation", "com.fasterxml.jackson.module:jackson-module-kotlin:2.17.1")
+        add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1")
 
-        add("testImplementation", libs.kotest.runner.junit5)
-        add("testImplementation", libs.kotest.assertions.core)
-        add("testImplementation", libs.mockk)
-        add("testImplementation", libs.mockito.kotlin)
-        add("testImplementation", libs.assertj.core)
-        add("testImplementation", libs.kotlin.test)
-        add("testImplementation", libs.spring.boot.starter.test)
+        add("testImplementation", "io.kotest:kotest-runner-junit5:5.8.1")
+        add("testImplementation", "io.kotest:kotest-assertions-core:5.8.1")
+        add("testImplementation", "io.mockk:mockk:1.13.10")
+        add("testImplementation", "org.mockito.kotlin:mockito-kotlin:5.3.1")
+        add("testImplementation", "org.assertj:assertj-core:3.25.3")
+        add("testImplementation", "org.jetbrains.kotlin:kotlin-test:1.9.24")
+        add("testImplementation", "org.springframework.boot:spring-boot-starter-test:3.3.5")
     }
 
     subproject.configurations.getByName("testImplementation").withDependencies {

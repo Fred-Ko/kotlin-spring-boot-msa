@@ -1,18 +1,18 @@
 plugins {
-    // kotlin("jvm") // Provided by subprojects block
-    alias(libs.plugins.kotlin.spring) // Apply spring plugin
+    kotlin("jvm")
+    `java-library`
 }
 
 dependencies {
     // Keep module-specific dependencies
     implementation(project(":domains:user:application"))
-    implementation(project(":config"))
+    implementation(project(":domains:common"))
 
     // Keep presentation-specific dependencies
-    implementation(libs.spring.boot.starter.web) // Use alias
-    implementation(libs.spring.boot.starter.hateoas) // Use alias
-    implementation(libs.spring.boot.starter.validation) // Use alias
-    implementation(libs.springdoc.openapi.starter.webmvc.ui) // Use alias
+    implementation("org.springframework.boot:spring-boot-starter-web:3.3.5")
+    implementation("org.springframework.boot:spring-boot-starter-hateoas:3.3.5")
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.3.5")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
 
     // Common dependencies (kotlin, slf4j, jackson, test deps) are handled by subprojects block
     // implementation(libs.kotlin.stdlib)

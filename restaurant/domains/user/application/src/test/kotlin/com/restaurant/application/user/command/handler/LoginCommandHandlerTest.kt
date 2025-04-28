@@ -3,7 +3,6 @@ package com.restaurant.application.user.handler
 import com.restaurant.user.application.TestConfig
 import com.restaurant.user.application.common.UserErrorCode
 import com.restaurant.user.application.dto.command.LoginCommand
-import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
