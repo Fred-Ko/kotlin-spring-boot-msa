@@ -10,10 +10,10 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import java.time.Instant
-import java.util.UUID
-import java.util.Objects
 import jakarta.persistence.Version
+import java.time.Instant
+import java.util.Objects
+import java.util.UUID
 
 @Entity
 @Table(name = "addresses")
@@ -21,33 +21,24 @@ class AddressEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-
     @Column(name = "address_id", unique = true, nullable = false, updatable = false)
     val addressId: UUID = UUID.randomUUID(),
-
     @Column(nullable = false)
     var street: String,
-
     @Column(nullable = false)
     var detail: String,
-
     @Column(nullable = false, length = 10)
     var zipCode: String,
-
     @Column(nullable = false)
     var isDefault: Boolean = false,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     var user: UserEntity? = null,
-
     @Version
     @Column(nullable = false)
     val version: Long = 0L,
-
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
-
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now(),
 ) : BaseEntity() {

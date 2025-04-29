@@ -1,8 +1,22 @@
+/*
+ * Copyright (c) 2025 junoko. All rights reserved.
+ *
+ * This file is part of the user-app module.
+ */
+
 plugins {
     id("org.springframework.boot") version "3.3.5"
     id("io.spring.dependency-management") version "1.1.6"
     kotlin("jvm")
     kotlin("plugin.spring")
+}
+
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "21"
+    }
 }
 
 dependencies {
@@ -13,6 +27,7 @@ dependencies {
     implementation(project(":domains:user:infrastructure:persistence"))
     implementation(project(":domains:user:infrastructure:messaging"))
     implementation(project(":independent:outbox"))
+    implementation("org.apache.avro:avro:1.11.3")
 
     // Spring Boot Starter Web
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.5")

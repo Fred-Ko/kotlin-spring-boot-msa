@@ -55,29 +55,5 @@ sealed class OutboxException(
         cause: Throwable? = null,
     ) : OutboxException(errorCode, message, cause)
 
-    /**
-     * 메시지 폴링 관련 예외 (Removed - Use more specific exceptions like DatabaseOperationException)
-     */
-    // class PollingException(
-    //     override val message: String,
-    //     cause: Throwable? = null,
-    // ) : OutboxException(OutboxErrorCode.UNEXPECTED_INFRA_ERROR, message, cause)
-
-    /**
-     * 메시지 전송 관련 예외 (Removed - Use KafkaProducerException)
-     */
-    // class MessageSendException(
-    //     override val message: String,
-    //     cause: Throwable? = null,
-    // ) : OutboxException(OutboxErrorCode.KAFKA_PRODUCER_ERROR, message, cause)
-
-    /**
-     * 최대 재시도 횟수 초과 예외 (Removed - Let poller handle retry logic state)
-     */
-    // class MaxRetriesExceededException(
-    //     override val message: String,
-    //     cause: Throwable? = null,
-    // ) : OutboxException(OutboxErrorCode.UNEXPECTED_INFRA_ERROR, message, cause)
-
     // Removed duplicated simple data class exceptions (SerializationFailed, etc.)
 }

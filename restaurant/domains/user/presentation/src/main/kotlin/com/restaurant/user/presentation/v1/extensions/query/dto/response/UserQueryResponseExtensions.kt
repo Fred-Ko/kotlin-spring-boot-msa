@@ -11,7 +11,8 @@ import java.util.UUID
 
 // UserProfileDto -> UserProfileResponseV1 변환
 fun UserProfileDto.toResponseV1(): UserProfileResponseV1 {
-    val userId = this.id // Assuming UserProfileDto has 'id' which is the UUID string
+    // Assuming UserProfileDto has 'id' which is the UUID string
+    val userId = this.id
     val userUuid = UUID.fromString(userId)
 
     // Use correct Controller classes for links
@@ -36,7 +37,8 @@ fun UserProfileDto.toResponseV1(): UserProfileResponseV1 {
         status = this.status,
         version = this.version, // Keep as Instant or format as needed
         updatedAt = this.updatedAt, // Keep as Instant or format as needed
-        addresses = this.addresses.map { it.toResponseV1() }, // Use correct function name
+        // Use correct function name
+        addresses = this.addresses.map { it.toResponseV1() },
     ).apply {
         // Add relevant links
         add(selfLink, updateProfileLink, changePasswordLink, deleteUserLink)
@@ -50,7 +52,8 @@ fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 {
     // val updateLink = linkTo(methodOn(UserAddressController::class.java).updateAddress(userId, addressId, null)).withRel("update")
     // val deleteLink = linkTo(methodOn(UserAddressController::class.java).deleteAddress(userId, addressId)).withRel("delete")
     return AddressResponseV1(
-        id = this.id, // Use correct field name 'id' from DTO
+        // Use correct field name 'id' from DTO
+        id = this.id,
         street = this.street,
         detail = this.detail,
         zipCode = this.zipCode,

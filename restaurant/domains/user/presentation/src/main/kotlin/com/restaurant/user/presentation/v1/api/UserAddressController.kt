@@ -18,10 +18,9 @@ import org.slf4j.MDC
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -47,10 +46,11 @@ class UserAddressController(
         registerAddressUseCase.handle(command)
 
         val correlationId = MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC_KEY) ?: "unknown"
-        val response = CommandResultResponse(
-            message = "주소 등록 성공",
-            correlationId = correlationId,
-        )
+        val response =
+            CommandResultResponse(
+                message = "주소 등록 성공",
+                correlationId = correlationId,
+            )
 
         response.add(linkTo(methodOn(UserAddressController::class.java).registerAddress(userId, request)).withSelfRel())
 
@@ -71,10 +71,11 @@ class UserAddressController(
         val command = request.toCommand(userId, addressId)
         updateAddressUseCase.handle(command)
 
-        val response = CommandResultResponse(
-            message = "주소 수정 성공",
-            correlationId = correlationId,
-        )
+        val response =
+            CommandResultResponse(
+                message = "주소 수정 성공",
+                correlationId = correlationId,
+            )
         response.add(linkTo(methodOn(UserAddressController::class.java).updateAddress(userId, addressId, request)).withSelfRel())
 
         log.info { "Address $addressId updated for userId: $userId" }
@@ -93,10 +94,11 @@ class UserAddressController(
         val command = DeleteAddressCommand(userId = userId, addressId = addressId)
         deleteAddressUseCase.handle(command)
 
-        val response = CommandResultResponse(
-            message = "주소 삭제 성공",
-            correlationId = correlationId,
-        )
+        val response =
+            CommandResultResponse(
+                message = "주소 삭제 성공",
+                correlationId = correlationId,
+            )
         response.add(linkTo(methodOn(UserAddressController::class.java).deleteAddress(userId, addressId)).withSelfRel())
 
         log.info { "Address $addressId deleted for userId: $userId" }

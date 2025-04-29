@@ -1,131 +1,141 @@
 package com.restaurant.user.infrastructure.messaging.serialization
 
-import com.restaurant.common.config.filter.CorrelationIdFilter
 import com.restaurant.common.domain.event.DomainEvent
-import com.restaurant.common.infrastructure.avro.dto.Envelope
-import com.restaurant.outbox.application.port.model.OutboxMessage
+import com.restaurant.common.infrastructure.avro.Envelope
+import com.restaurant.outbox.port.model.OutboxMessage
 import com.restaurant.user.domain.event.UserEvent
-import com.restaurant.user.infrastructure.avro.dto.UserCreatedAvro
-import com.restaurant.user.infrastructure.avro.dto.UserUpdatedAvro
-import com.restaurant.user.infrastructure.avro.dto.UserDeletedAvro
-import io.github.avro4k.Avro
+import com.restaurant.user.infrastructure.messaging.avro.event.UserCreated
 import mu.KotlinLogging
-import kotlinx.serialization.serializer
+import org.apache.avro.io.BinaryEncoder
+import org.apache.avro.io.DatumWriter
+import org.apache.avro.io.EncoderFactory
+import org.apache.avro.specific.SpecificDatumWriter
+import org.apache.avro.specific.SpecificRecordBase
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.UUID
+import java.io.ByteArrayOutputStream
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserUpdated (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserDeleted (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserPasswordChanged (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserProfileUpdated (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserAddressAdded (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserAddressUpdated (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserAddressDeleted (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.UserWithdrawn (추가 스키마 생성 시 적용)
+// import com.restaurant.user.infrastructure.messaging.avro.event.AddressData (추가 스키마 생성 시 적용)
 
 private val log = KotlinLogging.logger {}
 
 @Component
 class OutboxMessageFactory(
     // Inject Kafka topic name from application properties
-    @Value("\${kafka.topics.user-event:dev.user.domain-event.user.v1}") private val userEventTopic: String
+    @Value("\${kafka.topics.user-event:dev.user.domain-event.user.v1}") private val userEventTopic: String,
 ) {
-    // Default Avro instance configured for avro4k
-    private val avro = Avro.default
-
     /**
      * Creates a list of OutboxMessage objects from a single DomainEvent.
      * Typically, one event results in one message, but allows for future flexibility.
      */
-    fun createMessagesFromEvent(event: DomainEvent, correlationId: String): List<OutboxMessage> {
+    fun createMessagesFromEvent(
+        event: DomainEvent,
+        correlationId: String,
+    ): List<OutboxMessage> {
         // Ensure the event is a UserEvent before processing
-        val userEvent = event as? UserEvent ?: run {
-            log.warn { "Received non-UserEvent domain event type: ${event::class.simpleName}. Skipping outbox message creation." }
-            return emptyList()
-        }
+        val userEvent =
+            event as? UserEvent ?: run {
+                log.warn { "Received non-UserEvent domain event type: ${event::class.simpleName}. Skipping outbox message creation." }
+                return emptyList()
+            }
 
-        // 1. Map DomainEvent to specific Avro Payload DTO
-        val payloadDto: Any = mapToAvroPayloadDto(userEvent) ?: run {
-             log.error { "Failed to map domain event to Avro DTO for event: ${userEvent::class.simpleName}, aggregateId: ${userEvent.aggregateId}" }
-             return emptyList() // Or handle error appropriately
-        }
+        // 1. Map DomainEvent to specific Avro Payload DTO (generated Java class)
+        val payloadDto: SpecificRecordBase =
+            mapToAvroPayloadDto(userEvent) ?: run {
+                log.error {
+                    "Failed to map domain event to Avro DTO for event: " +
+                        "${userEvent::class.simpleName}, aggregateId: ${userEvent.aggregateId}"
+                }
+                return emptyList() // Or handle error appropriately
+            }
 
-        // 2. Serialize the specific Avro Payload DTO to ByteArray
-        val payloadBytes: ByteArray = serializePayload(payloadDto) ?: run {
-            log.error { "Failed to serialize Avro payload DTO for event: ${userEvent::class.simpleName}, aggregateId: ${userEvent.aggregateId}" }
-             return emptyList() // Or handle error appropriately
-        }
+        // 2. Serialize the specific Avro Payload DTO to ByteArray (Apache Avro Java API)
+        val payloadBytes: ByteArray =
+            serializePayload(payloadDto) ?: run {
+                log.error {
+                    "Failed to serialize Avro payload DTO for event: " +
+                        "${userEvent::class.simpleName}, " +
+                        "aggregateId: ${userEvent.aggregateId}"
+                }
+                return emptyList()
+            }
 
-        // 3. Create the Envelope DTO (without payload initially)
-        // Note: Envelope schema version might need a more robust strategy
-        val schemaVersion = payloadDto::class.simpleName + "_V1" // Example versioning
-        val envelope = Envelope(
-            schemaVersion = schemaVersion,
-            eventId = correlationId, // Use correlationId as eventId for tracing
-            timestamp = userEvent.occurredAt, // From DomainEvent
-            source = "user", // Hardcoded domain source for this factory
-            aggregateType = userEvent.aggregateType, // From DomainEvent
-            aggregateId = userEvent.aggregateId // From DomainEvent (usually String UUID)
-            // payload = payloadBytes // Payload is NOT part of the Avro Envelope DTO itself per Rule 113
-        )
-
-        // 4. Serialize the Envelope DTO to ByteArray (this will be the final Kafka message payload)
-        // This step seems redundant if the goal is to send the *payloadBytes* created in step 2
-        // wrapped in an OUTBOX message structure.
-        // Rule 85 says: "Envelope DTO와 이벤트 DTO를 조합하여 ... 최종 Kafka 메시지가 될 raw payload bytes (ByteArray)를 생성합니다"
-        // Rule 83 OutboxEventEntity: "이벤트 payload (바이트 배열 ByteArray)"
-        // Rule 81 OutboxMessage DTO: "raw payload bytes ByteArray"
-        // This implies the Outbox stores the *payload* bytes (step 2), NOT the envelope bytes.
-        // The Envelope information should likely go into the OutboxMessage/Entity headers/metadata.
-        // Let's store payloadBytes from step 2 in OutboxMessage.payload.
-        // val finalPayloadBytes = avro.encodeToByteArray(Envelope.serializer(), envelope) // Incorrect based on re-read rules
+        // 3. Create the Envelope DTO (Avro generated constructor)
+        // Avro Envelope 생성 (eventId, timestamp, source, aggregateType, aggregateId)
+        val envelope =
+            Envelope(
+                userEvent.eventId.toString(),
+                userEvent.occurredAt.toEpochMilli(),
+                "user",
+                userEvent.aggregateType,
+                userEvent.aggregateId,
+            )
 
         // 5. Determine the target Kafka topic
         val targetTopic = determineTopic(userEvent)
 
         // 6. Create Kafka message headers (including Envelope metadata)
-        val headers = createHeaders(userEvent, correlationId, envelope)
+        val headers =
+            createHeaders(
+                event = userEvent,
+                correlationId = correlationId,
+                envelope = envelope,
+            )
 
         // 7. Create the OutboxMessage DTO
-        val outboxMessage = OutboxMessage(
-            aggregateId = userEvent.aggregateId,
-            aggregateType = userEvent.aggregateType,
-            eventType = userEvent::class.simpleName ?: "UnknownEvent",
-            payload = payloadBytes, // Use the serialized DTO bytes (Step 2)
-            targetTopic = targetTopic,
-            headers = headers // Include Envelope info here
-        )
+        val outboxMessage =
+            OutboxMessage(
+                payload = payloadBytes,
+                topic = targetTopic,
+                headers = headers,
+                aggregateId = userEvent.aggregateId,
+                aggregateType = userEvent.aggregateType,
+            )
 
         return listOf(outboxMessage)
     }
 
-    // Maps specific UserEvent subtypes to their corresponding Avro DTOs
-    private fun mapToAvroPayloadDto(event: UserEvent): Any? = try {
-        when (event) {
-            is UserEvent.Created -> UserCreatedEventDtoV1(event.userId.value.toString(), event.username, event.email, event.name, event.phoneNumber, event.userType, event.registeredAt)
-            is UserEvent.PasswordChanged -> UserPasswordChangedEventDtoV1(event.userId.value.toString(), event.changedAt)
-            is UserEvent.ProfileUpdated -> UserProfileUpdatedEventDtoV1(event.userId.value.toString(), event.name, event.phoneNumber, event.updatedAt)
-            is UserEvent.AddressAdded -> UserAddressAddedEventDtoV1(event.userId.value.toString(), event.address.toAvroDto(), event.addedAt)
-            is UserEvent.AddressUpdated -> UserAddressUpdatedEventDtoV1(event.userId.value.toString(), event.address.toAvroDto(), event.updatedAt)
-            is UserEvent.AddressDeleted -> UserAddressDeletedEventDtoV1(event.userId.value.toString(), event.addressId, event.deletedAt)
-            is UserEvent.Withdrawn -> UserWithdrawnEventDtoV1(event.userId.value.toString(), event.withdrawnAt)
-            // Add cases for other UserEvent subtypes if they exist
+    // Maps specific UserEvent subtypes to their corresponding generated Avro Java DTOs
+    private fun mapToAvroPayloadDto(event: UserEvent): SpecificRecordBase? =
+        try {
+            when (event) {
+                is UserEvent.Created ->
+                    UserCreated(
+                        event.userId.value.toString(),
+                        event.username,
+                        event.email,
+                        event.name,
+                        event.phoneNumber,
+                        event.registeredAt.toEpochMilli(),
+                    )
+                // TODO: 나머지 이벤트도 Avro Java 클래스 생성 후 동일 패턴으로 작성
+                else -> null
+            }
+        } catch (e: Exception) {
+            log.error(e) { "Error mapping UserEvent to Avro DTO: ${event::class.simpleName}" }
+            null
         }
-    } catch (e: Exception) {
-         log.error(e) { "Error mapping UserEvent to Avro DTO: ${event::class.simpleName}" }
-         null
-    }
 
-    // Serializes the provided Avro DTO object into a ByteArray
-    private fun serializePayload(payloadDto: Any): ByteArray? = try {
-        when(payloadDto) {
-            // Use kx.serialization's serializer() function
-            is UserCreatedEventDtoV1 -> avro.encodeToByteArray(UserCreatedEventDtoV1.serializer(), payloadDto)
-            is UserPasswordChangedEventDtoV1 -> avro.encodeToByteArray(UserPasswordChangedEventDtoV1.serializer(), payloadDto)
-            is UserProfileUpdatedEventDtoV1 -> avro.encodeToByteArray(UserProfileUpdatedEventDtoV1.serializer(), payloadDto)
-            is UserAddressAddedEventDtoV1 -> avro.encodeToByteArray(UserAddressAddedEventDtoV1.serializer(), payloadDto)
-            is UserAddressUpdatedEventDtoV1 -> avro.encodeToByteArray(UserAddressUpdatedEventDtoV1.serializer(), payloadDto)
-            is UserAddressDeletedEventDtoV1 -> avro.encodeToByteArray(UserAddressDeletedEventDtoV1.serializer(), payloadDto)
-            is UserWithdrawnEventDtoV1 -> avro.encodeToByteArray(UserWithdrawnEventDtoV1.serializer(), payloadDto)
-            // Add other DTO types here
-            else -> throw IllegalArgumentException("Cannot serialize unknown Avro DTO type: ${payloadDto::class.simpleName}")
+    // Serializes the provided Avro DTO object into a ByteArray (Apache Avro Java API)
+    private fun serializePayload(payloadDto: SpecificRecordBase): ByteArray? =
+        try {
+            val writer: DatumWriter<SpecificRecordBase> = SpecificDatumWriter(payloadDto.schema)
+            val out = ByteArrayOutputStream()
+            val encoder: BinaryEncoder = EncoderFactory.get().binaryEncoder(out, null)
+            writer.write(payloadDto, encoder)
+            encoder.flush()
+            out.toByteArray()
+        } catch (e: Exception) {
+            log.error(e) { "Failed to serialize Avro payload DTO: ${payloadDto::class.simpleName}" }
+            null
         }
-    } catch (e: Exception) {
-        log.error(e) { "Failed to serialize Avro payload DTO: ${payloadDto::class.simpleName}" }
-        null
-    }
 
     // Determines the Kafka topic based on the event type (simple example)
     private fun determineTopic(event: UserEvent): String {
@@ -134,30 +144,21 @@ class OutboxMessageFactory(
     }
 
     // Creates the headers map for the Kafka message, including Envelope data
-    private fun createHeaders(event: UserEvent, correlationId: String, envelope: Envelope): Map<String, String> {
+    private fun createHeaders(
+        event: UserEvent,
+        correlationId: String,
+        envelope: Envelope,
+    ): Map<String, String> {
         return mapOf(
-            CorrelationIdFilter.CORRELATION_ID_MDC_KEY to correlationId, // Use constant
-            "aggregateId" to event.aggregateId,
-            "aggregateType" to event.aggregateType,
+            "correlationId" to correlationId.toString(),
+            "aggregateId" to event.aggregateId.toString(),
+            "aggregateType" to event.aggregateType.toString(),
             "eventType" to (event::class.simpleName ?: "UnknownEvent"),
-            // Include Envelope fields in headers
-            "envelope_schemaVersion" to envelope.schemaVersion,
-            "envelope_eventId" to envelope.eventId, // This is correlationId again
-            "envelope_timestamp" to envelope.timestamp.toString(), // Convert Instant to String
-            "envelope_source" to envelope.source,
-            "envelope_aggregateType" to envelope.aggregateType, // Duplicates aggregateType?
-            "envelope_aggregateId" to envelope.aggregateId // Duplicates aggregateId?
-            // Consider if duplicating envelope fields in headers is necessary
-        ).filterValues { it != null } // Ensure no null values if any fields are optional
+            "envelope_eventId" to envelope.eventId.toString(),
+            "envelope_timestamp" to envelope.timestamp.toString(),
+            "envelope_source" to envelope.source.toString(),
+            "envelope_aggregateType" to envelope.aggregateType.toString(),
+            "envelope_aggregateId" to envelope.aggregateId.toString(),
+        )
     }
-
-    // Extension function to convert AddressData (from UserEvent) to AddressAvroDto
-    // This should be private or internal to this factory/module
-    private fun UserEvent.AddressData.toAvroDto() = com.restaurant.user.infrastructure.avro.dto.AddressAvroDto(
-        addressId = this.addressId,
-        street = this.street,
-        detail = this.detail,
-        zipCode = this.zipCode,
-        isDefault = this.isDefault
-    )
-} 
+}

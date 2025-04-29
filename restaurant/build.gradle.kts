@@ -1,10 +1,16 @@
+/**
+ * build.gradle.kts for the root project.
+ *
+ * Configures plugins, dependency management, and global build settings.
+ *
+ * @author junoko
+ */
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.springframework.boot.gradle.plugin.SpringBootPlugin
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.artifacts.ExternalModuleDependency
-import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.1.20" apply false
@@ -14,10 +20,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20" apply false
     id("org.springframework.boot") version "3.3.5" apply false
     id("io.spring.dependency-management") version "1.1.6" apply false
+    
 }
 
 apply(plugin = "io.spring.dependency-management")
-
 
 configure<DependencyManagementExtension> {
     imports {
@@ -36,9 +42,7 @@ tasks.register("printSubprojects") {
     }
 }
 
-
 allprojects {
-
     plugins.apply("org.jetbrains.kotlin.jvm")
 
     if (project != rootProject) {
@@ -61,10 +65,7 @@ allprojects {
     }
 }
 
-
-
 subprojects.forEach { subproject ->
-    subproject.plugins.apply("org.jetbrains.kotlin.jvm")
     subproject.plugins.apply("java")
     subproject.extensions.configure(org.gradle.api.plugins.JavaPluginExtension::class.java) {
         toolchain.languageVersion.set(JavaLanguageVersion.of(21))

@@ -1,10 +1,10 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.ChangePasswordCommand
-import com.restaurant.user.application.port.`in`.ChangePasswordUseCase
+import com.restaurant.user.application.port.input.ChangePasswordUseCase
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Password
-import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.vo.UserId
 import mu.KotlinLogging
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -20,7 +20,7 @@ class ChangePasswordCommandHandler(
 ) : ChangePasswordUseCase {
     @Transactional
     override fun changePassword(command: ChangePasswordCommand) {
-        val userId = UserId.fromString(command.userId)
+        val userId = UserId.ofString(command.userId)
         log.info { "Attempting to change password for user: $userId" }
 
         val user =

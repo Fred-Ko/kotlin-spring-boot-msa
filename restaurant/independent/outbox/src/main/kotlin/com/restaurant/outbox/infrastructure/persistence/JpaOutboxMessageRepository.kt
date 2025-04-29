@@ -71,7 +71,9 @@ interface JpaOutboxMessageRepository :
     @Modifying
     @Transactional // Add Transactional for modifying queries
     @Query(
-        "UPDATE OutboxEventEntity o SET o.status = :newStatus, o.retryCount = o.retryCount + 1, o.lastAttemptTime = :now, o.updatedAt = :now WHERE o.id = :id",
+        "UPDATE OutboxEventEntity o SET o.status = :newStatus, " +
+            "o.retryCount = o.retryCount + 1, " +
+            "o.lastAttemptTime = :now, o.updatedAt = :now WHERE o.id = :id",
     )
     fun updateStatusAndIncrementRetry(
         id: UUID,
@@ -97,7 +99,7 @@ interface OutboxMessageRepositoryCustom {
  */
 @Repository("jpaOutboxMessageRepositoryImpl") // Changed bean name slightly for clarity
 class JpaOutboxMessageRepositoryImpl(
-    private val springDataRepo: JpaOutboxMessageRepository, // Inject the composite interface
+    private val springDataRepo: JpaOutboxMessageRepository,
 ) : OutboxMessageRepository,
     OutboxMessageRepositoryCustom { // Implement both Port and Custom
     @Transactional

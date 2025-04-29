@@ -1,8 +1,10 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.RegisterAddressCommand
-import com.restaurant.user.application.port.`in`.RegisterAddressUseCase
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.port.input.RegisterAddressUseCase
 import com.restaurant.user.domain.entity.Address
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
@@ -21,11 +23,13 @@ class RegisterAddressCommandHandler(
         log.info { "Registering address for userId=${command.userId}, street=${command.street}, zipCode=${command.zipCode}" }
 
         try {
-            val userIdVo = UserId.fromString(command.userId)
-            val user = userRepository.findByIdOrThrow(userIdVo)
+            val userIdVo = UserId.ofString(command.userId)
+            val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
 
+            val addressId = AddressId.generate()
             val address =
                 Address.create(
+                    addressId = addressId,
                     street = command.street,
                     detail = command.detail,
                     zipCode = command.zipCode,

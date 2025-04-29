@@ -14,7 +14,6 @@ import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import java.time.Instant
-import java.util.UUID
 
 /**
  * JPA Entity for Outbox messages.

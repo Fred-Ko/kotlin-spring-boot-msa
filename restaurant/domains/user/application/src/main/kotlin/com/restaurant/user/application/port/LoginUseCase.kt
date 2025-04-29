@@ -1,4 +1,4 @@
-package com.restaurant.user.application.port.`in`
+package com.restaurant.user.application.port.input
 
 import com.restaurant.user.application.dto.command.LoginCommand
 import com.restaurant.user.application.dto.query.LoginResult // Corrected import path for Query Result DTO

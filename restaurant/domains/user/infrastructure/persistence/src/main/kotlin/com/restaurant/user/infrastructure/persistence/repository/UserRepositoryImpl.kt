@@ -7,17 +7,15 @@ import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.domain.vo.Username
+import com.restaurant.user.infrastructure.messaging.serialization.OutboxMessageFactory
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 import com.restaurant.user.infrastructure.persistence.extensions.toDomain
 import com.restaurant.user.infrastructure.persistence.extensions.toEntity
-import com.restaurant.user.infrastructure.persistence.repository.SpringDataJpaUserRepository
-import com.restaurant.user.infrastructure.messaging.serialization.OutboxMessageFactory
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.slf4j.MDC
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import java.util.Optional
 import java.util.UUID
 
 private val log = KotlinLogging.logger {}
@@ -26,7 +24,7 @@ private val log = KotlinLogging.logger {}
 class UserRepositoryImpl(
     private val springDataJpaUserRepository: SpringDataJpaUserRepository,
     private val outboxRepository: OutboxMessageRepository,
-    private val outboxMessageFactory: OutboxMessageFactory
+    private val outboxMessageFactory: OutboxMessageFactory,
 ) : UserRepository {
     @Transactional
     override fun save(user: User): User {
@@ -35,30 +33,32 @@ class UserRepositoryImpl(
         log.debug { "Attempting to save user: ${user.id.value}, isNew=$isNew, correlationId=$correlationId" }
 
         val entity: UserEntity = user.toEntity()
-        val savedEntity: UserEntity = try {
-            springDataJpaUserRepository.saveAndFlush(entity)
-        } catch (e: DataIntegrityViolationException) {
-            log.warn(e) { "Data integrity violation while saving user ${user.id.value}" }
-            val message = e.mostSpecificCause.message ?: ""
-            when {
-                message.contains("uc_users_email", ignoreCase = true) || message.contains("users_email_key") || message.contains("uk_user_email") ->
-                    throw UserDomainException.User.DuplicateEmail(user.email.value)
-                message.contains("uc_users_username", ignoreCase = true) || message.contains("users_username_key") || message.contains("uk_user_username") ->
-                    throw UserDomainException.User.DuplicateUsername(user.username.value)
-                else -> throw UserDomainException.PersistenceError("Data integrity violation", e)
+        val savedEntity: UserEntity =
+            try {
+                springDataJpaUserRepository.saveAndFlush(entity)
+            } catch (e: DataIntegrityViolationException) {
+                log.warn(e) { "Data integrity violation while saving user ${user.id.value}" }
+                val message = e.mostSpecificCause.message ?: ""
+                when {
+                    message.contains("uc_users_email", ignoreCase = true) || message.contains("users_email_key") || message.contains("uk_user_email") ->
+                        throw UserDomainException.User.DuplicateEmail(user.email.value)
+                    message.contains("uc_users_username", ignoreCase = true) || message.contains("users_username_key") || message.contains("uk_user_username") ->
+                        throw UserDomainException.User.DuplicateUsername(user.username.value)
+                    else -> throw UserDomainException.PersistenceError("Data integrity violation", e)
+                }
+            } catch (e: Exception) {
+                log.error(e) { "Failed to save user ${user.id.value}" }
+                throw UserDomainException.PersistenceError("Failed to save user", e)
             }
-        } catch (e: Exception) {
-            log.error(e) { "Failed to save user ${user.id.value}" }
-            throw UserDomainException.PersistenceError("Failed to save user", e)
-        }
 
         val events = user.getDomainEvents()
         if (events.isNotEmpty()) {
             log.info { "Processing ${events.size} domain event(s) for aggregate ${user.id.value} with correlationId $correlationId" }
             try {
-                val outboxMessages = events.flatMap { event ->
-                    outboxMessageFactory.createMessagesFromEvent(event, correlationId)
-                }
+                val outboxMessages =
+                    events.flatMap { event ->
+                        outboxMessageFactory.createMessagesFromEvent(event, correlationId)
+                    }
 
                 if (outboxMessages.isNotEmpty()) {
                     outboxRepository.save(outboxMessages)

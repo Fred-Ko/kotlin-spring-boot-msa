@@ -3,10 +3,11 @@ package com.restaurant.user.application.usecase
 import com.restaurant.user.application.dto.command.LoginCommand
 import com.restaurant.user.application.dto.query.LoginResult
 import com.restaurant.user.application.error.UserApplicationErrorCode
-import com.restaurant.user.application.port.`in`.LoginUseCase
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.port.input.LoginUseCase
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -49,7 +50,7 @@ class LoginCommandHandler(
             userId = user.id.value.toString(),
             username = user.username.value,
             accessToken = fakeToken,
-            refreshToken = "fake-refresh-token"
+            refreshToken = "fake-refresh-token",
         )
     }
 }

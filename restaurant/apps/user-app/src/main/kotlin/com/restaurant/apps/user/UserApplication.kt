@@ -1,3 +1,10 @@
+/**
+ * UserApplication entry point for the user service.
+ *
+ * Configures component scanning and enables scheduling for Outbox Poller.
+ *
+ * @author junoko
+ */
 package com.restaurant.apps.user
 
 import org.springframework.boot.autoconfigure.SpringBootApplication

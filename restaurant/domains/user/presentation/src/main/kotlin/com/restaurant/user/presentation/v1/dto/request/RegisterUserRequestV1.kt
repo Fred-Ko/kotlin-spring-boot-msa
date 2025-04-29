@@ -1,3 +1,10 @@
+/**
+ * 사용자 등록 요청 DTO
+ *
+ * Contains validation and schema annotations for user registration API.
+ *
+ * @author junoko
+ */
 package com.restaurant.user.presentation.v1.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema

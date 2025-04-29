@@ -2,7 +2,6 @@ package com.restaurant.user.domain.entity
 
 import com.restaurant.user.domain.event.UserEvent
 import com.restaurant.user.domain.exception.UserDomainException
-
 import com.restaurant.user.domain.vo.AddressId
 import java.time.Instant
 
@@ -18,7 +17,7 @@ data class Address private constructor(
     var isDefault: Boolean,
     val createdAt: Instant,
     var updatedAt: Instant,
-    var version: Long = 0L
+    var version: Long = 0L,
 ) {
     init {
         if (street.isBlank()) {
@@ -31,7 +30,7 @@ data class Address private constructor(
         street: String,
         detail: String,
         zipCode: String,
-        isDefault: Boolean
+        isDefault: Boolean,
     ): Address {
         validateZipCode(zipCode)
         if (this.street == street && this.detail == detail && this.zipCode == zipCode && this.isDefault == isDefault) {
@@ -43,17 +42,17 @@ data class Address private constructor(
             zipCode = zipCode,
             isDefault = isDefault,
             updatedAt = Instant.now(),
-            version = this.version + 1
+            version = this.version + 1,
         )
     }
 
-    fun toData(): UserEvent.AddressData = 
+    fun toData(): UserEvent.AddressData =
         UserEvent.AddressData(
             addressId = this.addressId.value.toString(),
             street = this.street,
             detail = this.detail,
             zipCode = this.zipCode,
-            isDefault = this.isDefault
+            isDefault = this.isDefault,
         )
 
     companion object {
@@ -69,7 +68,7 @@ data class Address private constructor(
             detail: String,
             zipCode: String,
             isDefault: Boolean,
-            version: Long = 0L
+            version: Long = 0L,
         ): Address {
             validateZipCode(zipCode)
             val now = Instant.now()
@@ -81,7 +80,7 @@ data class Address private constructor(
                 isDefault = isDefault,
                 createdAt = now,
                 updatedAt = now,
-                version = version
+                version = version,
             )
         }
 
@@ -93,7 +92,7 @@ data class Address private constructor(
             isDefault: Boolean,
             createdAt: Instant,
             updatedAt: Instant,
-            version: Long
+            version: Long,
         ): Address {
             // No validation needed on reconstitute, assuming data is valid
             return Address(addressId, street, detail, zipCode, isDefault, createdAt, updatedAt, version)

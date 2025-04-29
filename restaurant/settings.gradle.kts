@@ -1,5 +1,10 @@
-import java.net.URI
-import java.io.File
+/**
+ * settings.gradle.kts for the project.
+ *
+ * Configures plugin repositories and project structure for Gradle.
+ *
+ * @author junoko
+ */
 
 pluginManagement {
     repositories {
@@ -29,7 +34,7 @@ include(
     ":domains:user:infrastructure:persistence",
     ":domains:user:infrastructure:messaging",
     ":independent:outbox",
-    ":apps:user-app"
+    ":apps:user-app",
 )
 
 fun includeGradleBuilds(vararg paths: String) {

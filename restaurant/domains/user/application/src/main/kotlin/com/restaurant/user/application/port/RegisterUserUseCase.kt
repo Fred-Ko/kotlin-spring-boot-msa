@@ -1,4 +1,4 @@
-package com.restaurant.user.application.port.`in`
+package com.restaurant.user.application.port.input
 
 import com.restaurant.user.application.dto.command.RegisterUserCommand // Command DTO 임포트 추가 (Package 변경됨)
 import com.restaurant.user.domain.vo.UserId // UserId import

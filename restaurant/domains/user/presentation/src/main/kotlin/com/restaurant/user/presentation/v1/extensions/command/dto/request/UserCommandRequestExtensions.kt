@@ -25,7 +25,8 @@ fun RegisterUserRequestV1.toCommand(): RegisterUserCommand =
         email = this.email,
         name = this.name,
         phoneNumber = this.phoneNumber,
-        userType = this.userType ?: UserType.CUSTOMER, // Default to CUSTOMER if null
+        // Default to CUSTOMER if null
+        userType = this.userType ?: UserType.CUSTOMER,
     )
 
 // LoginRequestV1 -> LoginCommand 변환

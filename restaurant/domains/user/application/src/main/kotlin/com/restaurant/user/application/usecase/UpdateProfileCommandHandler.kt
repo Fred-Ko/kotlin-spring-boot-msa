@@ -1,13 +1,13 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.UpdateProfileCommand
-import com.restaurant.user.application.port.`in`.UpdateProfileUseCase
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.port.input.UpdateProfileUseCase
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.domain.exception.UserDomainException
-import com.restaurant.user.application.exception.UserApplicationException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,8 +23,8 @@ class UpdateProfileCommandHandler(
         log.info { "Attempting to update profile for userId=${command.userId}" }
 
         try {
-            val userId = UserId.fromString(command.userId)
-            val user = userRepository.findByIdOrThrow(userId)
+            val userId = UserId.ofString(command.userId)
+            val user = userRepository.findById(userId) ?: throw UserDomainException.User.NotFound(userId.toString())
 
             val updatedName = Name.of(command.name)
             val updatedPhoneNumber = command.phoneNumber?.let { PhoneNumber.of(it) }

@@ -161,7 +161,7 @@
 31. **JPA 동시성 제어**: 모든 JPA 엔티티는 낙관적 잠금을 기본으로 사용하며, `@Version` 어노테이션을 필수로 포함하여 동시성 충돌을 관리한다. 낙관적 잠금 실패 시 발생하는 `OptimisticLockException`은 상위 레이어(Presentation/GlobalExceptionHandler)로 전파되어 일관된 응답으로 변환된다.
 32. **공통 DomainEvent 인터페이스 정의**: 모든 도메인 이벤트가 구현해야 할 `DomainEvent` 인터페이스는 `domains/common` 모듈의 domain 레이어 패키지(예: `domains/common/domain/event/DomainEvent.kt`)에 정의하며, 기술 독립적이어야 한다. `independent/outbox` 모듈은 이 인터페이스를 **직접 의존하지 않는다**. 도메인 Infrastructure 레이어는 이 인터페이스를 구현하는 구체적인 이벤트를 처리한다.
 33. **도메인 이벤트 정의 위치**: 도메인 이벤트 클래스는 해당 도메인 모듈의 `domain/event/` 패키지에 정의하며, 순수 Kotlin `data class`로 구현하고 `DomainEvent` 인터페이스를 구현해야 한다. 이벤트 페이로드는 불변 타입 및 불변 컬렉션(`List`, `Map` 등)만을 포함해야 한다.
-34. **Aggregate별 이벤트 그룹화**: 각 Aggregate (또는 도메인 엔티티)와 관련된 모든 도메인 이벤트는 해당 Aggregate의 이름 뒤에 `Events`를 붙인 파일명(예: `UserEvents.kt`)으로, 해당 도메인 모듈의 `domain/event/` 패키지 내에 정의한다. 이벤트들은 하나의 `sealed class`로 상위 타입을 정의하고 (예: `sealed class UserEvent(...) : DomainEvent`), 실제 발행 이벤트들은 해당 `sealed class` 내부에 `data class`로 중첩하여 구현한다 (예: `data class UserEvent.Created(...) : UserEvent(...)`). 중첩된 이벤트는 상위 `sealed class`의 생성자를 통해 공통 필드(예: `occurredAt`, 관련 Aggregate 식별자 Value Object 등)를 상속받아 관리한다. 특히 `userId`와 같은 관련 Aggregate 식별자는 상위 `sealed class UserEvent`의 추상 프로퍼티나 생성자 인자로 정의하고, 하위 이벤트 데이터 클래스들이 이를 상속받아 사용한다. 이벤트 페이로드에는 Infrastructure-specific ID(예: `Long`)를 포함하지 않고 Domain적인 의미를 가지는 데이터만 포함한다.
+34. **Aggregate별 이벤트 그룹화**: 각 Aggregate (또는 도메인 엔티티)와 관련된 모든 도메인 이벤트는 해당 Aggregate의 이름 뒤에 `Events`를 붙인 파일명(예: `UserEvent.kt`)으로, 해당 도메인 모듈의 `domain/event/` 패키지 내에 정의한다. 이벤트들은 하나의 `sealed class`로 상위 타입을 정의하고 (예: `sealed class UserEvent(...) : DomainEvent`), 실제 발행 이벤트들은 해당 `sealed class` 내부에 `data class`로 중첩하여 구현한다 (예: `data class UserEvent.Created(...) : UserEvent(...)`). 중첩된 이벤트는 상위 `sealed class`의 생성자를 통해 공통 필드(예: `occurredAt`, 관련 Aggregate 식별자 Value Object 등)를 상속받아 관리한다. 특히 `userId`와 같은 관련 Aggregate 식별자는 상위 `sealed class UserEvent`의 추상 프로퍼티나 생성자 인자로 정의하고, 하위 이벤트 데이터 클래스들이 이를 상속받아 사용한다. 이벤트 페이로드에는 Infrastructure-specific ID(예: `Long`)를 포함하지 않고 Domain적인 의미를 가지는 데이터만 포함한다.
 
 ### API 개발 규칙
 
@@ -475,7 +475,7 @@ restaurant/
 │       │                               │   ├── Email.kt
 │       │                               │   └── Password.kt
 │       │                               ├── event/          # Rule 33 (도메인 이벤트 위치)
-│       │                               │   └── UserEvents.kt # Rule 34 (Sealed Class 사용)
+│       │                               │   └── UserEvent.kt # Rule 34 (Sealed Class 사용)
 │       │                               ├── error/          # Rule 67 (도메인 에러코드)
 │       │                               │   └── UserDomainErrorCodes.kt
 │       │                               ├── exception/      # Rule 68 (도메인 예외)

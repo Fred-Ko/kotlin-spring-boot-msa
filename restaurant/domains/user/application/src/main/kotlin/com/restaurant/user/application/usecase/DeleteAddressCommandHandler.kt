@@ -1,7 +1,9 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.DeleteAddressCommand
-import com.restaurant.user.application.port.`in`.DeleteAddressUseCase
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.port.input.DeleteAddressUseCase
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
@@ -20,9 +22,9 @@ class DeleteAddressCommandHandler(
         log.info { "Deleting address for userId=${command.userId}, addressId=${command.addressId}" }
 
         try {
-            val userIdVo = UserId.fromString(command.userId)
-            val addressIdVo = AddressId.fromString(command.addressId)
-            val user = userRepository.findByIdOrThrow(userIdVo)
+            val userIdVo = UserId.ofString(command.userId)
+            val addressIdVo = AddressId.ofString(command.addressId)
+            val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
 
             val updatedUser = user.deleteAddress(addressIdVo)
             userRepository.save(updatedUser)

@@ -2,10 +2,12 @@ package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.query.GetUserProfileByIdQuery
 import com.restaurant.user.application.dto.query.UserProfileDto
-import com.restaurant.user.application.port.`in`.GetUserProfileQuery
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.port.input.GetUserProfileQuery
+import com.restaurant.user.domain.exception.UserDomainException
+import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.infrastructure.persistence.repository.SpringDataJpaUserRepository
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -13,38 +15,38 @@ private val log = KotlinLogging.logger {}
 
 @Service
 class GetUserProfileQueryHandler(
-    private val userJpaRepository: SpringDataJpaUserRepository,
+    private val userRepository: UserRepository,
 ) : GetUserProfileQuery {
     @Transactional(readOnly = true)
     override fun getUserProfile(query: GetUserProfileByIdQuery): UserProfileDto {
         log.debug { "Fetching user profile for userId=${query.userId}" }
 
         try {
-            val userIdVo = UserId.fromUUID(query.userId)
-            val userEntity = userJpaRepository.findByUserIdOrThrow(userIdVo.value)
+            val userIdVo = UserId.ofString(query.userId)
+            val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
 
             val dto =
                 UserProfileDto(
-                    id = userEntity.userId.toString(),
-                    email = userEntity.email,
-                    name = userEntity.name,
-                    username = userEntity.username,
-                    phoneNumber = userEntity.phoneNumber,
-                    userType = userEntity.userType.name,
-                    userStatus = userEntity.status.name,
+                    id = user.id.value.toString(),
+                    email = user.email.value,
+                    name = user.name.value,
+                    username = user.username.value,
+                    phoneNumber = user.phoneNumber?.value,
+                    userType = user.userType.name,
                     addresses =
-                        userEntity.addresses.map { addr ->
+                        user.addresses.map {
                             UserProfileDto.AddressDto(
-                                id = addr.addressId.toString(),
-                                street = addr.street,
-                                detail = addr.detail,
-                                zipCode = addr.zipCode,
-                                isDefault = addr.isDefault,
+                                id = it.addressId.value.toString(),
+                                street = it.street,
+                                detail = it.detail,
+                                zipCode = it.zipCode,
+                                isDefault = it.isDefault,
                             )
                         },
-                    createdAt = userEntity.createdAt,
-                    updatedAt = userEntity.updatedAt,
-                    version = userEntity.version,
+                    createdAt = user.createdAt,
+                    updatedAt = user.updatedAt,
+                    status = user.status.name,
+                    version = user.version,
                 )
 
             log.info { "User profile fetched successfully, userId=${userIdVo.value}" }

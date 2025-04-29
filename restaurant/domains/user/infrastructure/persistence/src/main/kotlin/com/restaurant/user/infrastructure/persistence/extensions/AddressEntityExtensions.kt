@@ -1,9 +1,9 @@
 package com.restaurant.user.infrastructure.persistence.extensions
 
-import com.restaurant.user.domain.entity.Address // Import Address domain entity
-import com.restaurant.user.domain.vo.AddressId // Import AddressId VO
+import com.restaurant.user.domain.entity.Address
+import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.infrastructure.persistence.entity.AddressEntity
-import com.restaurant.user.infrastructure.persistence.entity.UserEntity // Added import for user property in toEntity
+import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 
 /**
  * Extension functions for mapping between Address domain entity and AddressEntity.
@@ -13,12 +13,14 @@ import com.restaurant.user.infrastructure.persistence.entity.UserEntity // Added
 // AddressEntity -> Address Domain
 fun AddressEntity.toDomain(): Address {
     return Address.reconstitute(
+        // Map addressId to AddressId VO
         addressId = AddressId.of(this.addressId),
         street = this.street,
         detail = this.detail,
         zipCode = this.zipCode,
         isDefault = this.isDefault,
-        version = this.version // Add version mapping
+        // Map version from entity to domain
+        version = this.version,
     )
 }
 
@@ -32,8 +34,11 @@ fun Address.toEntity(userEntity: UserEntity? = null): AddressEntity {
         detail = this.detail,
         zipCode = this.zipCode,
         isDefault = this.isDefault,
-        version = this.version, // Add version mapping
-        user = userEntity // Set user relationship if provided
-        // id = null // Let JPA handle the Long id
+        // Map version from domain to entity
+        version = this.version,
+        // Set user relationship if provided
+        user = userEntity,
+        // Let JPA handle the Long id
+        // id = null
     )
 }

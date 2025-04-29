@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.util.Optional
 import java.util.UUID
-import java.util.UUID
 
 @Repository
 interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long> {
@@ -31,8 +30,9 @@ interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long> {
 
     @Modifying
     @Query("DELETE FROM UserEntity u WHERE u.domainId = :domainId")
-    fun deleteByDomainId(@Param("domainId") domainId: UUID)
+    fun deleteByDomainId(
+        @Param("domainId") domainId: UUID,
+    )
 
-    fun findByUserIdOrThrow(userId: UUID): UserEntity =
-        findByUserId(userId) ?: throw UserDomainException.User.NotFound(userId.toString())
+    fun findByUserIdOrThrow(userId: UUID): UserEntity = findByUserId(userId) ?: throw UserDomainException.User.NotFound(userId.toString())
 }

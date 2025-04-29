@@ -1,8 +1,10 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.UpdateAddressCommand
-import com.restaurant.user.application.port.`in`.UpdateAddressUseCase
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.port.input.UpdateAddressUseCase
 import com.restaurant.user.domain.entity.Address
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
@@ -21,13 +23,13 @@ class UpdateAddressCommandHandler(
         log.info { "Updating address for userId=${command.userId}, addressId=${command.addressId}" }
 
         try {
-            val userIdVo = UserId.fromString(command.userId)
-            val addressIdVo = AddressId.fromString(command.addressId)
-            val user = userRepository.findByIdOrThrow(userIdVo)
+            val userIdVo = UserId.ofString(command.userId)
+            val addressIdVo = AddressId.ofString(command.addressId)
+            val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
 
             val addressToUpdate =
                 Address.create(
-                    id = addressIdVo,
+                    addressId = addressIdVo,
                     street = command.street,
                     detail = command.detail,
                     zipCode = command.zipCode,
