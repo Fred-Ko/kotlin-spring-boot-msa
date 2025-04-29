@@ -1,5 +1,5 @@
 plugins {
-    `java-library`
+    
     // Common plugins (jvm, java-library) applied via subprojects
 }
 

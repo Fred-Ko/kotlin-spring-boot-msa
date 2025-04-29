@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm")
-    `java-library`
+    
     // Common plugins (jvm, spring, dependency-management, java-library) applied via subprojects
 }
 

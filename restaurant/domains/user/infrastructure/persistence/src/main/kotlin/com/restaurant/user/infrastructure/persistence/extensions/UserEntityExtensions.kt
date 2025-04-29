@@ -27,7 +27,7 @@ fun UserEntity.toDomain(): User {
         userType = this.userType,
         userStatus = this.status,
         addresses = this.addresses.stream().map { it.toDomain() }.collect(Collectors.toList()),
-        defaultAddressId = this.addresses.find { it.isDefault }?.let { AddressId.fromUUID(it.addressId) },
+        defaultAddressId = this.addresses.find { it.isDefault }?.let { AddressId.of(it.addressId) },
         version = this.version
     )
 }

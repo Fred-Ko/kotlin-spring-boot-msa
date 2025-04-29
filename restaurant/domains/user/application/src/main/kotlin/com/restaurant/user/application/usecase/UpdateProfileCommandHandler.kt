@@ -6,6 +6,8 @@ import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.exception.UserDomainException
+import com.restaurant.user.application.exception.UserApplicationException
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

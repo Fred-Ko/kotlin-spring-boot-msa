@@ -10,7 +10,7 @@ value class AddressId private constructor(
     companion object {
         fun generate(): AddressId = AddressId(UUID.randomUUID())
 
-        fun fromString(value: String): AddressId =
+        fun ofString(value: String): AddressId =
             try {
                 AddressId(UUID.fromString(value))
             } catch (e: IllegalArgumentException) {

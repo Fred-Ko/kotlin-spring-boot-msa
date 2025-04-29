@@ -1,10 +1,15 @@
 package com.restaurant.domain.user.aggregate
 
-import com.restaurant.user.domain.model.Address
+import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.aggregate.User
+import com.restaurant.user.domain.vo.Username
+import com.restaurant.user.domain.vo.UserType
+import com.restaurant.user.domain.vo.UserStatus
+import java.time.Instant
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
@@ -18,7 +23,7 @@ class UserTest :
 
         // 테스트용 인코딩된 비밀번호 (실제 인코딩 방식과 무관한 임의 값)
         val encodedPasswordValue = "encoded_password_123"
-        val passwordVo = Password.fromEncoded(encodedPasswordValue)
+        val passwordVo = Password.of(encodedPasswordValue)
 
         test("유효한 정보로 사용자 생성 성공") {
             // given
@@ -26,7 +31,14 @@ class UserTest :
             val name = Name.of("테스트유저")
 
             // when
-            val (user, events) = User.create(email, passwordVo, name)
+            val user = User.create(
+    id = UserId.generate(),
+    username = Username.of("testuser"),
+    password = passwordVo,
+    email = email,
+    name = name,
+    phoneNumber = null
+)
 
             // then
             user.id.shouldBeNull()
@@ -40,15 +52,29 @@ class UserTest :
 
         test("기존 정보로 사용자 복원 성공") {
             // given
-            val id = UserId.of(1L)
+            val id = UserId.generate()
             val email = Email.of("test@example.com")
             val name = Name.of("테스트유저")
-            val createdAt = LocalDateTime.now().minusDays(1)
-            val updatedAt = LocalDateTime.now()
+            val createdAt = Instant.now().minusSeconds(86400)
+            val updatedAt = Instant.now()
             val addresses = emptyList<Address>() // model.Address 사용
 
             // when
-            val user = User.reconstitute(id, email, passwordVo, name, addresses, createdAt, updatedAt)
+            val user = User.reconstitute(
+    id = id,
+    username = Username.of("testuser"),
+    password = passwordVo,
+    email = email,
+    name = name,
+    phoneNumber = null,
+    userType = UserType.CUSTOMER,
+    status = UserStatus.ACTIVE,
+    addresses = addresses,
+    defaultAddressId = null,
+    version = 0L,
+    createdAt = createdAt,
+    updatedAt = updatedAt
+)
 
             // then
             user.id shouldBe id
@@ -87,13 +113,11 @@ class UserTest :
                 User.create(
                     Email.of("test@example.com"),
                     passwordVo,
-                    Name.of("테스트유저"),
-                )
             val newEncodedPasswordValue = "new_encoded_password_456"
             val newPasswordVo = Password.fromEncoded(newEncodedPasswordValue)
 
             // when
-            val (updatedUser, events) = user.changePassword(newPasswordVo)
+            val updatedUser = user.changePassword(newPasswordVo)
 
             // then
             updatedUser.password shouldBe newPasswordVo // 변경된 VO 확인

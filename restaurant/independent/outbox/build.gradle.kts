@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.jpa")
     kotlin("plugin.allopen")
-    `java-library`
+    
 }
 
 allOpen {

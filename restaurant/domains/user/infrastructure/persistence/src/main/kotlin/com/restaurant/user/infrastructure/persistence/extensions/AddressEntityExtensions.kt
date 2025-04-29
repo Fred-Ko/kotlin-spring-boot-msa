@@ -13,7 +13,7 @@ import com.restaurant.user.infrastructure.persistence.entity.UserEntity // Added
 // AddressEntity -> Address Domain
 fun AddressEntity.toDomain(): Address {
     return Address.reconstitute(
-        addressId = AddressId.fromUUID(this.addressId), // Ensure AddressId has fromUUID
+        addressId = AddressId.of(this.addressId),
         street = this.street,
         detail = this.detail,
         zipCode = this.zipCode,

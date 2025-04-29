@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "UserProfileUpdatedAvro",
+  "namespace": "com.restaurant.user.infrastructure.avro.dto",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "phoneNumber", "type": ["null", "string"], "default": null},
+    {"name": "updatedAt", "type": "string"}
+  ]
+}

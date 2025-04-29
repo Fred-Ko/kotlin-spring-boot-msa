@@ -61,5 +61,5 @@ class UserEntity(
     }
 
     override fun toString(): String =
-        "UserEntity(id=$id, domainId=$domainId, username='$username', email='$email', userType=$userType, createdAt=$createdAt, updatedAt=$updatedAt, addresses=${addresses.size}, version=$version)"
+        "UserEntity(id=$id, domainId=$domainId, username='$username', email='$email', userType=$userType, createdAt=$createdAt, updatedAt=$updatedAt, addressId = AddressId.of(address.addressId), addresses=${addresses.size}, version=$version)"
 }

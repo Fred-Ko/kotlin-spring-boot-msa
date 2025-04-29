@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "UserAddressDeletedAvro",
+  "namespace": "com.restaurant.user.infrastructure.avro.dto",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "addressId", "type": "string"},
+    {"name": "deletedAt", "type": "string"}
+  ]
+}

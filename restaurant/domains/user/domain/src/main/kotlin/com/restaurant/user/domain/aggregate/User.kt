@@ -92,10 +92,10 @@ data class User(
         if (addresses.any { it.addressId == addressData.addressId }) throw UserDomainException.Address.DuplicateAddressId(addressData.addressId.value.toString())
 
         val newAddresses = addresses + addressData
-        val newDefaultAddressId = if (addressData.isDefault) addressData.id else if (this.defaultAddressId == null) addressData.id else this.defaultAddressId
+        val newDefaultAddressId = if (addressData.isDefault) addressData.addressId else if (this.defaultAddressId == null) addressData.addressId else this.defaultAddressId
 
         val finalAddresses = newAddresses.map { addr ->
-            if (addr.id == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
+            if (addr.addressId == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
         }
 
         val updatedUser = this.copy(
@@ -126,9 +126,9 @@ data class User(
 
     fun updateAddress(addressId: AddressId, updatedAddressData: Address): User {
         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
-        if (addressId != updatedAddressData.id) throw UserDomainException.Address.IdMismatch(addressId.value.toString(), updatedAddressData.id.value.toString())
+        if (addressId != updatedAddressData.addressId) throw UserDomainException.Address.IdMismatch(addressId.value.toString(), updatedAddressData.addressId.value.toString())
 
-        val addressIndex = addresses.indexOfFirst { it.id == addressId }
+        val addressIndex = addresses.indexOfFirst { it.addressId == addressId }
         if (addressIndex == -1) throw UserDomainException.Address.NotFound(addressId.value.toString())
 
         val newAddresses = addresses.toMutableList()
@@ -136,17 +136,17 @@ data class User(
 
         // Determine the new default ID
         val newDefaultAddressId = if (updatedAddressData.isDefault) {
-            updatedAddressData.id // New one is default
+            updatedAddressData.addressId // New one is default
         } else if (defaultAddressId == addressId) {
             // Default is being updated and is no longer default, pick another if possible
-            newAddresses.filterNot { it.id == addressId }.firstOrNull()?.id
+            newAddresses.filterNot { it.addressId == addressId }.firstOrNull()?.addressId
         } else {
             defaultAddressId // Keep the old default
         }
 
         // Ensure only one default address
         val finalAddresses = newAddresses.map { addr ->
-            if (addr.id == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
+            if (addr.addressId == newDefaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
         }
 
         val updatedUser = this.copy(
@@ -177,13 +177,13 @@ data class User(
 
     fun deleteAddress(addressId: AddressId): User {
         if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
-        val addressToRemove = addresses.find { it.id == addressId }
+        val addressToRemove = addresses.find { it.addressId == addressId }
             ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
 
         if (addresses.size == 1) throw UserDomainException.Address.CannotDeleteLast()
         if (addressToRemove.isDefault) throw UserDomainException.Address.CannotDeleteDefault()
 
-        val remainingAddresses = addresses.filterNot { it.id == addressId }
+        val remainingAddresses = addresses.filterNot { it.addressId == addressId }
 
         val updatedUser = this.copy(
             id = this.id,
@@ -256,11 +256,11 @@ data class User(
              if (initialAddresses.count { it.isDefault } > 1) {
                  throw UserDomainException.Address.MultipleDefaultsOnInit()
              }
-             val defaultAddressId = initialAddresses.find { it.isDefault }?.id
-                 ?: initialAddresses.firstOrNull()?.id // If no default, make the first one default
+             val defaultAddressId = initialAddresses.find { it.isDefault }?.addressId
+                 ?: initialAddresses.firstOrNull()?.addressId // If no default, make the first one default
 
              val finalAddresses = initialAddresses.map { addr ->
-                 if (addr.id == defaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
+                 if (addr.addressId == defaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
              }
 
             val user = User(

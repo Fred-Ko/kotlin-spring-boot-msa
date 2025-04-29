@@ -1,7 +1,5 @@
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
-import java.util.regex.Pattern
-
 import java.io.Serializable
 
 @JvmInline

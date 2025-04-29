@@ -21,11 +21,10 @@ data class Address private constructor(
     var version: Long = 0L
 ) {
     init {
-        // Basic validation
         if (street.isBlank()) {
-             throw UserDomainException.Validation.InvalidAddressFormat("Street cannot be blank.")
+            throw UserDomainException.Validation.InvalidAddressFormat("Street cannot be blank.")
         }
-        // Zip code validation moved to companion object helper
+        validateZipCode(zipCode)
     }
 
     fun updateDetails(
@@ -34,9 +33,9 @@ data class Address private constructor(
         zipCode: String,
         isDefault: Boolean
     ): Address {
-        validateZipCode(zipCode) // Use helper for validation
+        validateZipCode(zipCode)
         if (this.street == street && this.detail == detail && this.zipCode == zipCode && this.isDefault == isDefault) {
-            return this // No change
+            return this
         }
         return this.copy(
             street = street,
@@ -48,9 +47,6 @@ data class Address private constructor(
         )
     }
 
-    /**
-     * Converts Address entity to AddressData DTO for domain events.
-     */
     fun toData(): UserEvent.AddressData = 
         UserEvent.AddressData(
             addressId = this.addressId.value.toString(),
@@ -61,7 +57,6 @@ data class Address private constructor(
         )
 
     companion object {
-        // Simplified ZIP code validation
         private fun validateZipCode(zipCode: String) {
             if (zipCode.isBlank() || zipCode.length != 5 || !zipCode.all { it.isDigit() }) {
                 throw UserDomainException.Validation.InvalidAddressFormat("Zip code must be 5 digits.")
@@ -74,9 +69,9 @@ data class Address private constructor(
             detail: String,
             zipCode: String,
             isDefault: Boolean,
-            version: Long = 0L // Pass initial version
+            version: Long = 0L
         ): Address {
-            validateZipCode(zipCode) // Validate on creation
+            validateZipCode(zipCode)
             val now = Instant.now()
             return Address(
                 addressId = addressId,
@@ -101,7 +96,7 @@ data class Address private constructor(
             version: Long
         ): Address {
             // No validation needed on reconstitute, assuming data is valid
-            return Address(id, street, detail, zipCode, isDefault, createdAt, updatedAt, version)
+            return Address(addressId, street, detail, zipCode, isDefault, createdAt, updatedAt, version)
         }
     }
 

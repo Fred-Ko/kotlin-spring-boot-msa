@@ -1,7 +1,6 @@
 package com.restaurant.user.domain.vo
 
 import com.restaurant.user.domain.exception.UserDomainException
-import java.util.regex.Pattern
 
 /**
  * Value object representing an email address.

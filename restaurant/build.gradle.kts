@@ -64,21 +64,32 @@ allprojects {
 
 
 subprojects.forEach { subproject ->
+    subproject.plugins.apply("org.jetbrains.kotlin.jvm")
+    subproject.plugins.apply("java")
+    subproject.extensions.configure(org.gradle.api.plugins.JavaPluginExtension::class.java) {
+        toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    }
+    subproject.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {
+        kotlinOptions {
+            jvmTarget = "21"
+            freeCompilerArgs += "-Xjsr305=strict"
+        }
+    }
     subproject.dependencies {
         add("api", "org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
         add("api", "org.jetbrains.kotlin:kotlin-reflect:1.9.24")
         add("api", "org.slf4j:slf4j-api:2.0.13")
         add("implementation", "io.github.microutils:kotlin-logging-jvm:3.0.5")
-        add("implementation", "com.fasterxml.jackson.module:jackson-module-kotlin:2.17.1")
-        add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1")
+        add("implementation", "com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+        add("implementation", "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
 
         add("testImplementation", "io.kotest:kotest-runner-junit5:5.8.1")
         add("testImplementation", "io.kotest:kotest-assertions-core:5.8.1")
-        add("testImplementation", "io.mockk:mockk:1.13.10")
-        add("testImplementation", "org.mockito.kotlin:mockito-kotlin:5.3.1")
+        add("testImplementation", "io.mockk:mockk:1.14.0")
+        add("testImplementation", "org.mockito.kotlin:mockito-kotlin:5.4.0")
         add("testImplementation", "org.assertj:assertj-core:3.25.3")
         add("testImplementation", "org.jetbrains.kotlin:kotlin-test:1.9.24")
-        add("testImplementation", "org.springframework.boot:spring-boot-starter-test:3.3.5")
+        add("testImplementation", "org.springframework.boot:spring-boot-starter-test:3.4.5")
     }
 
     subproject.configurations.getByName("testImplementation").withDependencies {
