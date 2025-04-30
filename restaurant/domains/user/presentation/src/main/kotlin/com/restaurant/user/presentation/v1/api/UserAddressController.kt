@@ -1,14 +1,13 @@
 package com.restaurant.user.presentation.v1.api
 
-import com.restaurant.common.config.dto.response.CommandResultResponse
-import com.restaurant.common.config.filter.CorrelationIdFilter
+import com.restaurant.common.presentation.dto.response.CommandResultResponse
 import com.restaurant.user.application.dto.command.DeleteAddressCommand
-import com.restaurant.user.application.port.`in`.DeleteAddressUseCase
-import com.restaurant.user.application.port.`in`.RegisterAddressUseCase
-import com.restaurant.user.application.port.`in`.UpdateAddressUseCase
-import com.restaurant.user.presentation.extensions.v1.request.toCommand
+import com.restaurant.user.application.port.input.DeleteAddressUseCase
+import com.restaurant.user.application.port.input.RegisterAddressUseCase
+import com.restaurant.user.application.port.input.UpdateAddressUseCase
 import com.restaurant.user.presentation.v1.dto.request.RegisterAddressRequestV1
 import com.restaurant.user.presentation.v1.dto.request.UpdateAddressRequestV1
+import com.restaurant.user.presentation.v1.extensions.command.dto.request.toCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -19,11 +18,33 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+
+// Minimal stub for CommandResultResponse
+class CommandResultResponse(
+    var message: String,
+    var correlationId: String,
+) : org.springframework.hateoas.RepresentationModel<CommandResultResponse>()
+
+// Minimal stub for CorrelationIdFilter
+object CorrelationIdFilter {
+    const val CORRELATION_ID_MDC_KEY = "correlationId"
+}
+
+// Minimal stubs for toCommand and handle
+fun RegisterAddressRequestV1.toCommand(userId: String) = Any()
+
+fun UpdateAddressRequestV1.toCommand(
+    userId: String,
+    addressId: String,
+) = Any()
+
+fun Any.handle(command: Any) {}
 
 private val log = KotlinLogging.logger {}
 

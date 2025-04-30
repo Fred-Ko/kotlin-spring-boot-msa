@@ -6,15 +6,6 @@ import org.springframework.hateoas.RepresentationModel
 import org.springframework.hateoas.server.core.Relation
 import java.time.Instant
 
-@Schema(description = "주소 응답")
-data class AddressResponseV1(
-    @Schema(description = "주소 ID") val addressId: String,
-    @Schema(description = "도로명 주소") val street: String,
-    @Schema(description = "상세 주소") val detail: String,
-    @Schema(description = "우편번호") val zipCode: String,
-    @Schema(description = "기본 주소 여부") val isDefault: Boolean,
-)
-
 /**
  * 사용자 프로필 정보 응답 DTO (Rule 1.4, 39)
  */

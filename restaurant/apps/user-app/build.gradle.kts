@@ -31,6 +31,8 @@ dependencies {
 
     // Spring Boot Starter Web
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.5")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.5")
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.3.5")
 
     // Actuator for monitoring
     implementation("org.springframework.boot:spring-boot-starter-actuator:3.3.5")

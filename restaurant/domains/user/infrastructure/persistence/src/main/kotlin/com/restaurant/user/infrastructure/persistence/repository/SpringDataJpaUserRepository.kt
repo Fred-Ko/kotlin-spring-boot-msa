@@ -1,5 +1,6 @@
 package com.restaurant.user.infrastructure.persistence.repository
 
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository

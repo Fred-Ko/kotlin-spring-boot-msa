@@ -1,7 +1,6 @@
 package com.restaurant.user.infrastructure.messaging.serialization
 
 import com.restaurant.common.domain.event.DomainEvent
-import com.restaurant.common.infrastructure.avro.Envelope
 import com.restaurant.outbox.port.model.OutboxMessage
 import com.restaurant.user.domain.event.UserEvent
 import com.restaurant.user.infrastructure.messaging.avro.event.UserCreated
@@ -67,29 +66,28 @@ class OutboxMessageFactory(
                 return emptyList()
             }
 
-        // 3. Create the Envelope DTO (Avro generated constructor)
-        // Avro Envelope 생성 (eventId, timestamp, source, aggregateType, aggregateId)
-        val envelope =
-            Envelope(
-                userEvent.eventId.toString(),
-                userEvent.occurredAt.toEpochMilli(),
-                "user",
-                userEvent.aggregateType,
-                userEvent.aggregateId,
+        // 3. Create the Envelope metadata as a Map
+        val envelopeMetadata =
+            mapOf(
+                "eventId" to userEvent.eventId.toString(),
+                "timestamp" to userEvent.occurredAt.toEpochMilli().toString(),
+                "source" to "user",
+                "aggregateType" to userEvent.aggregateType,
+                "aggregateId" to userEvent.aggregateId,
             )
 
-        // 5. Determine the target Kafka topic
+        // 4. Determine the target Kafka topic
         val targetTopic = determineTopic(userEvent)
 
-        // 6. Create Kafka message headers (including Envelope metadata)
+        // 5. Create Kafka message headers (including Envelope metadata)
         val headers =
             createHeaders(
                 event = userEvent,
                 correlationId = correlationId,
-                envelope = envelope,
+                envelopeMetadata = envelopeMetadata,
             )
 
-        // 7. Create the OutboxMessage DTO
+        // 6. Create the OutboxMessage DTO
         val outboxMessage =
             OutboxMessage(
                 payload = payloadBytes,
@@ -147,18 +145,21 @@ class OutboxMessageFactory(
     private fun createHeaders(
         event: UserEvent,
         correlationId: String,
-        envelope: Envelope,
+        envelopeMetadata: Map<String, String>,
     ): Map<String, String> {
-        return mapOf(
-            "correlationId" to correlationId.toString(),
-            "aggregateId" to event.aggregateId.toString(),
-            "aggregateType" to event.aggregateType.toString(),
-            "eventType" to (event::class.simpleName ?: "UnknownEvent"),
-            "envelope_eventId" to envelope.eventId.toString(),
-            "envelope_timestamp" to envelope.timestamp.toString(),
-            "envelope_source" to envelope.source.toString(),
-            "envelope_aggregateType" to envelope.aggregateType.toString(),
-            "envelope_aggregateId" to envelope.aggregateId.toString(),
-        )
+        val headers =
+            mutableMapOf(
+                "correlationId" to correlationId.toString(),
+                "aggregateId" to event.aggregateId.toString(),
+                "aggregateType" to event.aggregateType.toString(),
+                "eventType" to (event::class.simpleName ?: "UnknownEvent"),
+            )
+
+        // Add envelope metadata with prefixes
+        envelopeMetadata.forEach { (key, value) ->
+            headers["envelope_$key"] = value
+        }
+
+        return headers
     }
 }

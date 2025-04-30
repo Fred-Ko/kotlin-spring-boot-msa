@@ -1,10 +1,9 @@
 package com.restaurant.user.presentation.v1.api
 
 import com.restaurant.user.application.dto.query.GetUserProfileByIdQuery
-import com.restaurant.user.application.port.`in`.GetUserProfileQuery
+import com.restaurant.user.application.port.input.GetUserProfileQuery
 import com.restaurant.user.presentation.v1.dto.response.UserProfileResponseV1
-import com.restaurant.user.presentation.v1.extensions.response.toResponseV1
-import io.github.oshai.kotlinlogging.KotlinLogging
+import com.restaurant.user.presentation.v1.extensions.query.dto.response.toResponseV1
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -12,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import mu.KotlinLogging
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
 import org.springframework.http.ProblemDetail
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
 private val log = KotlinLogging.logger {}
 
@@ -61,11 +60,10 @@ class UserQueryController(
 
         val responseDto = userProfileDto.toResponseV1()
 
-        val userUuid = UUID.fromString(userId)
         responseDto.add(
             linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId)).withSelfRel(),
-            linkTo(methodOn(UserController::class.java).updateProfile(userUuid, null)).withRel("update-profile"),
-            linkTo(methodOn(UserController::class.java).changePassword(userUuid, null)).withRel("change-password"),
+            linkTo(UserController::class.java).slash(userId).slash("profile").withRel("update-profile"),
+            linkTo(UserController::class.java).slash(userId).slash("password").withRel("change-password"),
         )
         log.info { "Returning user profile for ID: $userId" }
         return ResponseEntity.ok(responseDto)

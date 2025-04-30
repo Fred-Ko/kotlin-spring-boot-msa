@@ -1,20 +1,27 @@
 package com.restaurant.user.presentation.v1.api
 
-import com.restaurant.common.config.dto.response.CommandResultResponse
-import com.restaurant.user.application.port.`in`.ChangePasswordUseCase
-import com.restaurant.user.application.port.`in`.DeleteUserUseCase
-import com.restaurant.user.application.port.`in`.RegisterUserUseCase
-import com.restaurant.user.application.port.`in`.UpdateProfileUseCase
+import com.restaurant.common.presentation.dto.response.CommandResultResponse
+import com.restaurant.user.application.dto.command.ChangePasswordCommand
+import com.restaurant.user.application.dto.command.DeleteUserCommand
+import com.restaurant.user.application.dto.command.LoginCommand
+import com.restaurant.user.application.dto.command.RegisterUserCommand
+import com.restaurant.user.application.dto.command.UpdateProfileCommand
+import com.restaurant.user.application.port.input.ChangePasswordUseCase
+import com.restaurant.user.application.port.input.DeleteUserUseCase
+import com.restaurant.user.application.port.input.LoginUseCase
+import com.restaurant.user.application.port.input.RegisterUserUseCase
+import com.restaurant.user.application.port.input.UpdateProfileUseCase
 // Query Use Cases
 // DTOs
 import com.restaurant.user.presentation.v1.dto.request.ChangePasswordRequestV1
 import com.restaurant.user.presentation.v1.dto.request.DeleteUserRequestV1
 import com.restaurant.user.presentation.v1.dto.request.RegisterUserRequestV1
 import com.restaurant.user.presentation.v1.dto.request.UpdateProfileRequestV1
+import com.restaurant.user.presentation.v1.dto.request.LoginRequestV1
 // Extensions
-import com.restaurant.user.presentation.v1.extensions.request.toCommand
+import com.restaurant.user.presentation.v1.extensions.command.dto.request.toCommand
 // Other imports
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -29,6 +36,8 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestHeader
 import java.util.UUID
 
 private val log = KotlinLogging.logger {}
@@ -58,14 +67,14 @@ class UserController(
     ): ResponseEntity<CommandResultResponse> {
         log.info("Register user request received: {}", request.username)
         val command = request.toCommand()
-        val userId = registerUserUseCase.handle(command)
+        val userId = registerUserUseCase.register(command)
         val response =
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "User registered successfully",
             ).apply {
-                add(linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId.value.toString())).withSelfRel())
-                add(linkTo(methodOn(UserController::class.java).loginUser(null)).withRel("login")) // Pass null for request body placeholder
+                add(linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId.toString())).withSelfRel())
+                add(linkTo(UserController::class.java).slash("login").withRel("login"))
             }
         return ResponseEntity.created(response.getRequiredLink("self").toUri()).body(response)
     }

@@ -1,29 +1,14 @@
 package com.restaurant.user.presentation.v1.extensions.query.dto.response
 
 import com.restaurant.user.application.dto.query.UserProfileDto
-import com.restaurant.user.presentation.v1.controller.UserController
-import com.restaurant.user.presentation.v1.controller.UserQueryController
 import com.restaurant.user.presentation.v1.dto.response.AddressResponseV1
 import com.restaurant.user.presentation.v1.dto.response.UserProfileResponseV1
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
-import java.util.UUID
+import org.springframework.hateoas.Link
 
 // UserProfileDto -> UserProfileResponseV1 변환
 fun UserProfileDto.toResponseV1(): UserProfileResponseV1 {
     // Assuming UserProfileDto has 'id' which is the UUID string
     val userId = this.id
-    val userUuid = UUID.fromString(userId)
-
-    // Use correct Controller classes for links
-    val selfLink = linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId)).withSelfRel()
-    // Assuming addresses are handled by UserAddressController or UserQueryController
-    // val addressesLink = linkTo(methodOn(UserAddressController::class.java).getUserAddresses(userUuid)).withRel("addresses")
-    val updateProfileLink =
-        linkTo(methodOn(UserController::class.java).updateProfile(userUuid, null)).withRel("update-profile")
-    val changePasswordLink =
-        linkTo(methodOn(UserController::class.java).changePassword(userUuid, null)).withRel("change-password")
-    val deleteUserLink = linkTo(methodOn(UserController::class.java).deleteUser(userUuid, null)).withRel("delete-user")
 
     return UserProfileResponseV1(
         id = this.id,
@@ -32,34 +17,30 @@ fun UserProfileDto.toResponseV1(): UserProfileResponseV1 {
         name = this.name,
         phoneNumber = this.phoneNumber,
         userType = this.userType,
-        status = this.userStatus, // Map userStatus field added in Query DTO
-        createdAt = this.createdAt,
         status = this.status,
-        version = this.version, // Keep as Instant or format as needed
-        updatedAt = this.updatedAt, // Keep as Instant or format as needed
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+        version = this.version,
         // Use correct function name
         addresses = this.addresses.map { it.toResponseV1() },
     ).apply {
-        // Add relevant links
-        add(selfLink, updateProfileLink, changePasswordLink, deleteUserLink)
-        // if (addressesLink != null) add(addressesLink) // Add address link if implemented
+        // 간단히 문자열 기반으로 링크 추가
+        add(Link.of("/api/v1/users/$userId/profile", "self"))
+        add(Link.of("/api/v1/users/$userId/profile", "update-profile"))
+        add(Link.of("/api/v1/users/$userId/password", "change-password"))
+        add(Link.of("/api/v1/users/$userId", "delete-user"))
     }
 }
 
 // UserProfileDto.AddressDto -> AddressResponseV1 변환
-fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 {
-    // Add links if needed, e.g., link to update/delete this specific address
-    // val updateLink = linkTo(methodOn(UserAddressController::class.java).updateAddress(userId, addressId, null)).withRel("update")
-    // val deleteLink = linkTo(methodOn(UserAddressController::class.java).deleteAddress(userId, addressId)).withRel("delete")
-    return AddressResponseV1(
-        // Use correct field name 'id' from DTO
+fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 =
+    AddressResponseV1(
         id = this.id,
         street = this.street,
         detail = this.detail,
         zipCode = this.zipCode,
         isDefault = this.isDefault,
-    ) // .apply { add(updateLink, deleteLink) }
-}
+    )
 
 // List extension (can be useful)
 fun List<UserProfileDto.AddressDto>.toResponseV1(): List<AddressResponseV1> = map { it.toResponseV1() }

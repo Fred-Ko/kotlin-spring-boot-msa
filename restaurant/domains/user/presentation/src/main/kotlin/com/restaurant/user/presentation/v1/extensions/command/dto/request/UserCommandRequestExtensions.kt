@@ -7,7 +7,6 @@ import com.restaurant.user.application.dto.command.RegisterAddressCommand
 import com.restaurant.user.application.dto.command.RegisterUserCommand
 import com.restaurant.user.application.dto.command.UpdateAddressCommand
 import com.restaurant.user.application.dto.command.UpdateProfileCommand
-import com.restaurant.user.domain.aggregate.UserType
 import com.restaurant.user.presentation.v1.dto.request.ChangePasswordRequestV1
 import com.restaurant.user.presentation.v1.dto.request.DeleteUserRequestV1
 import com.restaurant.user.presentation.v1.dto.request.LoginRequestV1
@@ -20,13 +19,10 @@ import java.util.UUID
 // RegisterUserRequestV1 -> RegisterUserCommand 변환
 fun RegisterUserRequestV1.toCommand(): RegisterUserCommand =
     RegisterUserCommand(
-        username = this.username,
-        password = this.password,
         email = this.email,
+        password = this.password,
         name = this.name,
-        phoneNumber = this.phoneNumber,
-        // Default to CUSTOMER if null
-        userType = this.userType ?: UserType.CUSTOMER,
+        username = this.username,
     )
 
 // LoginRequestV1 -> LoginCommand 변환
@@ -39,15 +35,15 @@ fun LoginRequestV1.toCommand(): LoginCommand =
 // UpdateProfileRequestV1 -> UpdateProfileCommand 변환
 fun UpdateProfileRequestV1.toCommand(userId: UUID): UpdateProfileCommand =
     UpdateProfileCommand(
-        userId = userId,
+        userId = userId.toString(),
         name = this.name,
-        phoneNumber = this.phoneNumber,
+        phoneNumber = null,
     )
 
 // ChangePasswordRequestV1 -> ChangePasswordCommand 변환
 fun ChangePasswordRequestV1.toCommand(userId: UUID): ChangePasswordCommand =
     ChangePasswordCommand(
-        userId = userId,
+        userId = userId.toString(),
         currentPassword = this.currentPassword,
         newPassword = this.newPassword,
     )
@@ -55,8 +51,8 @@ fun ChangePasswordRequestV1.toCommand(userId: UUID): ChangePasswordCommand =
 // DeleteUserRequestV1 -> DeleteUserCommand 변환
 fun DeleteUserRequestV1.toCommand(userId: UUID): DeleteUserCommand =
     DeleteUserCommand(
-        userId = userId,
-        password = this.password,
+        userId = userId.toString(),
+        password = this.currentPassword,
     )
 
 // RegisterAddressRequestV1 -> RegisterAddressCommand 변환

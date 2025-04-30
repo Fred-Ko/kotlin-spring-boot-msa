@@ -17,9 +17,9 @@ import org.springframework.scheduling.annotation.EnableScheduling // For Outbox 
 // Scan components in config, outbox.infra, user.presentation, user.application, user.infra
 @ComponentScan(
     basePackages = [
-        "com.restaurant.config",
+        "com.restaurant.common",
         "com.restaurant.outbox.infrastructure",
-        "com.restaurant.outbox.internal", // If poller is in internal
+        "com.restaurant.outbox.port",
         "com.restaurant.user.presentation",
         "com.restaurant.user.application",
         "com.restaurant.user.infrastructure",

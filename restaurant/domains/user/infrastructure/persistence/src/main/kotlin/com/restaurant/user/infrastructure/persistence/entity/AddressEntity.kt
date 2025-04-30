@@ -37,24 +37,6 @@ class AddressEntity(
     @Version
     @Column(nullable = false)
     val version: Long = 0L,
-    @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now(),
-    @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant = Instant.now(),
 ) : BaseEntity() {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that = other as AddressEntity
-        return Objects.equals(id, that.id) &&
-            addressId == that.addressId
-    }
 
-    override fun hashCode(): Int {
-        return Objects.hash(id ?: addressId)
-    }
-
-    override fun toString(): String {
-        return "AddressEntity(id=$id, addressId=$addressId, street='$street', detail='$detail', zipCode='$zipCode', isDefault=$isDefault, userId=${user?.id}, version=$version)"
-    }
 }

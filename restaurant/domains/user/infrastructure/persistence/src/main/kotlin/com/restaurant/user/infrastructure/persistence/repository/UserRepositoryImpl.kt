@@ -3,6 +3,7 @@ package com.restaurant.user.infrastructure.persistence.repository
 import com.restaurant.common.config.filter.CorrelationIdFilter
 import com.restaurant.outbox.port.OutboxMessageRepository
 import com.restaurant.user.domain.aggregate.User
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.UserId
@@ -11,7 +12,7 @@ import com.restaurant.user.infrastructure.messaging.serialization.OutboxMessageF
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 import com.restaurant.user.infrastructure.persistence.extensions.toDomain
 import com.restaurant.user.infrastructure.persistence.extensions.toEntity
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import org.slf4j.MDC
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Repository
@@ -40,9 +41,13 @@ class UserRepositoryImpl(
                 log.warn(e) { "Data integrity violation while saving user ${user.id.value}" }
                 val message = e.mostSpecificCause.message ?: ""
                 when {
-                    message.contains("uc_users_email", ignoreCase = true) || message.contains("users_email_key") || message.contains("uk_user_email") ->
+                    message.contains("uc_users_email", ignoreCase = true) ||
+                        message.contains("users_email_key") ||
+                        message.contains("uk_user_email") ->
                         throw UserDomainException.User.DuplicateEmail(user.email.value)
-                    message.contains("uc_users_username", ignoreCase = true) || message.contains("users_username_key") || message.contains("uk_user_username") ->
+                    message.contains("uc_users_username", ignoreCase = true) ||
+                        message.contains("users_username_key") ||
+                        message.contains("uk_user_username") ->
                         throw UserDomainException.User.DuplicateUsername(user.username.value)
                     else -> throw UserDomainException.PersistenceError("Data integrity violation", e)
                 }
@@ -61,7 +66,7 @@ class UserRepositoryImpl(
                     }
 
                 if (outboxMessages.isNotEmpty()) {
-                    outboxRepository.save(outboxMessages)
+                    outboxRepository.saveAll(outboxMessages)
                     log.info { "Saved ${outboxMessages.size} message(s) to outbox for aggregate ${user.id.value}" }
                 }
             } catch (ex: Exception) {
@@ -77,13 +82,43 @@ class UserRepositoryImpl(
         return savedEntity.toDomain()
     }
 
+    @Transactional
+    override fun delete(user: User) {
+        log.debug { "Deleting user: ${user.id.value}" }
+        try {
+            springDataJpaUserRepository.deleteByDomainId(user.id.value)
+
+            // Process any domain events triggered by deletion
+            val events = user.getDomainEvents()
+            if (events.isNotEmpty()) {
+                val correlationId = MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC_KEY) ?: "SYSTEM-${UUID.randomUUID()}"
+                log.info { "Processing ${events.size} domain event(s) for deleted aggregate ${user.id.value}" }
+
+                val outboxMessages =
+                    events.flatMap { event ->
+                        outboxMessageFactory.createMessagesFromEvent(event, correlationId)
+                    }
+
+                if (outboxMessages.isNotEmpty()) {
+                    outboxRepository.saveAll(outboxMessages)
+                    log.info { "Saved ${outboxMessages.size} message(s) to outbox for deleted aggregate ${user.id.value}" }
+                }
+
+                user.clearDomainEvents()
+            }
+        } catch (e: Exception) {
+            log.error(e) { "Failed to delete user ${user.id.value}" }
+            throw UserDomainException.PersistenceError("Failed to delete user", e)
+        }
+    }
+
     @Transactional(readOnly = true)
     override fun findById(id: UserId): User? {
         log.debug { "Finding user by ID: ${id.value}" }
         return springDataJpaUserRepository
-            .findByDomainId(id.value)
+            .findByUserId(id.value)
             ?.toDomain()
-            .also { if (it == null) log.warn { "User not found for ID: ${id.value}" } }
+            .also { user -> if (user == null) log.warn { "User not found for ID: ${id.value}" } }
     }
 
     @Transactional(readOnly = true)
@@ -92,16 +127,16 @@ class UserRepositoryImpl(
         return springDataJpaUserRepository
             .findByUsername(username.value)
             ?.toDomain()
-            .also { if (it == null) log.warn { "User not found for Username: ${username.value}" } }
+            .also { user -> if (user == null) log.warn { "User not found for Username: ${username.value}" } }
     }
 
     @Transactional(readOnly = true)
     override fun findByEmail(email: Email): User? {
         log.debug { "Finding user by email: ${email.value}" }
         return springDataJpaUserRepository
-            .findByEmailValue(email.value)
+            .findByEmail(email.value)
             ?.toDomain()
-            .also { if (it == null) log.warn { "User not found for Email: ${email.value}" } }
+            .also { user -> if (user == null) log.warn { "User not found for Email: ${email.value}" } }
     }
 
     @Transactional(readOnly = true)
@@ -113,6 +148,6 @@ class UserRepositoryImpl(
     @Transactional(readOnly = true)
     override fun existsByEmail(email: Email): Boolean {
         log.debug { "Checking existence by email: ${email.value}" }
-        return springDataJpaUserRepository.existsByEmailValue(email.value)
+        return springDataJpaUserRepository.existsByEmail(email.value)
     }
 }

@@ -4,6 +4,7 @@ import com.restaurant.common.exception.ApplicationException
 import com.restaurant.common.exception.DomainException
 import jakarta.persistence.OptimisticLockException
 import mu.KotlinLogging
+import org.slf4j.MDC
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus

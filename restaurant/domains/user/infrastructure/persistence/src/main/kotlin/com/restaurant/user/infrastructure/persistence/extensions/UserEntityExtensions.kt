@@ -4,7 +4,16 @@ import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
-import java.util.stream.Collectors
+import com.restaurant.user.domain.vo.Username
+import com.restaurant.user.domain.vo.Password
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.Name
+import com.restaurant.user.domain.vo.PhoneNumber
+import com.restaurant.user.domain.aggregate.UserType
+import com.restaurant.user.domain.aggregate.UserStatus
+import java.time.Instant
+
+
 
 /**
  * Extension functions for mapping between User domain aggregate and UserEntity.
@@ -12,46 +21,41 @@ import java.util.stream.Collectors
  */
 // UserEntity -> User Domain
 fun UserEntity.toDomain(): User {
-    return User.reconstitute(
-        id = UserId.fromUUID(this.userId),
+    return User(
+        id = UserId.fromUUID(this.domainId),
         username = Username.of(this.username),
         password = Password.of(this.passwordHash),
         email = Email.of(this.email),
-        name = this.name,
+        name = Name.of(this.name),
         phoneNumber = this.phoneNumber?.let { PhoneNumber.of(it) },
-        userType = this.userType,
-        userStatus = this.status,
-        addresses = this.addresses.stream().map { it.toDomain() }.collect(Collectors.toList()),
+        userType = UserType.valueOf(this.userType.name),
+        status = UserStatus.valueOf(this.status.name),
+        addresses = this.addresses.map { it.toDomain() },
         defaultAddressId = this.addresses.find { it.isDefault }?.let { AddressId.of(it.addressId) },
         version = this.version,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt
     )
 }
 
 // User Domain -> UserEntity
 fun User.toEntity(): UserEntity {
-    val userEntity =
-        UserEntity(
-            userId = this.id.value,
-            username = this.username.value,
-            passwordHash = this.password.value,
-            email = this.email.value,
-            name = this.name,
-            phoneNumber = this.phoneNumber?.value,
-            userType = this.userType,
-            status = this.userStatus,
-            addresses = mutableListOf(),
-            version = this.version,
-        )
-
-    val addressEntities =
-        this.addresses.map { address ->
-            address.toEntity(userEntity)
-        }
-    userEntity.addresses.addAll(addressEntities)
-
-    this.defaultAddressId?.let { defId ->
-        userEntity.addresses.find { it.addressId == defId.value }?.isDefault = true
+    // Map domain to entity, addresses handled as immutable list
+    val addressEntities = this.addresses.map { address ->
+        address.toEntity() // userEntity will be set by JPA relationship
     }
-
-    return userEntity
+    return UserEntity(
+        domainId = this.id.value,
+        username = this.username.value,
+        passwordHash = this.password.value,
+        email = this.email.value,
+        name = this.name.value,
+        phoneNumber = this.phoneNumber?.value,
+        userType = this.userType,
+        status = this.status,
+        addresses = addressEntities,
+        version = this.version,
+        createdAt = Instant.now(),
+        updatedAt = Instant.now()
+    )
 }

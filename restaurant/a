@@ -4255,7 +4255,7 @@ import com.restaurant.user.infrastructure.messaging.serialization.OutboxMessageF
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 import com.restaurant.user.infrastructure.persistence.extensions.toDomain
 import com.restaurant.user.infrastructure.persistence.extensions.toEntity
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging.KotlinLogging
 import org.slf4j.MDC
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Repository
@@ -4410,9 +4410,9 @@ package com.restaurant.user.presentation.v1.api
 import com.restaurant.common.config.dto.response.CommandResultResponse
 import com.restaurant.common.config.filter.CorrelationIdFilter
 import com.restaurant.user.application.dto.command.DeleteAddressCommand
-import com.restaurant.user.application.port.`in`.DeleteAddressUseCase
-import com.restaurant.user.application.port.`in`.RegisterAddressUseCase
-import com.restaurant.user.application.port.`in`.UpdateAddressUseCase
+import com.restaurant.user.application.port.input.DeleteAddressUseCase
+import com.restaurant.user.application.port.input.RegisterAddressUseCase
+import com.restaurant.user.application.port.input.UpdateAddressUseCase
 import com.restaurant.user.presentation.extensions.v1.request.toCommand
 import com.restaurant.user.presentation.v1.dto.request.RegisterAddressRequestV1
 import com.restaurant.user.presentation.v1.dto.request.UpdateAddressRequestV1
@@ -4526,10 +4526,10 @@ package com.restaurant.user.presentation.v1.api
 
 import com.restaurant.common.config.dto.response.CommandResultResponse
 // Command Use Cases
-import com.restaurant.user.application.port.`in`.ChangePasswordUseCase
-import com.restaurant.user.application.port.`in`.DeleteUserUseCase
-import com.restaurant.user.application.port.`in`.RegisterUserUseCase
-import com.restaurant.user.application.port.`in`.UpdateProfileUseCase
+import com.restaurant.user.application.port.input.ChangePasswordUseCase
+import com.restaurant.user.application.port.input.DeleteUserUseCase
+import com.restaurant.user.application.port.input.RegisterUserUseCase
+import com.restaurant.user.application.port.input.UpdateProfileUseCase
 // Query Use Cases
 // DTOs
 import com.restaurant.user.presentation.v1.dto.request.ChangePasswordRequestV1
@@ -4539,7 +4539,7 @@ import com.restaurant.user.presentation.v1.dto.request.UpdateProfileRequestV1
 // Extensions
 import com.restaurant.user.presentation.v1.extensions.request.toCommand
 // Other imports
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -4696,10 +4696,10 @@ class UserController(
 package com.restaurant.user.presentation.v1.api
 
 import com.restaurant.user.application.dto.query.GetUserProfileByIdQuery
-import com.restaurant.user.application.port.`in`.GetUserProfileQuery
+import com.restaurant.user.application.port.input.GetUserProfileQuery
 import com.restaurant.user.presentation.v1.dto.response.UserProfileResponseV1
 import com.restaurant.user.presentation.v1.extensions.response.toResponseV1
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
