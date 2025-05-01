@@ -108,7 +108,7 @@ class UserController(
     ): ResponseEntity<CommandResultResponse> {
         log.info("Update profile request received for user: {}", userId)
         val command = request.toCommand(userId)
-        updateProfileUseCase.handle(command)
+        updateProfileUseCase.updateProfile(command)
         val response =
             CommandResultResponse(
                 status = "SUCCESS",
@@ -128,7 +128,7 @@ class UserController(
     ): ResponseEntity<CommandResultResponse> {
         log.info("Change password request received for user: {}", userId)
         val command = request.toCommand(userId)
-        changePasswordUseCase.handle(command)
+        changePasswordUseCase.changePassword(command)
         val response =
             CommandResultResponse(
                 status = "SUCCESS",
@@ -148,7 +148,7 @@ class UserController(
     ): ResponseEntity<CommandResultResponse> {
         log.info("Delete user request received for user: {}", userId)
         val command = request.toCommand(userId)
-        deleteUserUseCase.handle(command)
+        deleteUserUseCase.deleteUser(command)
         val response =
             CommandResultResponse(
                 status = "SUCCESS",
