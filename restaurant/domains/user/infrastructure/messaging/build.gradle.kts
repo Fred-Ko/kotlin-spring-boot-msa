@@ -10,7 +10,8 @@ plugins {
 
 dependencies {
     api(project(":domains:user:domain"))
-    api(project(":domains:common"))
+    api(project(":domains:common:domain"))
+api(project(":domains:common:infrastructure"))
     api(project(":independent:outbox"))
     implementation("org.springframework:spring-context:6.1.6")
     implementation("org.springframework:spring-tx:6.1.6")

@@ -1,6 +1,6 @@
 package com.restaurant.common.exception
 
-import com.restaurant.common.error.ErrorCode
+import com.restaurant.common.domain.error.ErrorCode
 
 /**
  * Base class for all custom domain exceptions.

@@ -13,7 +13,8 @@ allOpen {
 
 dependencies {
     api(project(":domains:user:domain"))
-    api(project(":domains:common"))
+    api(project(":domains:common:domain"))
+api(project(":domains:common:infrastructure"))
     api(project(":independent:outbox"))
     implementation(project(":domains:user:infrastructure:messaging"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.5")

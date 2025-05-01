@@ -27,7 +27,9 @@ dependencyResolutionManagement {
 rootProject.name = "restaurant"
 
 include(
-    ":domains:common",
+    ":domains:common:domain",
+    ":domains:common:presentation",
+    ":domains:common:infrastructure",
     ":domains:user:presentation",
     ":domains:user:application",
     ":domains:user:domain",

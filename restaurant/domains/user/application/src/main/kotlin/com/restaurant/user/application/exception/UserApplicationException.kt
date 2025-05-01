@@ -1,7 +1,7 @@
 package com.restaurant.user.application.exception
 
-import com.restaurant.common.error.ErrorCode
-import com.restaurant.common.exception.ApplicationException
+import com.restaurant.common.domain.error.ErrorCode
+import com.restaurant.common.domain.exception.ApplicationException
 import com.restaurant.user.application.error.UserApplicationErrorCode
 
 /**

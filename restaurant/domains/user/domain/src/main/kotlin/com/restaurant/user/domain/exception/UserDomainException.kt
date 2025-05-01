@@ -1,6 +1,6 @@
 package com.restaurant.user.domain.exception
 
-import com.restaurant.common.exception.DomainException
+import com.restaurant.common.domain.exception.DomainException
 import com.restaurant.user.domain.error.UserDomainErrorCodes
 
 /**

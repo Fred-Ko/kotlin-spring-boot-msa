@@ -21,7 +21,9 @@ tasks.withType<KotlinCompile> {
 
 dependencies {
     // Core Application Dependencies
-    implementation(project(":domains:common"))
+    implementation(project(":domains:common:domain"))
+implementation(project(":domains:common:presentation"))
+implementation(project(":domains:common:infrastructure"))
     implementation(project(":domains:user:presentation"))
     implementation(project(":domains:user:application"))
     implementation(project(":domains:user:infrastructure:persistence"))

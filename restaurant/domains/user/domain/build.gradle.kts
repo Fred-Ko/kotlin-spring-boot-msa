@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    api(project(":domains:common"))
+
 }
 
 // REMOVED: Comment about Jar task configuration

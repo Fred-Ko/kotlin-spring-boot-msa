@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(project(":domains:user:domain"))
-    api(project(":domains:common"))
+
     implementation("org.springframework.boot:spring-boot-starter:3.3.5")
     implementation("org.springframework:spring-tx:6.1.6")
     implementation("org.springframework:spring-context:6.1.6")

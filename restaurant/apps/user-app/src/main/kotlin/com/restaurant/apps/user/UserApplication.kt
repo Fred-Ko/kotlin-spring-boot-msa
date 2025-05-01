@@ -17,7 +17,9 @@ import org.springframework.scheduling.annotation.EnableScheduling // For Outbox 
 // Scan components in config, outbox.infra, user.presentation, user.application, user.infra
 @ComponentScan(
     basePackages = [
-        "com.restaurant.common",
+        "com.restaurant.common.domain",
+        "com.restaurant.common.presentation",
+        "com.restaurant.common.infrastructure",
         "com.restaurant.outbox.infrastructure",
         "com.restaurant.outbox.port",
         "com.restaurant.user.presentation",

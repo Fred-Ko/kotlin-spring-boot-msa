@@ -1,6 +1,6 @@
 package com.restaurant.user.infrastructure.persistence.repository
 
-import com.restaurant.common.config.filter.CorrelationIdFilter
+import com.restaurant.common.presentation.filter.CorrelationIdFilter
 import com.restaurant.outbox.port.OutboxMessageRepository
 import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.exception.UserDomainException

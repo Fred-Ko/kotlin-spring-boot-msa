@@ -1,4 +1,4 @@
-package com.restaurant.common.config.filter
+package com.restaurant.common.presentation.filter
 
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain

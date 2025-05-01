@@ -1,7 +1,7 @@
 package com.restaurant.common.presentation
 
-import com.restaurant.common.exception.ApplicationException
-import com.restaurant.common.exception.DomainException
+import com.restaurant.common.domain.exception.ApplicationException
+import com.restaurant.common.domain.exception.DomainException
 import jakarta.persistence.OptimisticLockException
 import mu.KotlinLogging
 import org.slf4j.MDC
