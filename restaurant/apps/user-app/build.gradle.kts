@@ -28,7 +28,8 @@ repositories {
 dependencies {
     implementation(project(":domains:user:application"))
     implementation(project(":domains:user:domain"))
-    implementation(project(":domains:user:infrastructure"))
+    implementation(project(":domains:user:infrastructure:persistence"))
+    implementation(project(":domains:user:infrastructure:messaging"))
     implementation(project(":domains:user:presentation"))
     implementation(project(":domains:common:application"))
     implementation(project(":domains:common:domain"))

@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    id("java-library")
     id("org.springframework.boot")
     id("io.spring.dependency-management")
     kotlin("plugin.spring")
@@ -65,4 +66,20 @@ avro {
     setFieldVisibility("PRIVATE")
     setOutputCharacterEncoding("UTF-8")
     stringType = "String"
+}
+
+sourceSets {
+    main {
+        java.srcDirs("src/main/java", "build/generated-src/avro/main/java")
+        kotlin.srcDirs("src/main/kotlin", "build/generated-src/avro/main/java")
+    }
+}
+
+// Ensure generateAvro task runs before compile tasks
+tasks.named<JavaCompile>("compileJava") {
+    dependsOn(tasks.named("generateAvroJava"))
+}
+
+tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileKotlin") {
+    dependsOn(tasks.named("generateAvroJava"))
 }

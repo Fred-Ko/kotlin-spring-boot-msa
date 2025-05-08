@@ -24,6 +24,10 @@ dependencies {
     // Kafka
     implementation("org.apache.kafka:kafka-clients")
     
+    // Jackson for JSON conversion in converters
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")

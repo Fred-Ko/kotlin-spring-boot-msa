@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    id("java-library")
     id("org.springframework.boot")
     id("io.spring.dependency-management")
     kotlin("plugin.spring")
@@ -10,17 +11,25 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
 
+sourceSets {
+    main {
+        java.srcDirs("src/main/java", "build/generated-src/avro/main/java")
+        kotlin.srcDirs("src/main/kotlin", "build/generated-src/avro/main/java")
+    }
+}
+
 dependencies {
-    implementation(project(":domains:common:domain"))
-    implementation(project(":domains:common:application"))
-    implementation(project(":domains:common:infrastructure"))
-    implementation(project(":domains:user:domain"))
-    implementation(project(":domains:user:application"))
-    implementation(project(":independent:outbox"))
+    api(project(":domains:common:domain"))
+    api(project(":domains:common:infrastructure"))
+    api(project(":domains:user:domain"))
+    api(project(":independent:outbox"))
     
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+    
+    // Add explicit slf4j-api dependency for MDC
+    implementation("org.slf4j:slf4j-api:2.0.16")
     
     // Spring
     implementation("org.springframework.boot:spring-boot-starter")
@@ -57,4 +66,13 @@ avro {
     setFieldVisibility("PRIVATE")
     setOutputCharacterEncoding("UTF-8")
     stringType = "String"
+}
+
+// Ensure generateAvro task runs before compile tasks
+tasks.named<JavaCompile>("compileJava") {
+    dependsOn(tasks.named("generateAvroJava"))
+}
+
+tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileKotlin") {
+    dependsOn(tasks.named("generateAvroJava"))
 }

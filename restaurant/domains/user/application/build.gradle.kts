@@ -12,7 +12,6 @@ java {
 tasks {
     jar {
         enabled = true
-        dependsOn("classes")
     }
     
     classes {

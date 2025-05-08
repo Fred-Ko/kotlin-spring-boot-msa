@@ -13,10 +13,9 @@ java {
 
 dependencies {
     implementation(project(":domains:common:domain"))
-    implementation(project(":domains:common:application"))
     implementation(project(":domains:common:infrastructure"))
     implementation(project(":domains:user:domain"))
-    implementation(project(":domains:user:application"))
+    implementation(project(":domains:user:infrastructure:messaging"))
     implementation(project(":independent:outbox"))
     
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
@@ -25,6 +24,7 @@ dependencies {
     
     // Spring
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework:spring-tx")
     
     // Database
