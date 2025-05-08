@@ -19,13 +19,12 @@ sourceSets {
 }
 
 dependencies {
-    api(project(":domains:common:domain"))
     api(project(":domains:common:infrastructure"))
     api(project(":domains:user:domain"))
     api(project(":independent:outbox"))
     
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
     implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
     
     // Add explicit slf4j-api dependency for MDC

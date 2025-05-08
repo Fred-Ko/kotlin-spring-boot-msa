@@ -47,7 +47,7 @@ pluginManagement {
                 requested.id.id == "org.jetbrains.kotlin.plugin.spring" ||
                 requested.id.id == "org.jetbrains.kotlin.plugin.jpa" ||
                 requested.id.id == "org.jetbrains.kotlin.plugin.allopen") {
-                useVersion("2.0.20")
+                useVersion("1.9.23")
             }
             if (requested.id.id == "org.jlleitschuh.gradle.ktlint") {
                 useVersion("12.1.1")

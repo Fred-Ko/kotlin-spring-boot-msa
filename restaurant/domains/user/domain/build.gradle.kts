@@ -4,9 +4,13 @@ kotlin {
     jvmToolchain(21)
 }
 
+tasks.named("jar") {
+    enabled = false
+}
+
 dependencies {
-    implementation(project(":domains:common:domain"))
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.0.20"))
+    compileOnly(project(":domains:common:domain"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.23"))
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
@@ -16,3 +20,7 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach { useJUnitPlatform() }
+
+tasks.withType<JavaCompile>().configureEach { enabled = false }
+tasks.withType<Jar>().configureEach { enabled = false }
+tasks.withType<ProcessResources>().configureEach { enabled = false }

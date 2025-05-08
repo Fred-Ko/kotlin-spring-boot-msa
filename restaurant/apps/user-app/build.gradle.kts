@@ -7,10 +7,10 @@
 plugins {
     id("org.springframework.boot") version "3.3.4"
     id("io.spring.dependency-management") version "1.1.6"
-    kotlin("jvm") version "2.0.20"
-    kotlin("plugin.spring") version "2.0.20"
-    kotlin("plugin.jpa") version "2.0.20"
-    kotlin("plugin.allopen") version "2.0.20"
+    kotlin("jvm") version "1.9.23"
+    kotlin("plugin.spring") version "1.9.23"
+    kotlin("plugin.jpa") version "1.9.23"
+    kotlin("plugin.allopen") version "1.9.23"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 

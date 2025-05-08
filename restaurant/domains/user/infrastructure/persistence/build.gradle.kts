@@ -12,14 +12,13 @@ java {
 }
 
 dependencies {
-    implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:infrastructure"))
     implementation(project(":domains:user:domain"))
     implementation(project(":domains:user:infrastructure:messaging"))
     implementation(project(":independent:outbox"))
     
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     
     // Spring

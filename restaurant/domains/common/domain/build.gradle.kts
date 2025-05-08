@@ -7,8 +7,8 @@ java {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 
@@ -24,9 +24,6 @@ kotlin {
     }
 }
 
-tasks.named("jar") {
-    dependsOn("compileKotlin")
-}
 
 tasks.withType<Test> {
     useJUnitPlatform()
