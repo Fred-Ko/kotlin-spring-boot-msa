@@ -2,11 +2,15 @@
   "type": "record",
   "name": "Envelope",
   "namespace": "com.restaurant.common.infrastructure.avro",
+  "doc": "Common envelope for all domain events",
   "fields": [
-    { "name": "eventId", "type": "string" },
-    { "name": "timestamp", "type": "long" },
-    { "name": "source", "type": "string" },
-    { "name": "aggregateType", "type": "string" },
-    { "name": "aggregateId", "type": "string" }
+    { "name": "schemaVersion", "type": "string", "doc": "Envelope schema version or payload schema physical version" },
+    { "name": "eventId", "type": "string", "doc": "UUID for unique identification and correlation" },
+    { "name": "timestamp", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" },
+    { "name": "source", "type": "string", "doc": "Publishing domain (e.g., user, order)" },
+    { "name": "aggregateType", "type": "string", "doc": "Type of the aggregate (e.g., User, Order)" },
+    { "name": "aggregateId", "type": "string", "doc": "Domain ID of the aggregate (UUID string)" },
+    { "name": "payload", "type": "bytes", "doc": "Serialized domain event payload" }
+    }
   ]
 }

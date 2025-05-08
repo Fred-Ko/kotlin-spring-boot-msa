@@ -18,5 +18,4 @@ enum class UserApplicationErrorCode(
     INVALID_CREDENTIALS("USER-APPLICATION-006", "Invalid username or password"),
     USER_INACTIVE("USER-APPLICATION-007", "User account is inactive"),
     SYSTEM_ERROR("USER-APPLICATION-999", "처리 중 오류가 발생했습니다."),
-    // 필요한 다른 Application 에러 코드 추가
 }

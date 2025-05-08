@@ -11,34 +11,62 @@ import java.time.Instant
  */
 data class Address private constructor(
     val addressId: AddressId,
-    val street: String,
-    val detail: String,
+    val name: String,
+    val streetAddress: String,
+    val city: String,
+    val state: String,
+    val country: String,
     val zipCode: String,
-    var isDefault: Boolean,
+    val isDefault: Boolean,
     val createdAt: Instant,
-    var updatedAt: Instant,
-    var version: Long = 0L,
+    val updatedAt: Instant,
+    val version: Long = 0L,
 ) {
     init {
-        if (street.isBlank()) {
-            throw UserDomainException.Validation.InvalidAddressFormat("Street cannot be blank.")
+        if (streetAddress.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("Street address cannot be blank.")
         }
         validateZipCode(zipCode)
+        if (name.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("Name cannot be blank.")
+        }
+        if (city.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("City cannot be blank.")
+        }
+        if (state.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("State cannot be blank.")
+        }
+        if (country.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("Country cannot be blank.")
+        }
     }
 
     fun updateDetails(
-        street: String,
-        detail: String,
+        name: String,
+        streetAddress: String,
+        city: String,
+        state: String,
+        country: String,
         zipCode: String,
         isDefault: Boolean,
     ): Address {
         validateZipCode(zipCode)
-        if (this.street == street && this.detail == detail && this.zipCode == zipCode && this.isDefault == isDefault) {
+        if (this.name == name &&
+            this.streetAddress == streetAddress &&
+            this.city == city &&
+            this.state == state &&
+            this.country == country &&
+            this.zipCode == zipCode &&
+            this.isDefault == isDefault
+        ) {
             return this
         }
         return this.copy(
-            street = street,
-            detail = detail,
+            name = name,
+            streetAddress = streetAddress,
+            city = city,
+            state = state,
+            country = country,
             zipCode = zipCode,
             isDefault = isDefault,
             updatedAt = Instant.now(),
@@ -48,11 +76,14 @@ data class Address private constructor(
 
     fun toData(): UserEvent.AddressData =
         UserEvent.AddressData(
-            addressId = this.addressId.value.toString(),
-            street = this.street,
-            detail = this.detail,
-            zipCode = this.zipCode,
-            isDefault = this.isDefault,
+            id = addressId.value.toString(),
+            name = name,
+            streetAddress = streetAddress,
+            city = city,
+            state = state,
+            country = country,
+            zipCode = zipCode,
+            isDefault = isDefault,
         )
 
     companion object {
@@ -64,39 +95,57 @@ data class Address private constructor(
 
         fun create(
             addressId: AddressId,
-            street: String,
-            detail: String,
+            name: String,
+            streetAddress: String,
+            city: String,
+            state: String,
+            country: String,
             zipCode: String,
             isDefault: Boolean,
-            version: Long = 0L,
         ): Address {
             validateZipCode(zipCode)
             val now = Instant.now()
             return Address(
                 addressId = addressId,
-                street = street,
-                detail = detail,
+                name = name,
+                streetAddress = streetAddress,
+                city = city,
+                state = state,
+                country = country,
                 zipCode = zipCode,
                 isDefault = isDefault,
                 createdAt = now,
                 updatedAt = now,
-                version = version,
+                version = 0L,
             )
         }
 
         fun reconstitute(
             addressId: AddressId,
-            street: String,
-            detail: String,
+            name: String,
+            streetAddress: String,
+            city: String,
+            state: String,
+            country: String,
             zipCode: String,
             isDefault: Boolean,
             createdAt: Instant,
             updatedAt: Instant,
             version: Long,
-        ): Address {
-            // No validation needed on reconstitute, assuming data is valid
-            return Address(addressId, street, detail, zipCode, isDefault, createdAt, updatedAt, version)
-        }
+        ): Address =
+            Address(
+                addressId = addressId,
+                name = name,
+                streetAddress = streetAddress,
+                city = city,
+                state = state,
+                country = country,
+                zipCode = zipCode,
+                isDefault = isDefault,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                version = version,
+            )
     }
 
     fun markAsDefault(): Address {

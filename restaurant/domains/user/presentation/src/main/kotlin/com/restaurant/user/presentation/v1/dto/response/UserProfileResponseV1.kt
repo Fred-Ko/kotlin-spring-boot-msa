@@ -9,7 +9,7 @@ import java.time.Instant
 /**
  * 사용자 프로필 정보 응답 DTO (Rule 1.4, 39)
  */
-@Relation(collectionRelation = "users", itemRelation = "user") // For HATEOAS collection relation
+@Relation(collectionRelation = "users", itemRelation = "user")
 @Schema(description = "사용자 프로필 응답")
 data class UserProfileResponseV1(
     @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000") val id: String,
@@ -27,4 +27,4 @@ data class UserProfileResponseV1(
     val updatedAt: Instant,
     val status: String,
     val version: Long,
-) : RepresentationModel<UserProfileResponseV1>() // Inherit from RepresentationModel
+) : RepresentationModel<UserProfileResponseV1>()

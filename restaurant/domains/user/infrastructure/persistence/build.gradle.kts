@@ -1,29 +1,56 @@
 plugins {
     kotlin("jvm")
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
     kotlin("plugin.allopen")
 }
 
-allOpen {
-    annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.Embeddable")
-    annotation("jakarta.persistence.MappedSuperclass")
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
 }
 
 dependencies {
-    api(project(":domains:user:domain"))
-    api(project(":domains:common:domain"))
-api(project(":domains:common:infrastructure"))
-    api(project(":independent:outbox"))
-    implementation(project(":domains:user:infrastructure:messaging"))
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.5")
-    runtimeOnly("com.h2database:h2:2.2.224")
-    implementation("org.springframework:spring-context:6.1.6")
-    implementation("org.springframework:spring-tx:6.1.6")
-    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
-    runtimeOnly("org.postgresql:postgresql:42.7.3")
-    implementation("org.mapstruct:mapstruct:1.5.5.Final")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:application"))
+    implementation(project(":domains:common:infrastructure"))
+    implementation(project(":domains:user:domain"))
+    implementation(project(":domains:user:application"))
+    implementation(project(":independent:outbox"))
+    
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    
+    // Spring
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework:spring-tx")
+    
+    // Database
+    implementation("org.postgresql:postgresql")
+    implementation("com.zaxxer:HikariCP")
+    
+    // Test
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.testcontainers:postgresql:1.20.2")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.2")
 }
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
+tasks.bootJar {
+    enabled = false
+}
+
+tasks.jar {
+    enabled = true
+}
+

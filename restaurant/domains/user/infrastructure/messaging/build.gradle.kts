@@ -1,31 +1,60 @@
 plugins {
-    id("org.springframework.boot") apply false
-    id("io.spring.dependency-management") apply false
     kotlin("jvm")
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
     kotlin("plugin.spring")
-    kotlin("plugin.jpa") apply false
-    kotlin("plugin.allopen") apply false
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
+    id("com.github.davidmc24.gradle.plugin.avro")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
 }
 
 dependencies {
-    api(project(":domains:user:domain"))
-    api(project(":domains:common:domain"))
-api(project(":domains:common:infrastructure"))
-    api(project(":independent:outbox"))
-    implementation("org.springframework:spring-context:6.1.6")
-    implementation("org.springframework:spring-tx:6.1.6")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1")
-    implementation("org.apache.avro:avro:1.11.3")
-    implementation("io.confluent:kafka-avro-serializer:7.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:application"))
+    implementation(project(":domains:common:infrastructure"))
+    implementation(project(":domains:user:domain"))
+    implementation(project(":domains:user:application"))
+    implementation(project(":independent:outbox"))
+    
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation("org.slf4j:slf4j-api:2.0.13")
+    
+    // Spring
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework:spring-tx")
+    
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+    
+    // Kafka & Avro
+    implementation("org.apache.kafka:kafka-clients")
+    implementation("org.apache.avro:avro")
+    implementation("io.confluent:kafka-avro-serializer:7.6.3")
+    
+    // Test
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.testcontainers:kafka:1.20.2")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.2")
 }
+
+tasks.bootJar {
+    enabled = false
+}
+
+tasks.jar {
+    enabled = true
+}
+
+// Configure Avro plugin
 avro {
-    stringType.set("String")
-    fieldVisibility.set("PRIVATE")
+    setCreateSetters(false)
+    setFieldVisibility("PRIVATE")
+    setOutputCharacterEncoding("UTF-8")
+    stringType = "String"
 }
-sourceSets["main"].java.srcDir("$buildDir/generated-main-avro-java")

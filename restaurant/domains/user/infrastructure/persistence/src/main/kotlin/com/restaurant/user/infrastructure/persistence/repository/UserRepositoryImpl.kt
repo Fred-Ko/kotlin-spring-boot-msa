@@ -88,7 +88,6 @@ class UserRepositoryImpl(
         try {
             springDataJpaUserRepository.deleteByDomainId(user.id.value)
 
-            // Process any domain events triggered by deletion
             val events = user.getDomainEvents()
             if (events.isNotEmpty()) {
                 val correlationId = MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC_KEY) ?: "SYSTEM-${UUID.randomUUID()}"

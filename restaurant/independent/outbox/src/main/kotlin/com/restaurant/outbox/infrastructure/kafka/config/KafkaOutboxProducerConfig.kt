@@ -15,34 +15,26 @@ import org.springframework.kafka.core.ProducerFactory
  * Configures KafkaTemplate to send raw byte arrays (Rule 129).
  */
 @Configuration
-class KafkaOutboxProducerConfig {
+class KafkaOutboxProducerConfig(
     @Value("\${spring.kafka.bootstrap-servers}")
-    private lateinit var bootstrapServers: String
-
-    // No Schema Registry URL needed here as we send raw bytes
-    // @Value("\${spring.kafka.properties.schema.registry.url}")
-    // private lateinit var schemaRegistryUrl: String
-
-    @Bean("outboxKafkaProducerFactory")
-    fun outboxProducerFactory(): ProducerFactory<String, ByteArray> {
-        val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
-        configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-        // Rule 129: Use ByteArraySerializer for value as payload is pre-serialized bytes
-        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = ByteArraySerializer::class.java
-
-        // Optional: Configure idempotence, retries, acks etc. for higher reliability
-        // configProps[ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG] = "true"
-        // configProps[ProducerConfig.ACKS_CONFIG] = "all"
-        // configProps[ProducerConfig.RETRIES_CONFIG] = Int.MAX_VALUE.toString()
-        // configProps[ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION] = "5"
-
-        // No Schema Registry config needed for ByteArraySerializer
-        // configProps["schema.registry.url"] = schemaRegistryUrl
-
+    private val bootstrapServers: String,
+) {
+    @Bean
+    fun producerFactory(): ProducerFactory<String, ByteArray> {
+        val configProps =
+            mapOf(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to ByteArraySerializer::class.java,
+                ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,
+                ProducerConfig.ACKS_CONFIG to "all",
+                ProducerConfig.RETRIES_CONFIG to 3,
+                ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 1,
+            )
         return DefaultKafkaProducerFactory(configProps)
     }
 
-    @Bean("outboxKafkaTemplate")
-    fun outboxKafkaTemplate(): KafkaTemplate<String, ByteArray> = KafkaTemplate(outboxProducerFactory())
+    @Bean
+    fun kafkaTemplate(producerFactory: ProducerFactory<String, ByteArray>): KafkaTemplate<String, ByteArray> =
+        KafkaTemplate(producerFactory)
 }

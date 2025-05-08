@@ -1,19 +1,68 @@
 plugins {
     kotlin("jvm")
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
+    kotlin("plugin.spring")
+    kotlin("plugin.jpa")
+    kotlin("plugin.allopen")
+    id("com.github.davidmc24.gradle.plugin.avro")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
 }
 
 dependencies {
-    api(project(":domains:common:domain")) // BaseEntity 등에서 공통 도메인 요소 참조 가능성
-    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0") // BaseEntity @MappedSuperclass 등
-    implementation("org.apache.avro:avro:1.11.3") // Envelope 스키마 생성용
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:application"))
+    
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    
+    // Spring
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework:spring-tx")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.kafka:spring-kafka")
+    
+    // Database
+    implementation("org.postgresql:postgresql")
+    implementation("com.zaxxer:HikariCP")
+    
+    // Kafka & Avro
+    implementation("org.apache.kafka:kafka-clients")
+    implementation("org.apache.avro:avro")
+    implementation("io.confluent:kafka-avro-serializer:7.6.3")
+    
+    // Test
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.testcontainers:postgresql:1.20.2")
+    testImplementation("org.testcontainers:kafka:1.20.2")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.2")
 }
 
-// Avro 플러그인 설정 (Envelope 스키마 생성용)
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
+tasks.bootJar {
+    enabled = false
+}
+
+tasks.jar {
+    enabled = true
+}
+
+// Configure Avro plugin
 avro {
-    stringType.set("String")
-    fieldVisibility.set("PRIVATE")
-    // createSetters, outputDir 옵션은 지원되지 않으므로 제거
+    setCreateSetters(false)
+    setFieldVisibility("PRIVATE")
+    setOutputCharacterEncoding("UTF-8")
+    stringType = "String"
 }
-// 기본 avro 플러그인 출력 디렉토리 사용 (srcDirs 자동 설정)
-

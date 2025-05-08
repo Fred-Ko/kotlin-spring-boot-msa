@@ -88,8 +88,10 @@ echo -e "==============================================================" >>$OUTP
 - 현재 코드를 유지하는 경우는 작업지시서에 굳이 명시하지 않아도 된다.
 - 작업지시서는 ~을 확인해라. 같은 모호한 문장은 절대로 안된다. ~을 어떻게 고쳐라 같이 매우 명시적이여야 한다.
 - 작업지시서는 어떤 파일이 어떤 부분이 잘못작성되었고 어떻게 고쳐야한다. 그리고 근거는 무엇이다 라는 명시적 문장이 있어야 한다.
+- 작업지시서에 코드 레벨을 너무 자세하게 설명하지 않아도 된다.
 - 작업지시서 제일 하단에는 모든 작업이 끝나고 확인해야할 체크리스트를 작성한다.
 - 이프로젝트는 Kotlin 으로 작성되어있다. Java는 사용하지 않는다.
+- 최신 스테이블 버전 목록은 작업지시서에 생략하지 않고 꼭 기입한다.
 
 작업 지시서에 항상 상단에 첨부할 문구
 ```
@@ -110,6 +112,70 @@ echo -e "==============================================================" >>$OUTP
 - 이동으로 처리할 일을 삭제후 생성으로 처리하지 말아라.
 - 의존성 버전은 항상 tools 이용해서 최신 스테이블 버전을 활용하도록 한다.
 - 확인하고 싶은 디렉토리 구조가 있다면 tree 명령어로 최대한 효율적이게 진행하라. 단 bin,build 는 제외한다.
+
+### 플러그인 (Plugins) - 최신 스테이블 버전
+1. **`org.springframework.boot`**: `3.3.4`  
+   - Spring Boot Gradle 플러그인 최신 버전 (Gradle Plugin Portal 및 GitHub 확인).[](https://github.com/spring-projects/spring-boot/releases)
+2. **`io.spring.dependency-management`**: `1.1.6`  
+   - Spring Dependency Management 플러그인 최신 버전 (Gradle Plugin Portal 확인).
+3. **`org.jetbrains.kotlin.jvm`**: `2.0.20`  
+   - Kotlin JVM 플러그인 최신 버전 (JetBrains GitHub 및 Maven Central 확인).
+4. **`org.jetbrains.kotlin.plugin.spring`**: `2.0.20`  
+   - Kotlin Spring 플러그인, Kotlin 버전과 동기화 (JetBrains 공식 문서 확인).
+5. **`org.jetbrains.kotlin.plugin.jpa`**: `2.0.20`  
+   - Kotlin JPA 플러그인, Kotlin 버전과 동기화 (JetBrains 공식 문서 확인).
+6. **`org.jetbrains.kotlin.plugin.allopen`**: `2.0.20`  
+   - Kotlin AllOpen 플러그인, Kotlin 버전과 동기화 (JetBrains 공식 문서 확인).
+7. **`org.jlleitschuh.gradle.ktlint`**: `12.1.1`  
+   - ktlint Gradle 플러그인 최신 버전 (GitHub 릴리스 확인).[](https://github.com/JLLeitschuh/ktlint-gradle)
+8. **`com.github.davidmc24.gradle.plugin.avro`**: `1.9.1`  
+   - Avro Gradle 플러그인 최신 버전 (GitHub 릴리스 확인).[](https://github.com/davidmc24/gradle-avro-plugin)
+
+### 외부 라이브러리 의존성 - 최신 스테이블 버전
+Spring Boot 3.3.4의 BOM(`spring-boot-dependencies`)을 기준으로 관리되는 의존성은 해당 BOM에서 제공하는 버전을 사용합니다. Spring Boot BOM 외의 의존성은 Maven Central 또는 공식 문서에서 최신 버전을 확인했습니다.
+
+1. **`org.jetbrains.kotlin:kotlin-stdlib`**: `2.0.20` (Spring Boot BOM: `2.0.20`)
+2. **`org.jetbrains.kotlin:kotlin-reflect`**: `2.0.20` (Spring Boot BOM: `2.0.20`)
+3. **`org.jetbrains.kotlin:kotlin-stdlib-common`**: `2.0.20` (Kotlin 버전과 동기화)
+4. **`io.github.microutils:kotlin-logging-jvm`**: `3.0.5` (Maven Central 확인)
+5. **`org.jetbrains.kotlinx:kotlinx-serialization-core`**: `1.7.3` (Kotlinx GitHub 확인)
+6. **`org.springframework.boot:spring-boot-starter`**: `3.3.4` (Spring Boot BOM)
+7. **`org.springframework.boot:spring-boot-starter-web`**: `3.3.4` (Spring Boot BOM)
+8. **`org.springframework.boot:spring-boot-starter-data-jpa`**: `3.3.4` (Spring Boot BOM)
+9. **`org.springframework.boot:spring-boot-starter-validation`**: `3.3.4` (Spring Boot BOM)
+10. **`org.springframework.boot:spring-boot-starter-actuator`**: `3.3.4` (Spring Boot BOM)
+11. **`org.springframework.boot:spring-boot-starter-security`**: `3.3.4` (Spring Boot BOM)
+12. **`org.springframework.boot:spring-boot-starter-aop`**: `3.3.4` (Spring Boot BOM)
+13. **`org.springframework.boot:spring-boot-starter-hateoas`**: `3.3.4` (Spring Boot BOM)
+14. **`org.springframework:spring-context`**: `6.1.14` (Spring Boot BOM)
+15. **`org.springframework:spring-tx`**: `6.1.14` (Spring Boot BOM)
+16. **`jakarta.persistence:jakarta.persistence-api`**: `3.1.0` (Spring Boot BOM)
+17. **`jakarta.validation:jakarta.validation-api`**: `3.0.2` (Spring Boot BOM)
+18. **`com.h2database:h2`**: `2.3.230` (Spring Boot BOM)
+19. **`org.postgresql:postgresql`**: `42.7.4` (Spring Boot BOM)
+20. **`com.zaxxer:HikariCP`**: `5.1.0` (Spring Boot BOM)
+21. **`org.mapstruct:mapstruct`**: `1.6.2` (Spring Boot BOM)
+22. **`org.mapstruct:mapstruct-processor`**: `1.6.2` (Spring Boot BOM)
+23. **`org.apache.avro:avro`**: `1.12.0` (Spring Boot BOM)
+24. **`org.springframework.kafka:spring-kafka`**: `3.2.4` (Spring Boot BOM)
+25. **`org.apache.kafka:kafka-clients`**: `3.8.0` (Spring Boot BOM)
+26. **`io.confluent:kafka-avro-serializer`**: `7.6.3` (Confluent Maven Repository 확인)
+27. **`com.fasterxml.jackson.module:jackson-module-kotlin`**: `2.17.2` (Spring Boot BOM)
+28. **`com.fasterxml.jackson.datatype:jackson-datatype-jsr310`**: `2.17.2` (Spring Boot BOM)
+29. **`com.fasterxml.jackson.core:jackson-databind`**: `2.17.2` (Spring Boot BOM)
+30. **`org.springdoc:springdoc-openapi-starter-webmvc-ui`**: `2.6.0` (Springdoc GitHub 확인)
+31. **`io.github.resilience4j:resilience4j-spring-boot3`**: `2.2.0` (Resilience4j GitHub 확인)
+32. **`org.slf4j:slf4j-api`**: `2.0.16` (Spring Boot BOM)
+33. **`org.springframework.boot:spring-boot-starter-test`**: `3.3.4` (Spring Boot BOM)
+34. **`io.kotest:kotest-runner-junit5`**: `5.9.1` (Kotest GitHub 확인)
+35. **`io.kotest:kotest-assertions-core`**: `5.9.1` (Kotest GitHub 확인)
+36. **`io.mockk:mockk`**: `1.13.13` (MockK GitHub 확인)
+37. **`org.mockito.kotlin:mockito-kotlin`**: `5.4.0` (Mockito Kotlin GitHub 확인)
+38. **`org.assertj:assertj-core`**: `3.26.3` (Spring Boot BOM)
+39. **`org.jetbrains.kotlin:kotlin-test-junit5`**: `2.0.20` (Kotlin 버전과 동기화)
+40. **`org.testcontainers:postgresql`**: `1.20.2` (Testcontainers GitHub 확인)
+41. **`org.testcontainers:kafka`**: `1.20.2` (Testcontainers GitHub 확인)
+42. **`org.testcontainers:junit-jupiter`**: `1.20.2` (Testcontainers GitHub 확인)
 ```
 EOF
 echo -e "\n--------------------------------------------------------------------\n\n" >>$OUTPUT_FILE

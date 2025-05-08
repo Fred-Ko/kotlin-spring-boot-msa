@@ -16,7 +16,6 @@ import com.restaurant.user.presentation.v1.dto.request.UpdateAddressRequestV1
 import com.restaurant.user.presentation.v1.dto.request.UpdateProfileRequestV1
 import java.util.UUID
 
-// RegisterUserRequestV1 -> RegisterUserCommand 변환
 fun RegisterUserRequestV1.toCommand(): RegisterUserCommand =
     RegisterUserCommand(
         email = this.email,
@@ -25,14 +24,12 @@ fun RegisterUserRequestV1.toCommand(): RegisterUserCommand =
         username = this.username,
     )
 
-// LoginRequestV1 -> LoginCommand 변환
 fun LoginRequestV1.toCommand(): LoginCommand =
     LoginCommand(
         email = this.email,
         password = this.password,
     )
 
-// UpdateProfileRequestV1 -> UpdateProfileCommand 변환
 fun UpdateProfileRequestV1.toCommand(userId: UUID): UpdateProfileCommand =
     UpdateProfileCommand(
         userId = userId.toString(),
@@ -40,7 +37,6 @@ fun UpdateProfileRequestV1.toCommand(userId: UUID): UpdateProfileCommand =
         phoneNumber = null,
     )
 
-// ChangePasswordRequestV1 -> ChangePasswordCommand 변환
 fun ChangePasswordRequestV1.toCommand(userId: UUID): ChangePasswordCommand =
     ChangePasswordCommand(
         userId = userId.toString(),
@@ -48,14 +44,12 @@ fun ChangePasswordRequestV1.toCommand(userId: UUID): ChangePasswordCommand =
         newPassword = this.newPassword,
     )
 
-// DeleteUserRequestV1 -> DeleteUserCommand 변환
 fun DeleteUserRequestV1.toCommand(userId: UUID): DeleteUserCommand =
     DeleteUserCommand(
         userId = userId.toString(),
         password = this.currentPassword,
     )
 
-// RegisterAddressRequestV1 -> RegisterAddressCommand 변환
 fun RegisterAddressRequestV1.toCommand(userId: String): RegisterAddressCommand =
     RegisterAddressCommand(
         userId = userId,
@@ -65,7 +59,6 @@ fun RegisterAddressRequestV1.toCommand(userId: String): RegisterAddressCommand =
         isDefault = this.isDefault ?: false,
     )
 
-// UpdateAddressRequestV1 -> UpdateAddressCommand 변환
 fun UpdateAddressRequestV1.toCommand(
     userId: String,
     addressId: String,

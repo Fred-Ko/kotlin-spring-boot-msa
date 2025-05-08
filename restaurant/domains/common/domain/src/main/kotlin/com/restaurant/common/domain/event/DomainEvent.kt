@@ -8,11 +8,7 @@ import java.util.UUID
  */
 interface DomainEvent {
     val eventId: UUID
-        get() = UUID.randomUUID()
-
     val occurredAt: Instant
-        get() = Instant.now()
-
     val aggregateId: String
     val aggregateType: String
 }

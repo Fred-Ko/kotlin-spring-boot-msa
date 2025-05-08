@@ -1,4 +1,4 @@
-package com.restaurant.common.error
+package com.restaurant.common.domain.error
 
 /**
  * Base interface for all error codes in the system.

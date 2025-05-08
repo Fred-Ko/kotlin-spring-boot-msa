@@ -1,59 +1,55 @@
 package com.restaurant.outbox.infrastructure.exception
 
-import com.restaurant.outbox.infrastructure.error.OutboxErrorCode
+import com.restaurant.outbox.infrastructure.error.OutboxErrorCodes
 
 /**
  * Outbox 모듈에서 발생하는 예외의 베이스 클래스
  */
 sealed class OutboxException(
-    val errorCode: OutboxErrorCode,
-    override val message: String = errorCode.message,
+    val errorCode: OutboxErrorCodes,
+    message: String? = null,
     cause: Throwable? = null,
-) : RuntimeException(message, cause) {
-    /**
-     * 메시지 직렬화 관련 예외
-     */
+) : RuntimeException(message ?: errorCode.message, cause) {
+    class MessageProcessingException(
+        message: String? = null,
+        cause: Throwable? = null,
+    ) : OutboxException(OutboxErrorCodes.MESSAGE_PROCESSING_FAILED, message, cause)
+
     class SerializationException(
-        errorCode: OutboxErrorCode = OutboxErrorCode.MESSAGE_SERIALIZATION_FAILED,
-        override val message: String = errorCode.message,
+        message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(errorCode, message, cause)
+    ) : OutboxException(OutboxErrorCodes.MESSAGE_SERIALIZATION_FAILED, message, cause)
 
-    /**
-     * 메시지 역직렬화 관련 예외
-     */
     class DeserializationException(
-        errorCode: OutboxErrorCode = OutboxErrorCode.MESSAGE_DESERIALIZATION_FAILED,
-        override val message: String = errorCode.message,
+        message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(errorCode, message, cause)
+    ) : OutboxException(OutboxErrorCodes.MESSAGE_DESERIALIZATION_FAILED, message, cause)
 
-    /**
-     * Kafka 전송 관련 예외
-     */
-    class KafkaProducerException(
-        errorCode: OutboxErrorCode = OutboxErrorCode.KAFKA_PRODUCER_ERROR,
-        override val message: String = errorCode.message,
+    class KafkaSendException(
+        message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(errorCode, message, cause)
+    ) : OutboxException(OutboxErrorCodes.KAFKA_SEND_FAILED, message, cause)
+
+    class MaxRetriesExceededException(
+        message: String? = null,
+        cause: Throwable? = null,
+    ) : OutboxException(OutboxErrorCodes.MAX_RETRIES_EXCEEDED, message, cause)
 
     /**
      * 데이터베이스 작업 관련 예외
      */
     class DatabaseOperationException(
-        errorCode: OutboxErrorCode = OutboxErrorCode.DATABASE_OPERATION_FAILED,
-        override val message: String = errorCode.message,
+        message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(errorCode, message, cause)
+    ) : OutboxException(OutboxErrorCodes.DATABASE_OPERATION_FAILED, message, cause)
 
     /**
      * 예상치 못한 인프라 예외
      */
-    class UnexpectedInfraException(
-        errorCode: OutboxErrorCode = OutboxErrorCode.UNEXPECTED_INFRA_ERROR,
-        override val message: String = errorCode.message,
+    class UnexpectedInfrastructureException(
+        message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(errorCode, message, cause)
+    ) : OutboxException(OutboxErrorCodes.UNEXPECTED_INFRA_ERROR, message, cause)
 
     // Removed duplicated simple data class exceptions (SerializationFailed, etc.)
 }

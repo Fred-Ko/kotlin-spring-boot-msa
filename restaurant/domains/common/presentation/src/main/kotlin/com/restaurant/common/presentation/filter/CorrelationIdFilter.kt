@@ -33,19 +33,14 @@ class CorrelationIdFilter : Filter {
         val httpResponse = response as HttpServletResponse
 
         try {
-            // Get correlationId from header or generate a new one
             val correlationId = httpRequest.getHeader(CORRELATION_ID_HEADER) ?: UUID.randomUUID().toString()
 
-            // Set in MDC for logging
             MDC.put(CORRELATION_ID_MDC_KEY, correlationId)
 
-            // Add to response
             httpResponse.setHeader(CORRELATION_ID_HEADER, correlationId)
 
-            // Continue filter chain
             chain.doFilter(request, response)
         } finally {
-            // Clear MDC
             MDC.remove(CORRELATION_ID_MDC_KEY)
         }
     }

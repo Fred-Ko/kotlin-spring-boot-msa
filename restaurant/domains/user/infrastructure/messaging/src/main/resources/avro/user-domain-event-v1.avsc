@@ -1,0 +1,103 @@
+{
+  "type": "record",
+  "name": "AddressData",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Address value object for user events",
+  "fields": [
+    { "name": "id", "type": "string", "doc": "Address unique ID (UUID string)" },
+    { "name": "name", "type": "string", "doc": "Address label (e.g., Home, Office)" },
+    { "name": "streetAddress", "type": "string", "doc": "Street address" },
+    { "name": "city", "type": "string", "doc": "City" },
+    { "name": "state", "type": "string", "doc": "State or region" },
+    { "name": "country", "type": "string", "doc": "Country" },
+    { "name": "zipCode", "type": "string", "doc": "Postal code" },
+    { "name": "isDefault", "type": "boolean", "doc": "Is default address" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserCreated",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user creation",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "username", "type": "string", "doc": "Username" },
+    { "name": "email", "type": "string", "doc": "User's email" },
+    { "name": "name", "type": "string", "doc": "User's full name" },
+    { "name": "phoneNumber", "type": ["null", "string"], "default": null, "doc": "User's phone number" },
+    { "name": "userType", "type": "string", "doc": "User type (enum as string)" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserPasswordChanged",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user password change",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserProfileUpdated",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user profile update",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "name", "type": "string", "doc": "User's full name" },
+    { "name": "phoneNumber", "type": ["null", "string"], "default": null, "doc": "User's phone number" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserAddressRegistered",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user address registration",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "address", "type": "AddressData", "doc": "Registered address data" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserAddressUpdated",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user address update",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "address", "type": "AddressData", "doc": "Updated address data" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserAddressDeleted",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user address deletion",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "addressId", "type": "string", "doc": "Deleted address ID (UUID string)" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}
+
+{
+  "type": "record",
+  "name": "UserWithdrawn",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "doc": "Event for user withdrawal",
+  "fields": [
+    { "name": "userId", "type": "string", "doc": "User's unique ID (UUID string)" },
+    { "name": "occurredAt", "type": "long", "logicalType": "timestamp-micros", "doc": "Event occurrence time in microseconds" }
+  ]
+}

@@ -1,6 +1,6 @@
 package com.restaurant.user.domain.error
 
-import com.restaurant.common.domain.error.ErrorCode // Add this
+import com.restaurant.common.domain.error.ErrorCode
 
 /**
  * User 도메인 비즈니스 규칙 위반 관련 에러 코드 Enum (Rule 67)

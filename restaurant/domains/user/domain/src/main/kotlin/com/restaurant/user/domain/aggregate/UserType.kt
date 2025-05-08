@@ -6,5 +6,4 @@ package com.restaurant.user.domain.aggregate
 enum class UserType {
     CUSTOMER,
     ADMIN,
-    // Add other types as needed
 }

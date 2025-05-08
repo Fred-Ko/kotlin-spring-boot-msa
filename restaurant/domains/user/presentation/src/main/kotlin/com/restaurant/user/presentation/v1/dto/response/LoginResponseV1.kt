@@ -9,8 +9,6 @@ data class LoginResponseV1(
     val userId: String,
     @Schema(description = "사용자 이름")
     val username: String,
-    @Schema(description = "사용자 이메일")
-    val email: String,
     @Schema(description = "액세스 토큰")
     val accessToken: String,
     @Schema(description = "리프레시 토큰")

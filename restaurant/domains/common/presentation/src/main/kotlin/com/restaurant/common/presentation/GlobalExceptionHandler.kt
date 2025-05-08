@@ -1,6 +1,6 @@
 package com.restaurant.common.presentation
 
-import com.restaurant.common.domain.exception.ApplicationException
+import com.restaurant.common.application.exception.ApplicationException
 import com.restaurant.common.domain.exception.DomainException
 import jakarta.persistence.OptimisticLockException
 import mu.KotlinLogging

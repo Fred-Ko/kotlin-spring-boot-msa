@@ -17,21 +17,19 @@ import org.springframework.scheduling.annotation.EnableScheduling // For Outbox 
 // Scan components in config, outbox.infra, user.presentation, user.application, user.infra
 @ComponentScan(
     basePackages = [
-        "com.restaurant.common.domain",
         "com.restaurant.common.presentation",
-        "com.restaurant.common.infrastructure",
-        "com.restaurant.outbox.infrastructure",
-        "com.restaurant.outbox.port",
         "com.restaurant.user.presentation",
         "com.restaurant.user.application",
         "com.restaurant.user.infrastructure",
+        "com.restaurant.outbox.application",
+        "com.restaurant.outbox.infrastructure"
     ],
 )
 // Explicitly enable JPA repositories if not found by default scan
 @EnableJpaRepositories(
     basePackages = [
         "com.restaurant.user.infrastructure.persistence.repository",
-        "com.restaurant.outbox.infrastructure.persistence", // Include Outbox repo
+        "com.restaurant.outbox.infrastructure.persistence"
     ],
 )
 @EnableScheduling // Enable @Scheduled tasks (for Outbox Poller)

@@ -18,19 +18,17 @@ private val log = KotlinLogging.logger {}
 class LoginCommandHandler(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    // private val jwtTokenProvider: JwtTokenProvider // Assuming JWT provider exists
 ) : LoginUseCase {
     @Transactional(readOnly = true)
     override fun login(command: LoginCommand): LoginResult {
         log.info { "Processing login command for email: ${command.email}" }
 
-        val email = Email.of(command.email) // DomainException.Validation can occur here and should propagate
+        val email = Email.of(command.email)
 
         val user =
             userRepository.findByEmail(email)
                 ?: throw UserApplicationException.UserNotFound(UserApplicationErrorCode.USER_NOT_FOUND_BY_EMAIL, command.email)
 
-        // Validate password using PasswordEncoder (Application layer responsibility)
         if (!passwordEncoder.matches(command.password, user.password.value)) {
             log.warn { "Invalid password attempt for email: ${command.email}" }
             throw UserApplicationException.InvalidCredentials(UserApplicationErrorCode.INVALID_CREDENTIALS)
@@ -41,9 +39,7 @@ class LoginCommandHandler(
             throw UserApplicationException.UserInactive(UserApplicationErrorCode.USER_INACTIVE, user.id.value.toString())
         }
 
-        // Generate Token (Example - Assuming JwtTokenProvider)
-        // val token = jwtTokenProvider.generateToken(user.id.value.toString(), user.userType)
-        val fakeToken = "fake-jwt-token-for-${user.id.value}" // Placeholder
+        val fakeToken = "fake-jwt-token-for-${user.id.value}"
 
         log.info { "User logged in successfully: ${user.email.value}" }
         return LoginResult(

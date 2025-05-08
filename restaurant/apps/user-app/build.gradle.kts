@@ -5,63 +5,54 @@
  */
 
 plugins {
-    id("org.springframework.boot") version "3.3.5"
+    id("org.springframework.boot") version "3.3.4"
     id("io.spring.dependency-management") version "1.1.6"
-    kotlin("jvm")
-    kotlin("plugin.spring")
+    kotlin("jvm") version "2.0.20"
+    kotlin("plugin.spring") version "2.0.20"
+    kotlin("plugin.jpa") version "2.0.20"
+    kotlin("plugin.allopen") version "2.0.20"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
 }
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+group = "com.restaurant"
+version = "0.0.1-SNAPSHOT"
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "21"
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
-    // Core Application Dependencies
-    implementation(project(":domains:common:domain"))
-implementation(project(":domains:common:presentation"))
-implementation(project(":domains:common:infrastructure"))
-    implementation(project(":domains:user:presentation"))
     implementation(project(":domains:user:application"))
-    implementation(project(":domains:user:infrastructure:persistence"))
-    implementation(project(":domains:user:infrastructure:messaging"))
+    implementation(project(":domains:user:domain"))
+    implementation(project(":domains:user:infrastructure"))
+    implementation(project(":domains:user:presentation"))
+    implementation(project(":domains:common:application"))
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:infrastructure"))
+    implementation(project(":domains:common:presentation"))
     implementation(project(":independent:outbox"))
-    implementation("org.apache.avro:avro:1.11.3")
 
-    // Spring Boot Starter Web
-    implementation("org.springframework.boot:spring-boot-starter-web:3.3.5")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.5")
-    implementation("org.springframework.boot:spring-boot-starter-validation:3.3.5")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0")
 
-    // Actuator for monitoring
-    implementation("org.springframework.boot:spring-boot-starter-actuator:3.3.5")
+    runtimeOnly("org.postgresql:postgresql")
 
-    // Springdoc OpenAPI for Swagger
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
-
-    // Other potential dependencies
-    // implementation(libs.spring.cloud.starter.config) // If using Spring Cloud Config
-    // implementation(libs.micrometer.registry.prometheus) // Example Micrometer registry
-
-    // H2 Console (개발/테스트용)
-    runtimeOnly("com.h2database:h2:2.2.224")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+    }
+    testImplementation("org.testcontainers:postgresql:1.19.7")
+    testImplementation("org.testcontainers:kafka:1.19.7")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.7")
 }
 
-// Spring Boot specific configurations
-springBoot {
-    mainClass.set("com.restaurant.apps.user.UserApplication")
-}
-
-// Ensure the bootJar task is configured
-tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
-    enabled = true
-    // classifier = "boot"
-}
-
-// Optionally disable the plain JAR task
-tasks.withType<Jar> {
-    enabled = false
-}
