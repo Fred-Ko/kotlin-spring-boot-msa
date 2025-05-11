@@ -30,7 +30,7 @@ enum class UserDomainErrorCodes(
     ADDRESS_ID_MISMATCH("USER-DOMAIN-201", "주소 ID가 일치하지 않습니다."),
     INVALID_CREDENTIALS("USER-DOMAIN-056", "Invalid credentials"),
     ADMIN_CANNOT_BE_WITHDRAWN("USER-DOMAIN-057", "Admin user cannot be withdrawn"),
-    MULTIPLE_DEFAULT_ADDRESSES("USER-DOMAIN-107", "Cannot have multiple default addresses"),
+    MULTIPLE_DEFAULT_ADDRESSES("USER-DOMAIN-109", "Cannot have multiple default addresses"),
     DEFAULT_ADDRESS_NOT_FOUND("USER-DOMAIN-108", "Default address not found"),
     PERSISTENCE_ERROR("USER-DOMAIN-901", "Persistence error occurred"),
 }

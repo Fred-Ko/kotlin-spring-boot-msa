@@ -42,7 +42,7 @@ class UserEntity(
     @Column(nullable = false, length = 20)
     val status: UserStatus = UserStatus.ACTIVE,
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "user")
-    val addresses: List<AddressEntity> = listOf(),
+    var addresses: MutableList<AddressEntity> = mutableListOf(), // MutableList로 변경
     @Version
     @Column(nullable = false)
     val version: Long = 0L,
@@ -50,7 +50,20 @@ class UserEntity(
     val createdAt: Instant = Instant.now(),
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant = Instant.now(),
+    // UserEntity에는 defaultAddressId 필드가 없습니다.
 ) {
+    // AddressEntity 추가를 위한 편의 메서드 (선택적, 양방향 관계 설정 시 유용)
+    fun addAddress(address: AddressEntity) {
+        addresses.add(address)
+        address.user = this // AddressEntity에 user 필드가 있다고 가정
+    }
+
+    fun removeAddress(address: AddressEntity) {
+        addresses.remove(address)
+        address.user = null // AddressEntity에 user 필드가 있다고 가정
+    }
+
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
@@ -63,6 +76,8 @@ class UserEntity(
         return Objects.hash(id ?: domainId)
     }
 
-    override fun toString(): String =
-        "UserEntity(id=$id, domainId=$domainId, username='$username', email='$email', userType=$userType, createdAt=$createdAt, updatedAt=$updatedAt, addressId = AddressId.of(address.addressId), addresses=${addresses.size}, version=$version)"
+    override fun toString(): String {
+        val defaultAddressDomainId = addresses.find { it.isDefault }?.domainId?.toString() ?: "N/A"
+        return "UserEntity(id=$id, domainId=$domainId, username='$username', email='$email', userType=$userType, defaultAddressDomainId=${defaultAddressDomainId}, addresses=${addresses.size}, createdAt=$createdAt, updatedAt=$updatedAt, version=$version)"
+    }
 }

@@ -1,9 +1,6 @@
 package com.restaurant.common.domain.exception
 
-interface ErrorCode {
-    val code: String
-    val message: String
-}
+import com.restaurant.common.domain.error.ErrorCode
 
 /**
  * Base class for all custom domain exceptions.

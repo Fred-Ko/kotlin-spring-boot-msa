@@ -1,61 +1,106 @@
 package com.restaurant.outbox.application
 
-import com.restaurant.outbox.application.port.OutboxMessageRepository
+import com.restaurant.outbox.application.port.model.OutboxMessage
 import com.restaurant.outbox.application.port.model.OutboxMessageStatus
+import com.restaurant.outbox.application.port.OutboxMessageRepository
 import com.restaurant.outbox.infrastructure.kafka.OutboxMessageSender
-import mu.KotlinLogging
+import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import com.restaurant.outbox.infrastructure.exception.OutboxException
 
-private val logger = KotlinLogging.logger {}
-
-/**
- * OutboxPoller: 주기적으로 Outbox 테이블에서 PENDING 메시지를 조회하여 Kafka로 전송하고 상태를 갱신한다.
- */
 @Component
 class OutboxPoller(
     private val outboxMessageRepository: OutboxMessageRepository,
     private val outboxMessageSender: OutboxMessageSender,
 ) {
-    /**
-     * 주기적으로 실행되어 PENDING 상태의 메시지를 전송한다.
-     * cron/interval 설정은 application-outbox.yml 등에서 조정 가능.
-     */
-    @Scheduled(fixedDelay = 1000)
-    @Transactional
-    fun pollMessages() {
-        try {
-            val messages =
-                outboxMessageRepository.findAndMarkForProcessing(
-                    status = OutboxMessageStatus.PENDING,
-                    limit = 10,
-                )
+    private val logger = LoggerFactory.getLogger(this::class.java)
+    private val batchSize = 100
+    private val maxRetries = 3
 
-            if (messages.isEmpty()) {
+    @Scheduled(fixedRate = 1000) // 1초마다 실행
+    @Transactional
+    fun pollAndProcessMessages() {
+        try {
+            val unprocessedMessages: List<OutboxMessage> =
+                outboxMessageRepository.findAndMarkForProcessing(OutboxMessageStatus.PENDING, batchSize)
+
+            if (unprocessedMessages.isEmpty()) {
                 return
             }
 
-            logger.debug { "Found ${messages.size} messages to process" }
+            logger.debug("Found {} unprocessed messages to process", unprocessedMessages.size)
 
-            messages.forEach { message ->
+            unprocessedMessages.forEach { message ->
                 try {
-                    outboxMessageSender.send(message)
-                    outboxMessageRepository.updateStatus(
-                        id = message.dbId!!,
-                        newStatus = OutboxMessageStatus.SENT,
+                    outboxMessageSender.processAndSendMessage(message)
+                    message.id?.let {
+                        outboxMessageRepository.updateStatus(it, OutboxMessageStatus.SENT)
+                    }
+                } catch (e: OutboxException.KafkaSendFailedException) {
+                    logger.error(
+                        "Kafka send failed for message: {}, Error: {}. Incrementing retry count.",
+                        message.id,
+                        e.message,
                     )
+                    message.id?.let {
+                        // PENDING 상태로 변경하고 재시도 횟수 증가
+                        outboxMessageRepository.updateStatus(it, OutboxMessageStatus.PENDING, true)
+                    }
+                } catch (e: Exception) { // 그 외 예상치 못한 오류
+                    logger.error(
+                        "Unexpected error processing message: {}, Error: {}",
+                        message.id,
+                        e.message,
+                        e,
+                    )
+                    message.id?.let {
+                        // 예상치 못한 오류는 FAILED로 처리하고 재시도 횟수 증가
+                        outboxMessageRepository.updateStatus(it, OutboxMessageStatus.FAILED, true)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Error in outbox polling process", e)
+        }
+    }
+
+    @Scheduled(fixedRate = 300000) // 5분마다 실행
+    @Transactional
+    fun retryFailedMessages() {
+        try {
+            // 재시도 횟수가 maxRetries 미만인 FAILED 상태의 메시지들을 조회
+            val failedMessages: List<OutboxMessage> = outboxMessageRepository.findByStatusAndRetryCountLessThan(
+                status = OutboxMessageStatus.FAILED,
+                maxRetries = maxRetries,
+                limit = batchSize
+            )
+
+            if (failedMessages.isEmpty()) {
+                return
+            }
+
+            logger.debug("Found {} failed messages for retry", failedMessages.size)
+
+            failedMessages.forEach { message: OutboxMessage ->
+                try {
+                    message.id?.let {
+                        // 상태를 PENDING으로 변경하고, 재시도 횟수는 여기서 증가시키지 않음
+                        outboxMessageRepository.updateStatus(it, OutboxMessageStatus.PENDING, false)
+                        logger.info("Message ID {} marked as PENDING for retry.", it)
+                    }
                 } catch (e: Exception) {
-                    logger.error(e) { "Failed to process message: $message" }
-                    outboxMessageRepository.updateStatus(
-                        id = message.dbId!!,
-                        newStatus = OutboxMessageStatus.FAILED,
-                        incrementRetry = true,
+                    logger.error(
+                        "Error resetting failed message to PENDING: {}, Error: {}",
+                        message.id,
+                        e.message,
+                        e,
                     )
                 }
             }
         } catch (e: Exception) {
-            logger.error(e) { "Failed to poll messages" }
+            logger.error("Error in failed message retry process", e)
         }
     }
 }

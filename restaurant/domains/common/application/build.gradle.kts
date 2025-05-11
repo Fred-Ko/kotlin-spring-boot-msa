@@ -1,43 +1,28 @@
 plugins {
+    `java-library`
     kotlin("jvm")
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
     kotlin("plugin.spring")
+    id("io.spring.dependency-management")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
-
-dependencies {
-    implementation(project(":domains:common:domain"))
-    
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    
-    // Spring
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework:spring-tx")
-    
-    // Resilience4j
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
-    
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.13")
-}
-
-kotlin {
-    jvmToolchain(21)
-    compilerOptions {
-        freeCompilerArgs.add("-Xjsr305=strict")
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.2.3")
     }
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+dependencies {
+    api(project(":domains:common:domain"))
+    
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-kotlin:2.2.0")
+    
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
 }
-

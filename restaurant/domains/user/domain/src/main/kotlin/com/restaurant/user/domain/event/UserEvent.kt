@@ -59,6 +59,7 @@ sealed class UserEvent(
         val id: String,
         val name: String,
         val streetAddress: String,
+        val detailAddress: String?,
         val city: String,
         val state: String,
         val country: String,

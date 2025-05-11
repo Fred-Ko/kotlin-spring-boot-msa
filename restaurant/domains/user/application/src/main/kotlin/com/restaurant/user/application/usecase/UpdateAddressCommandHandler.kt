@@ -8,11 +8,8 @@ import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
-import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private val log = KotlinLogging.logger {}
 
 @Service
 class UpdateAddressCommandHandler(
@@ -20,37 +17,33 @@ class UpdateAddressCommandHandler(
 ) : UpdateAddressUseCase {
     @Transactional
     override fun updateAddress(command: UpdateAddressCommand) {
-        log.info { "Updating address for userId=${command.userId}, addressId=${command.addressId}" }
-
         try {
             val userIdVo = UserId.ofString(command.userId)
             val addressIdVo = AddressId.ofString(command.addressId)
             val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
 
             val addressToUpdate =
-                Address.create(
+                Address.create( // create로 새 주소 객체를 만들지만, ID는 기존 것을 사용합니다.
                     addressId = addressIdVo,
-                    street = command.street,
-                    detail = command.detail,
+                    name = command.name,
+                    streetAddress = command.street,
+                    detailAddress = command.detail,
+                    city = command.city,
+                    state = command.state,
+                    country = command.country,
                     zipCode = command.zipCode,
                     isDefault = command.isDefault,
                 )
 
-            val updatedUser = user.updateAddress(addressIdVo, addressToUpdate)
+            val updatedUser = user.updateAddress(addressToUpdate)
 
             userRepository.save(updatedUser)
-            log.info { "Address updated successfully. userId=${userIdVo.value}, addressId=${addressIdVo.value}" }
         } catch (de: UserDomainException) {
-            log.warn(
-                de,
-            ) { "Domain error during address update for user ${command.userId}: code=${de.errorCode.code}, message=${de.message}" }
             throw de
         } catch (iae: IllegalArgumentException) {
-            log.warn(iae) { "Invalid ID format during address update: userId=${command.userId}, addressId=${command.addressId}" }
             throw UserApplicationException.BadRequest("Invalid ID format.", iae)
         } catch (e: Exception) {
-            log.error(e) { "Unexpected error updating address for user ${command.userId}: ${e.message}" }
-            throw UserApplicationException.UnexpectedError("Failed to update address due to an unexpected error.", e)
+            throw UserApplicationException.UnexpectedError(message = "Failed to update address due to an unexpected error.", cause = e)
         }
     }
 }

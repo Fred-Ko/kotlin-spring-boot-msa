@@ -1,33 +1,22 @@
 package com.restaurant.user.presentation.v1.api
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.port.input.ChangePasswordUseCase
-import com.restaurant.user.application.port.input.DeleteUserUseCase
-import com.restaurant.user.application.port.input.LoginUseCase
-import com.restaurant.user.application.port.input.RegisterUserUseCase
-import com.restaurant.user.application.port.input.UpdateProfileUseCase
-import com.restaurant.user.presentation.v1.dto.request.ChangePasswordRequestV1
-import com.restaurant.user.presentation.v1.dto.request.DeleteUserRequestV1
-import com.restaurant.user.presentation.v1.dto.request.LoginRequestV1
-import com.restaurant.user.presentation.v1.dto.request.RegisterUserRequestV1
-import com.restaurant.user.presentation.v1.dto.request.UpdateProfileRequestV1
+import com.restaurant.user.application.dto.command.DeleteUserCommand
+import com.restaurant.user.application.port.input.*
+import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.presentation.v1.dto.request.*
 import com.restaurant.user.presentation.v1.extensions.command.dto.request.toCommand
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import mu.KotlinLogging
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.util.UUID
 
 private val log = KotlinLogging.logger {}
@@ -43,45 +32,52 @@ class UserController(
     private val loginUseCase: LoginUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val changePasswordUseCase: ChangePasswordUseCase,
-    private val deleteUserUseCase: DeleteUserUseCase,
+    private val deleteUserUseCase: DeleteUserUseCase
+    // private val userProfileImageUseCase: UserProfileImageUseCase // 프로필 이미지 기능은 추후 구현
 ) {
-    @PostMapping
+    @PostMapping("/register")
     @Operation(summary = "Register a new user")
     @ApiResponse(responseCode = "201", description = "User registered successfully")
     fun registerUser(
         @Valid @RequestBody request: RegisterUserRequestV1,
+        @RequestHeader("X-Correlation-Id") correlationId: String
     ): ResponseEntity<CommandResultResponse> {
-        log.info("Register user request received: {}", request.username)
-        val command = request.toCommand()
-        val userId = registerUserUseCase.register(command)
-        val response =
+        log.info { "[Correlation ID: $correlationId] Received request to register user: ${request.username}" }
+        val command = request.toCommand(correlationId)
+        val userId: UserId = registerUserUseCase.register(command)
+
+        val location = ServletUriComponentsBuilder
+            .fromCurrentContextPath()
+            .path("/api/v1/users/{userId}/profile")
+            .buildAndExpand(userId.value)
+            .toUri()
+
+        return ResponseEntity.created(location).body(
             CommandResultResponse(
                 status = "SUCCESS",
-                message = "User registered successfully",
-            ).apply {
-                add(linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId.toString())).withSelfRel())
-                add(linkTo(UserController::class.java).slash("login").withRel("login"))
-            }
-        return ResponseEntity.created(response.getRequiredLink("self").toUri()).body(response)
+                message = "User registered successfully.",
+                correlationId = correlationId
+            )
+        )
     }
 
     @PostMapping("/login")
     @Operation(summary = "Login a user")
     @ApiResponse(responseCode = "200", description = "User logged in successfully")
-    fun loginUser(
+    fun login(
         @Valid @RequestBody request: LoginRequestV1,
-    ): ResponseEntity<Any> {
-        log.info("Login request received for email: {}", request.email)
-        val command = request.toCommand()
+        @RequestHeader("X-Correlation-Id") correlationId: String
+    ): ResponseEntity<CommandResultResponse> {
+        log.info { "[Correlation ID: $correlationId] Received login request for user: ${request.email}" }
+        val command = request.toCommand(correlationId)
         val loginResult = loginUseCase.login(command)
-
-        val response =
-            mapOf(
-                "status" to "SUCCESS",
-                "message" to "Login successful",
-                "data" to loginResult,
+        return ResponseEntity.ok(
+            CommandResultResponse(
+                status = "SUCCESS",
+                message = "Login successful. Token: ${loginResult.accessToken}",
+                correlationId = correlationId
             )
-        return ResponseEntity.ok(response)
+        )
     }
 
     @PutMapping("/{userId}/profile")
@@ -90,38 +86,38 @@ class UserController(
     fun updateProfile(
         @Parameter(description = "User ID") @PathVariable userId: UUID,
         @Valid @RequestBody request: UpdateProfileRequestV1,
+        @RequestHeader("X-Correlation-Id") correlationId: String
     ): ResponseEntity<CommandResultResponse> {
-        log.info("Update profile request received for user: {}", userId)
-        val command = request.toCommand(userId)
+        log.info { "[Correlation ID: $correlationId] Received request to update profile for user ID: $userId" }
+        val command = request.toCommand(UserId.of(userId), correlationId)
         updateProfileUseCase.updateProfile(command)
-        val response =
+        return ResponseEntity.ok(
             CommandResultResponse(
                 status = "SUCCESS",
-                message = "Profile updated successfully",
-            ).apply {
-                add(linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId.toString())).withSelfRel())
-            }
-        return ResponseEntity.ok(response)
+                message = "User profile updated successfully.",
+                correlationId = correlationId
+            )
+        )
     }
 
-    @PutMapping("/{userId}/password")
+    @PatchMapping("/{userId}/password")
     @Operation(summary = "Change user password")
     @ApiResponse(responseCode = "200", description = "Password changed successfully")
     fun changePassword(
         @Parameter(description = "User ID") @PathVariable userId: UUID,
         @Valid @RequestBody request: ChangePasswordRequestV1,
+        @RequestHeader("X-Correlation-Id") correlationId: String
     ): ResponseEntity<CommandResultResponse> {
-        log.info("Change password request received for user: {}", userId)
-        val command = request.toCommand(userId)
+        log.info { "[Correlation ID: $correlationId] Received request to change password for user ID: $userId" }
+        val command = request.toCommand(UserId.of(userId), correlationId)
         changePasswordUseCase.changePassword(command)
-        val response =
+        return ResponseEntity.ok(
             CommandResultResponse(
                 status = "SUCCESS",
-                message = "Password changed successfully",
-            ).apply {
-                add(linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId.toString())).withRel("view-profile"))
-            }
-        return ResponseEntity.ok(response)
+                message = "User password changed successfully.",
+                correlationId = correlationId
+            )
+        )
     }
 
     @DeleteMapping("/{userId}")
@@ -130,16 +126,17 @@ class UserController(
     fun deleteUser(
         @Parameter(description = "User ID") @PathVariable userId: UUID,
         @Valid @RequestBody request: DeleteUserRequestV1,
+        @RequestHeader("X-Correlation-Id") correlationId: String
     ): ResponseEntity<CommandResultResponse> {
-        log.info("Delete user request received for user: {}", userId)
-        val command = request.toCommand(userId)
+        log.info { "[Correlation ID: $correlationId] Received request to delete user ID: $userId" }
+        val command = request.toCommand(UserId.of(userId), correlationId)
         deleteUserUseCase.deleteUser(command)
-        val response =
+        return ResponseEntity.ok(
             CommandResultResponse(
                 status = "SUCCESS",
-                message = "User deleted successfully",
+                message = "User deleted successfully.",
+                correlationId = correlationId
             )
-
-        return ResponseEntity.ok(response)
+        )
     }
 }

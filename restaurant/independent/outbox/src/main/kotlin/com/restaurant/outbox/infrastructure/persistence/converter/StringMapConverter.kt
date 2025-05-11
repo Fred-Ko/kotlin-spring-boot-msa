@@ -1,21 +1,33 @@
 package com.restaurant.outbox.infrastructure.persistence.converter
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 
 @Converter
 class StringMapConverter : AttributeConverter<Map<String, String>, String> {
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = ObjectMapper()
 
     override fun convertToDatabaseColumn(attribute: Map<String, String>?): String =
-        attribute?.let {
-            objectMapper.writeValueAsString(it)
-        } ?: "{}"
+        if (attribute == null) {
+            "{}"
+        } else {
+            try {
+                objectMapper.writeValueAsString(attribute)
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Error converting map to JSON", e)
+            }
+        }
 
     override fun convertToEntityAttribute(dbData: String?): Map<String, String> =
-        dbData?.let {
-            objectMapper.readValue(it, object : TypeReference<Map<String, String>>() {})
-        } ?: emptyMap()
+        if (dbData.isNullOrBlank()) {
+            emptyMap()
+        } else {
+            try {
+                objectMapper.readValue(dbData, object : TypeReference<Map<String, String>>() {})
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Error converting JSON to map", e)
+            }
+        }
 }

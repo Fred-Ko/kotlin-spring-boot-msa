@@ -1,17 +1,15 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.ChangePasswordCommand
+import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.application.port.input.ChangePasswordUseCase
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.UserId
-import mu.KotlinLogging
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private val log = KotlinLogging.logger {}
 
 @Service
 class ChangePasswordCommandHandler(
@@ -20,25 +18,23 @@ class ChangePasswordCommandHandler(
 ) : ChangePasswordUseCase {
     @Transactional
     override fun changePassword(command: ChangePasswordCommand) {
-        val userId = UserId.ofString(command.userId)
-        log.info { "Attempting to change password for user: $userId" }
+        try {
+            val userId = UserId.ofString(command.userId)
+            val user = userRepository.findById(userId) ?: throw UserDomainException.User.NotFound(command.userId)
 
-        val user =
-            userRepository.findById(userId)
-                ?: throw UserDomainException.User.NotFound(command.userId.toString())
+            val newPassword = Password.of(passwordEncoder.encode(command.newPassword))
+            val updatedUser = user.changePassword(newPassword)
 
-        if (!passwordEncoder.matches(command.currentPassword, user.password.value)) {
-            val e = UserDomainException.User.PasswordMismatch()
-            log.warn(e) { "Password change failed for userId ${command.userId}: Incorrect current password, errorCode=${e.errorCode.code}" }
-            throw e
+            userRepository.save(updatedUser)
+        } catch (de: UserDomainException) {
+            throw de
+        } catch (iae: IllegalArgumentException) {
+            throw UserApplicationException.BadRequest("Invalid password data format: ${iae.message}", iae)
+        } catch (e: Exception) {
+            throw UserApplicationException.UnexpectedError(
+                message = "Failed to change password due to an unexpected error.",
+                cause = e,
+            )
         }
-
-        val encodedNewPassword = passwordEncoder.encode(command.newPassword)
-        val newPasswordVo = Password.of(encodedNewPassword)
-
-        val updatedUser = user.changePassword(newPasswordVo)
-
-        userRepository.save(updatedUser)
-        log.info { "Password changed successfully for user: $userId" }
     }
 }

@@ -1,0 +1,1605 @@
+./gradlew :domains:user:domain:build
+
+> Configure project :domains:common:domain
+e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:3:5: Unreso
+lved reference: implementation                                                                                  e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:4:5: Unreso
+lved reference: implementation                                                                                  e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:5:5: Unreso
+lved reference: implementation                                                                                  e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:7:5: Unreso
+lved reference: testImplementation                                                                              e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:8:5: Unreso
+lved reference: testImplementation                                                                              e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:9:5: Unreso
+lved reference: testImplementation                                                                              e: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts:10:5: Unres
+olved reference: testImplementation                                                                             
+[Incubating] Problems report is available at: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/build/r
+eports/problems/problems-report.html                                                                            
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts' line: 3
+
+* What went wrong:
+Script compilation errors:
+
+  Line 03:     implementation("org.jetbrains.kotlin:kotlin-reflect")
+               ^ Unresolved reference: implementation
+
+  Line 04:     implementation("jakarta.validation:jakarta.validation-api")
+               ^ Unresolved reference: implementation
+
+  Line 05:     implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
+               ^ Unresolved reference: implementation
+
+  Line 07:     testImplementation("org.springframework.boot:spring-boot-starter-test")
+               ^ Unresolved reference: testImplementation
+
+  Line 08:     testImplementation("io.mockk:mockk:1.13.9")
+               ^ Unresolved reference: testImplementation
+
+  Line 09:     testImplementation("org.junit.jupiter:junit-jupiter")
+               ^ Unresolved reference: testImplementation
+
+  Line 10:     testImplementation("org.assertj:assertj-core")
+               ^ Unresolved reference: testImplementation
+
+7 errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build.gradle.kts' line: 3
+
+* What went wrong:
+Script compilation errors:
+
+  Line 03:     implementation("org.jetbrains.kotlin:kotlin-reflect")
+               ^ Unresolved reference: implementation
+
+  Line 04:     implementation("jakarta.validation:jakarta.validation-api")
+               ^ Unresolved reference: implementation
+
+  Line 05:     implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
+               ^ Unresolved reference: implementation
+
+  Line 07:     testImplementation("org.springframework.boot:spring-boot-starter-test")
+               ^ Unresolved reference: testImplementation
+
+  Line 08:     testImplementation("io.mockk:mockk:1.13.9")
+               ^ Unresolved reference: testImplementation
+
+  Line 09:     testImplementation("org.junit.jupiter:junit-jupiter")
+               ^ Unresolved reference: testImplementation
+
+  Line 10:     testImplementation("org.assertj:assertj-core")
+               ^ Unresolved reference: testImplementation
+
+7 errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from you
+r own scripts or plugins.                                                                                       
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command
+_line_warnings in the Gradle documentation.                                                                     
+BUILD FAILED in 360ms
+
+
+====================================================================
+ File: build.gradle.kts
+ Path: build.gradle.kts
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+/**
+ * build.gradle.kts for the root project.
+ *
+ * Configures plugins, dependency management, and global build settings.
+ *
+ * @author junoko
+ */
+
+plugins {
+    // Only versions are declared here for subprojects
+    id("org.jetbrains.kotlin.jvm") version "1.9.22" apply false
+    id("org.jetbrains.kotlin.plugin.spring") version "1.9.22" apply false
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.9.22" apply false
+    id("org.jetbrains.kotlin.plugin.allopen") version "1.9.22" apply false
+    id("org.springframework.boot") version "3.2.3" apply false
+    id("io.spring.dependency-management") version "1.1.4" apply false
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1" apply false
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.1" apply false
+}
+====================================================================n
+
+
+====================================================================
+ File: domains/common/domain/build.gradle.kts
+ Path: domains/common/domain/build.gradle.kts
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+// 플러그인 설정은 상위에서 상속됨으로 제거
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("jakarta.validation:jakarta.validation-api")
+    implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
+    
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.common.domain.aggregate
+
+import com.restaurant.common.domain.event.DomainEvent
+
+/**
+ * Base class for all Aggregate Roots.
+ * Provides methods to manage domain events.
+ * Rule 17, 18
+ */
+abstract class AggregateRoot {
+    private val domainEvents: MutableList<DomainEvent> = mutableListOf()
+
+    /**
+     * Returns the list of recorded domain events.
+     */
+    fun getDomainEvents(): List<DomainEvent> = domainEvents.toList()
+
+    /**
+     * Clears the list of recorded domain events.
+     */
+    fun clearDomainEvents() {
+        domainEvents.clear()
+    }
+
+    /**
+     * Adds a domain event to the list of recorded events.
+     * This method is internal to ensure it's only called within the Aggregate implementation.
+     */
+    internal fun addDomainEvent(event: DomainEvent) {
+        domainEvents.add(event)
+    }
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.common.domain.error
+
+/**
+ * Common system-level error codes.
+ */
+enum class CommonSystemErrorCode(
+    override val code: String,
+    override val message: String,
+) : ErrorCode {
+    INTERNAL_SERVER_ERROR("COMMON-001", "Internal server error"),
+    INVALID_REQUEST("COMMON-002", "Invalid request"),
+    RESOURCE_NOT_FOUND("COMMON-003", "Resource not found"),
+    UNAUTHORIZED("COMMON-004", "Unauthorized"),
+    FORBIDDEN("COMMON-005", "Forbidden"),
+    VALIDATION_ERROR("COMMON-006", "Validation error"),
+    CONFLICT("COMMON-007", "Conflict"),
+    TOO_MANY_REQUESTS("COMMON-008", "Too many requests"),
+    SERVICE_UNAVAILABLE("COMMON-009", "Service unavailable"),
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.common.domain.error
+
+/**
+ * Base interface for all error codes in the system.
+ * Error codes should follow the format: {DOMAIN}-{LAYER}-{CODE}
+ */
+interface ErrorCode {
+    /**
+     * The unique code for this error.
+     * Format: {DOMAIN}-{LAYER}-{CODE}
+     * Example: USER-DOMAIN-001, USER-APP-002
+     */
+    val code: String
+
+    /**
+     * A human-readable message describing this error.
+     */
+    val message: String
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.common.domain.event
+
+import java.time.Instant
+import java.util.UUID
+
+/**
+ * Base interface for domain events. (Rule 32)
+ */
+interface DomainEvent {
+    val eventId: UUID
+    val occurredAt: Instant
+    val aggregateId: String
+    val aggregateType: String
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.common.domain.exception
+
+import com.restaurant.common.domain.error.ErrorCode
+
+/**
+ * Base class for all custom domain exceptions.
+ * Requires subclasses to provide an ErrorCode. (Rule 68)
+ */
+open class DomainException(
+    val errorCode: ErrorCode,
+    override val message: String = errorCode.message,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause)
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/build.gradle.kts
+ Path: domains/user/domain/build.gradle.kts
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+plugins {
+    kotlin("jvm")
+    kotlin("plugin.spring")
+}
+
+dependencies {
+    api(project(":domains:common:domain"))
+    
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("jakarta.validation:jakarta.validation-api")
+    implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
+    
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("io.mockk:mockk:1.13.9")
+}
+
+tasks {
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-Xjsr305=strict")
+            jvmTarget = "17"
+        }
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
+    }
+
+}
+
+sourceSets {
+    main {
+        kotlin.srcDirs("src/main/kotlin")
+    }
+    test {
+        kotlin.srcDirs("src/test/kotlin")
+    }
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/User.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/User.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.aggregate
+
+import com.restaurant.common.domain.aggregate.AggregateRoot
+import com.restaurant.user.domain.entity.Address
+import com.restaurant.user.domain.event.UserEvent
+import com.restaurant.user.domain.exception.UserDomainException
+import com.restaurant.user.domain.vo.AddressId
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.Name
+import com.restaurant.user.domain.vo.Password
+import com.restaurant.user.domain.vo.PhoneNumber
+import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.vo.Username
+import java.time.Instant
+
+data class User private constructor(
+    val id: UserId,
+    val username: Username,
+    val password: Password,
+    val email: Email,
+    val name: Name,
+    val phoneNumber: PhoneNumber?,
+    val userType: UserType,
+    val status: UserStatus,
+    val addresses: List<Address> = listOf(),
+    val defaultAddressId: AddressId? = null,
+    val version: Long,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+) : AggregateRoot() {
+    fun changePassword(newPassword: Password): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+
+        val updatedUser =
+            copy(
+                password = newPassword,
+                version = this.version + 1,
+                updatedAt = Instant.now(),
+            )
+        updatedUser.addDomainEvent(
+            UserEvent.PasswordChanged(
+                userId = this.id,
+                occurredAt = updatedUser.updatedAt,
+            ),
+        )
+        return updatedUser
+    }
+
+    fun updateProfile(
+        newName: Name,
+        newPhoneNumber: PhoneNumber?,
+    ): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+
+        val updatedUser =
+            copy(
+                name = newName,
+                phoneNumber = newPhoneNumber,
+                version = this.version + 1,
+                updatedAt = Instant.now(),
+            )
+        updatedUser.addDomainEvent(
+            UserEvent.ProfileUpdated(
+                name = newName.value,
+                phoneNumber = newPhoneNumber?.value,
+                userId = this.id,
+                occurredAt = updatedUser.updatedAt,
+            ),
+        )
+        return updatedUser
+    }
+
+    fun addAddress(addressData: Address): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        if (addresses.size >= MAX_ADDRESSES) throw UserDomainException.Address.LimitExceeded(MAX_ADDRESSES)
+        if (addresses.any { it.addressId == addressData.addressId }) {
+            throw UserDomainException.Address.DuplicateAddressId(addressData.addressId.value.toString())
+        }
+        val newAddresses = addresses.toMutableList()
+        if (addressData.isDefault) {
+            newAddresses.forEachIndexed { idx, addr -> newAddresses[idx] = addr.copy(isDefault = false) }
+        }
+        newAddresses.add(addressData)
+        val currentDefault = newAddresses.find { it.isDefault }
+        val finalDefaultAddressId = currentDefault?.addressId ?: newAddresses.firstOrNull()?.addressId
+        val finalAddresses = newAddresses.map { addr -> addr.copy(isDefault = addr.addressId == finalDefaultAddressId) }
+        val updatedUser = copy(
+            addresses = finalAddresses,
+            defaultAddressId = finalDefaultAddressId,
+            version = this.version + 1,
+            updatedAt = Instant.now(),
+        )
+
+        updatedUser.addDomainEvent(
+            UserEvent.AddressRegistered(
+                address = addressData.toData(),
+                userId = this.id,
+                occurredAt = updatedUser.updatedAt,
+            ),
+        )
+        return updatedUser
+    }
+
+    fun updateAddress(updatedAddressData: Address): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        val addressIndex = addresses.indexOfFirst { it.addressId == updatedAddressData.addressId }
+        if (addressIndex == -1) throw UserDomainException.Address.NotFound(updatedAddressData.addressId.value.toString())
+        val newAddresses = addresses.toMutableList()
+        if (updatedAddressData.isDefault) {
+            newAddresses.forEachIndexed { idx, addr -> if (addr.addressId != updatedAddressData.addressId) newAddresses[idx] = addr.copy(isDefault = false) }
+        }
+        newAddresses[addressIndex] = updatedAddressData
+        val currentDefault = newAddresses.find { it.isDefault }
+        val finalDefaultAddressId = currentDefault?.addressId ?: if (newAddresses.isNotEmpty()) newAddresses.first().addressId else null
+        val finalAddresses = newAddresses.map { addr -> addr.copy(isDefault = addr.addressId == finalDefaultAddressId) }
+        val updatedUser = copy(
+            addresses = finalAddresses,
+            defaultAddressId = finalDefaultAddressId,
+            version = this.version + 1,
+            updatedAt = Instant.now(),
+        )
+
+        updatedUser.addDomainEvent(
+            UserEvent.AddressUpdated(
+                address = updatedAddressData.toData(),
+                userId = this.id,
+                occurredAt = updatedUser.updatedAt,
+            ),
+        )
+        return updatedUser
+    }
+
+    fun deleteAddress(addressId: AddressId): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        val addressToRemove =
+            addresses.find { it.addressId == addressId }
+                ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
+
+        if (addresses.size == 1) throw UserDomainException.Address.CannotDeleteLast()
+        if (addressToRemove.isDefault) throw UserDomainException.Address.CannotDeleteDefault()
+
+        val remainingAddresses = addresses.filterNot { it.addressId == addressId }
+
+        val updatedUser =
+            copy(
+                addresses = remainingAddresses,
+                version = this.version + 1,
+                updatedAt = Instant.now(),
+            )
+        updatedUser.addDomainEvent(
+            UserEvent.AddressDeleted(
+                addressId = addressId.value.toString(),
+                userId = this.id,
+                occurredAt = updatedUser.updatedAt,
+            ),
+        )
+        return updatedUser
+    }
+
+    fun withdraw(): User {
+        if (status == UserStatus.WITHDRAWN) throw UserDomainException.User.AlreadyWithdrawn()
+        if (userType == UserType.ADMIN) throw UserDomainException.User.AdminCannotBeWithdrawn()
+
+        val updatedUser =
+            copy(
+                status = UserStatus.WITHDRAWN,
+                version = this.version + 1,
+                updatedAt = Instant.now(),
+            )
+        updatedUser.addDomainEvent(
+            UserEvent.Withdrawn(
+                userId = this.id,
+                occurredAt = updatedUser.updatedAt,
+            ),
+        )
+        return updatedUser
+    }
+
+    fun isActive(): Boolean = this.status == UserStatus.ACTIVE
+
+
+    companion object {
+        const val MAX_ADDRESSES = 5
+
+        fun create(
+            id: UserId,
+            username: Username,
+            password: Password,
+            email: Email,
+            name: Name,
+            phoneNumber: PhoneNumber?,
+            userType: UserType = UserType.CUSTOMER,
+            initialAddresses: List<Address> = emptyList(),
+        ): User {
+            val now = Instant.now()
+            if (initialAddresses.count { it.isDefault } > 1) {
+                throw UserDomainException.Address.MultipleDefaultsOnInit()
+            }
+            val defaultAddressId =
+                initialAddresses.find { it.isDefault }?.addressId
+                    ?: initialAddresses.firstOrNull()?.addressId
+
+            val finalAddresses =
+                initialAddresses.map { addr ->
+                    if (addr.addressId == defaultAddressId) addr.copy(isDefault = true) else addr.copy(isDefault = false)
+                }
+
+            val user =
+                User(
+                    id = id,
+                    username = username,
+                    password = password,
+                    email = email,
+                    name = name,
+                    phoneNumber = phoneNumber,
+                    userType = userType,
+                    status = UserStatus.ACTIVE,
+                    addresses = finalAddresses,
+                    defaultAddressId = defaultAddressId,
+                    createdAt = now,
+                    updatedAt = now,
+                    version = 0L,
+                )
+            user.addDomainEvent(
+                UserEvent.Created(
+                    username = username.value,
+                    email = email.value,
+                    name = name.value,
+                    phoneNumber = phoneNumber?.value,
+                    userType = userType.toString(),
+                    userId = id,
+                    occurredAt = now,
+                ),
+            )
+            return user
+        }
+
+        fun reconstitute(
+            id: UserId,
+            username: Username,
+            password: Password,
+            email: Email,
+            name: Name,
+            phoneNumber: PhoneNumber?,
+            userType: UserType,
+            addresses: List<Address>,
+            status: UserStatus,
+            createdAt: Instant,
+            updatedAt: Instant,
+            version: Long,
+        ): User {
+            val defaultAddrId = addresses.find { it.isDefault }?.addressId
+            return User(
+                id = id,
+                username = username,
+                password = password,
+                email = email,
+                name = name,
+                phoneNumber = phoneNumber,
+                userType = userType,
+                status = status,
+                addresses = addresses,
+                defaultAddressId = defaultAddrId,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                version = version,
+            )
+        }
+    }
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/UserStatus.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/UserStatus.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.aggregate
+
+/**
+ * Represents the status of a user account.
+ */
+enum class UserStatus {
+    ACTIVE,
+    INACTIVE,
+    WITHDRAWN,
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/UserType.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/UserType.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.aggregate
+
+/**
+ * Represents the type of user.
+ */
+enum class UserType {
+    CUSTOMER,
+    ADMIN,
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/entity/Address.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/entity/Address.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.entity
+
+import com.restaurant.user.domain.event.UserEvent
+import com.restaurant.user.domain.exception.UserDomainException
+import com.restaurant.user.domain.vo.AddressId
+import java.time.Instant
+
+/**
+ * Address Domain Entity (Rule 11)
+ * User Aggregate에 속하지만 자체 식별자를 가짐.
+ */
+data class Address private constructor(
+    val addressId: AddressId,
+    val name: String,
+    val streetAddress: String,
+    val detailAddress: String?,
+    val city: String,
+    val state: String,
+    val country: String,
+    val zipCode: String,
+    val isDefault: Boolean,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val version: Long = 0L,
+) {
+    init {
+        if (streetAddress.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("Street address cannot be blank.")
+        }
+        validateZipCode(zipCode)
+        if (name.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("Name cannot be blank.")
+        }
+        if (city.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("City cannot be blank.")
+        }
+        if (state.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("State cannot be blank.")
+        }
+        if (country.isBlank()) {
+            throw UserDomainException.Validation.InvalidAddressFormat("Country cannot be blank.")
+        }
+    }
+
+    fun updateDetails(
+        name: String,
+        streetAddress: String,
+        detailAddress: String?,
+        city: String,
+        state: String,
+        country: String,
+        zipCode: String,
+        isDefault: Boolean,
+    ): Address {
+        validateZipCode(zipCode)
+        if (this.name == name &&
+            this.streetAddress == streetAddress &&
+            this.detailAddress == detailAddress &&
+            this.city == city &&
+            this.state == state &&
+            this.country == country &&
+            this.zipCode == zipCode &&
+            this.isDefault == isDefault
+        ) {
+            return this
+        }
+        return this.copy(
+            name = name,
+            streetAddress = streetAddress,
+            detailAddress = detailAddress,
+            city = city,
+            state = state,
+            country = country,
+            zipCode = zipCode,
+            isDefault = isDefault,
+            updatedAt = Instant.now(),
+            version = this.version + 1,
+        )
+    }
+
+    fun toData(): UserEvent.AddressData =
+        UserEvent.AddressData(
+            id = addressId.value.toString(),
+            name = name,
+            streetAddress = streetAddress,
+            detailAddress = detailAddress,
+            city = city,
+            state = state,
+            country = country,
+            zipCode = zipCode,
+            isDefault = isDefault,
+        )
+
+    companion object {
+        private fun validateZipCode(zipCode: String) {
+            if (zipCode.isBlank() || zipCode.length != 5 || !zipCode.all { it.isDigit() }) {
+                throw UserDomainException.Validation.InvalidAddressFormat("Zip code must be 5 digits.")
+            }
+        }
+
+        fun create(
+            addressId: AddressId,
+            name: String,
+            streetAddress: String,
+            detailAddress: String?,
+            city: String,
+            state: String,
+            country: String,
+            zipCode: String,
+            isDefault: Boolean,
+        ): Address {
+            validateZipCode(zipCode)
+            val now = Instant.now()
+            return Address(
+                addressId = addressId,
+                name = name,
+                streetAddress = streetAddress,
+                detailAddress = detailAddress,
+                city = city,
+                state = state,
+                country = country,
+                zipCode = zipCode,
+                isDefault = isDefault,
+                createdAt = now,
+                updatedAt = now,
+                version = 0L,
+            )
+        }
+
+        fun reconstitute(
+            addressId: AddressId,
+            name: String,
+            streetAddress: String,
+            detailAddress: String?,
+            city: String,
+            state: String,
+            country: String,
+            zipCode: String,
+            isDefault: Boolean,
+            createdAt: Instant,
+            updatedAt: Instant,
+            version: Long,
+        ): Address =
+            Address(
+                addressId = addressId,
+                name = name,
+                streetAddress = streetAddress,
+                detailAddress = detailAddress,
+                city = city,
+                state = state,
+                country = country,
+                zipCode = zipCode,
+                isDefault = isDefault,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                version = version,
+            )
+    }
+
+    fun markAsDefault(): Address {
+        if (this.isDefault) return this
+        return this.copy(
+            isDefault = true,
+            updatedAt = Instant.now(),
+            version = this.version + 1,
+        )
+    }
+
+    fun markAsNonDefault(): Address {
+        if (!this.isDefault) return this
+        return this.copy(
+            isDefault = false,
+            updatedAt = Instant.now(),
+            version = this.version + 1,
+        )
+    }
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/error/UserDomainErrorCodes.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/error/UserDomainErrorCodes.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.error
+
+import com.restaurant.common.domain.error.ErrorCode
+
+/**
+ * User 도메인 비즈니스 규칙 위반 관련 에러 코드 Enum (Rule 67)
+ */
+enum class UserDomainErrorCodes(
+    override val code: String,
+    override val message: String,
+) : ErrorCode {
+    USER_NOT_FOUND("USER-DOMAIN-001", "사용자를 찾을 수 없습니다."),
+    DUPLICATE_EMAIL("USER-DOMAIN-002", "이미 사용중인 이메일입니다."),
+    DUPLICATE_USERNAME("USER-DOMAIN-003", "이미 사용중인 사용자 이름입니다."),
+    PASSWORD_MISMATCH("USER-DOMAIN-004", "비밀번호가 일치하지 않습니다."),
+    USER_ALREADY_WITHDRAWN("USER-DOMAIN-005", "이미 탈퇴한 사용자입니다."),
+    ADDRESS_NOT_FOUND("USER-DOMAIN-006", "주소를 찾을 수 없습니다."),
+    DUPLICATE_ADDRESS_ID("USER-DOMAIN-007", "이미 존재하는 주소 ID 입니다."),
+    MAX_ADDRESS_LIMIT_EXCEEDED("USER-DOMAIN-008", "최대 주소 등록 개수를 초과했습니다."),
+    DEFAULT_ADDRESS_CANNOT_BE_REMOVED("USER-DOMAIN-009", "기본 주소는 삭제할 수 없습니다."),
+    CANNOT_REMOVE_LAST_ADDRESS("USER-DOMAIN-010", "마지막 주소는 삭제할 수 없습니다."),
+    INVALID_EMAIL_FORMAT("USER-DOMAIN-101", "잘못된 이메일 형식입니다."),
+    INVALID_USERNAME_FORMAT("USER-DOMAIN-102", "사용자 이름 형식이 올바르지 않습니다."),
+    INVALID_PASSWORD_FORMAT("USER-DOMAIN-103", "비밀번호 형식이 올바르지 않습니다."),
+    INVALID_NAME_FORMAT("USER-DOMAIN-104", "잘못된 이름 형식입니다."),
+    INVALID_ADDRESS_FORMAT("USER-DOMAIN-105", "잘못된 주소 형식입니다."),
+    INVALID_PHONE_NUMBER_FORMAT("USER-DOMAIN-106", "잘못된 전화번호 형식입니다."),
+    INVALID_USER_ID_FORMAT("USER-DOMAIN-107", "잘못된 사용자 ID 형식입니다."),
+    INVALID_ADDRESS_ID_FORMAT("USER-DOMAIN-108", "잘못된 주소 ID 형식입니다."),
+    ADDRESS_ID_MISMATCH("USER-DOMAIN-201", "주소 ID가 일치하지 않습니다."),
+    INVALID_CREDENTIALS("USER-DOMAIN-056", "Invalid credentials"),
+    ADMIN_CANNOT_BE_WITHDRAWN("USER-DOMAIN-057", "Admin user cannot be withdrawn"),
+    MULTIPLE_DEFAULT_ADDRESSES("USER-DOMAIN-109", "Cannot have multiple default addresses"),
+    DEFAULT_ADDRESS_NOT_FOUND("USER-DOMAIN-108", "Default address not found"),
+    PERSISTENCE_ERROR("USER-DOMAIN-901", "Persistence error occurred"),
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/event/UserEvent.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/event/UserEvent.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.event
+
+import com.restaurant.common.domain.event.DomainEvent
+import com.restaurant.user.domain.vo.UserId
+import java.time.Instant
+import java.util.UUID
+
+/**
+ * Sealed class grouping all domain events related to the User aggregate. (Rule 34)
+ */
+sealed class UserEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override val occurredAt: Instant,
+    open val userId: UserId,
+) : DomainEvent {
+    override val aggregateId: String
+        get() = userId.value.toString()
+    override val aggregateType: String
+        get() = "User"
+
+    /**
+     * User Created Event
+     */
+    data class Created(
+        val username: String,
+        val email: String,
+        val name: String,
+        val phoneNumber: String?,
+        val userType: String,
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+
+    /**
+     * User Password Changed Event
+     */
+    data class PasswordChanged(
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+
+    /**
+     * User Profile Updated Event
+     */
+    data class ProfileUpdated(
+        val name: String,
+        val phoneNumber: String?,
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+
+    /**
+     * Represents address data within user events.
+     */
+    data class AddressData(
+        val id: String,
+        val name: String,
+        val streetAddress: String,
+        val detailAddress: String?,
+        val city: String,
+        val state: String,
+        val country: String,
+        val zipCode: String,
+        val isDefault: Boolean,
+    )
+
+    /**
+     * User Address Added Event
+     */
+    data class AddressRegistered(
+        val address: AddressData,
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+
+    /**
+     * User Address Updated Event
+     */
+    data class AddressUpdated(
+        val address: AddressData,
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+
+    /**
+     * User Address Deleted Event (Renamed from Removed)
+     */
+    data class AddressDeleted(
+        val addressId: String,
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+
+    /**
+     * User Withdrawn Event (Renamed from UserWithdrawn)
+     */
+    data class Withdrawn(
+        override val userId: UserId,
+        override val eventId: UUID = UUID.randomUUID(),
+        override val occurredAt: Instant,
+    ) : UserEvent(eventId, occurredAt, userId)
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/exception/UserDomainException.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/exception/UserDomainException.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.exception
+
+import com.restaurant.common.domain.exception.DomainException
+import com.restaurant.user.domain.error.UserDomainErrorCodes
+
+/**
+ * Sealed class representing all possible domain exceptions for the User aggregate. (Rule 68)
+ */
+sealed class UserDomainException(
+    override val errorCode: UserDomainErrorCodes,
+    message: String? = errorCode.message,
+    cause: Throwable? = null,
+) : DomainException(errorCode, message, cause) {
+    /**
+     * Validation-related exceptions
+     */
+    sealed class Validation(
+        errorCode: UserDomainErrorCodes,
+        message: String? = errorCode.message,
+        cause: Throwable? = null,
+    ) : UserDomainException(errorCode, message, cause) {
+        class InvalidEmailFormat(
+            value: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_EMAIL_FORMAT,
+                "Invalid email format: $value",
+            )
+
+        class InvalidUsernameFormat(
+            value: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_USERNAME_FORMAT,
+                "Invalid username format: $value",
+            )
+
+        class InvalidUserIdFormat(
+            value: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_USER_ID_FORMAT,
+                "Invalid user ID format: $value",
+            )
+
+        class InvalidPasswordFormat(
+            message: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_PASSWORD_FORMAT,
+                message,
+            )
+
+        class InvalidNameFormat(
+            value: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_NAME_FORMAT,
+                "Invalid name format: $value",
+            )
+
+        class InvalidPhoneNumberFormat(
+            value: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_PHONE_NUMBER_FORMAT,
+                "Invalid phone number format: $value",
+            )
+
+        class InvalidAddressFormat(
+            message: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_ADDRESS_FORMAT,
+                message,
+            )
+
+        class InvalidAddressIdFormat(
+            value: String,
+        ) : Validation(
+                UserDomainErrorCodes.INVALID_ADDRESS_ID_FORMAT,
+                "Invalid address ID format: $value",
+            )
+    }
+
+    /**
+     * User-related exceptions
+     */
+    sealed class User(
+        errorCode: UserDomainErrorCodes,
+        message: String? = errorCode.message,
+        cause: Throwable? = null,
+    ) : UserDomainException(errorCode, message, cause) {
+        class NotFound(
+            userId: String,
+        ) : User(
+                UserDomainErrorCodes.USER_NOT_FOUND,
+                "User not found with ID: $userId",
+            )
+
+        class DuplicateUsername(
+            username: String,
+        ) : User(
+                UserDomainErrorCodes.DUPLICATE_USERNAME,
+                "Username already exists: $username",
+            )
+
+        class DuplicateEmail(
+            email: String,
+        ) : User(
+                UserDomainErrorCodes.DUPLICATE_EMAIL,
+                "Email already exists: $email",
+            )
+
+        class PasswordMismatch : User(UserDomainErrorCodes.PASSWORD_MISMATCH)
+
+        class AlreadyWithdrawn : User(UserDomainErrorCodes.USER_ALREADY_WITHDRAWN)
+
+        class InvalidCredentials(
+            username: String,
+        ) : User(
+                UserDomainErrorCodes.INVALID_CREDENTIALS,
+                "Invalid credentials for username: $username",
+            )
+
+        class AdminCannotBeWithdrawn :
+            User(
+                UserDomainErrorCodes.ADMIN_CANNOT_BE_WITHDRAWN,
+                "Admin user cannot be withdrawn.",
+            )
+    }
+
+    /**
+     * Address-related exceptions
+     */
+    sealed class Address(
+        errorCode: UserDomainErrorCodes,
+        message: String? = errorCode.message,
+        cause: Throwable? = null,
+    ) : UserDomainException(errorCode, message, cause) {
+        class NotFound(
+            addressId: String,
+        ) : Address(
+                UserDomainErrorCodes.ADDRESS_NOT_FOUND,
+                "Address not found with ID: $addressId",
+            )
+
+        class DefaultAddressNotFound(
+            message: String = "Default address ID does not exist in the address list.",
+        ) : Address(
+                UserDomainErrorCodes.DEFAULT_ADDRESS_NOT_FOUND,
+                message,
+            )
+
+        class DuplicateAddressId(
+            addressId: String,
+        ) : Address(
+                UserDomainErrorCodes.DUPLICATE_ADDRESS_ID,
+                "Address ID already exists: $addressId",
+            )
+
+        class IdMismatch(
+            existingId: String,
+            newId: String,
+        ) : Address(
+                UserDomainErrorCodes.ADDRESS_ID_MISMATCH,
+                "Address ID mismatch: expected $existingId, got $newId",
+            )
+
+        class LimitExceeded(
+            limit: Int,
+        ) : Address(
+                UserDomainErrorCodes.MAX_ADDRESS_LIMIT_EXCEEDED,
+                "Cannot add more addresses, limit is $limit",
+            )
+
+        class CannotDeleteDefault(
+            message: String = "Cannot remove the default address.",
+        ) : Address(
+                UserDomainErrorCodes.DEFAULT_ADDRESS_CANNOT_BE_REMOVED,
+                message,
+            )
+
+        class CannotDeleteLast(
+            message: String = "Cannot remove the last address.",
+        ) : Address(
+                UserDomainErrorCodes.CANNOT_REMOVE_LAST_ADDRESS,
+                message,
+            )
+
+        class MultipleDefaultsOnInit(
+            val reason: String = "Cannot initialize user with multiple default addresses.",
+        ) : Address(
+                UserDomainErrorCodes.INVALID_ADDRESS_FORMAT,
+                reason,
+            )
+    }
+
+    class PersistenceError(
+        message: String,
+        cause: Throwable? = null,
+    ) : UserDomainException(
+            UserDomainErrorCodes.PERSISTENCE_ERROR,
+            message,
+            cause,
+        )
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/repository/UserRepository.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/repository/UserRepository.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.repository
+
+import com.restaurant.user.domain.aggregate.User
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.vo.Username
+
+/**
+ * 사용자 도메인 리포지토리 Port (Domain Layer).
+ * 애플리케이션 코어 로직은 이 인터페이스에 의존한다.
+ * 실제 구현은 Infrastructure 레이어에서 제공한다.
+ */
+interface UserRepository {
+    /**
+     * 사용자를 저장하거나 업데이트한다.
+     * @param user 저장 또는 업데이트할 User Aggregate
+     * @return 저장된 User Aggregate (Immutable Aggregate 패턴 고려 시 새 인스턴스)
+     */
+    fun save(user: User): User
+
+    /**
+     * 사용자 ID로 사용자를 찾는다.
+     * @param id 사용자 ID (Value Object)
+     * @return 찾은 User Aggregate 또는 null
+     */
+    fun findById(id: UserId): User?
+
+    /**
+     * 사용자 이름으로 사용자를 찾는다.
+     * @param username 사용자 이름 (Value Object)
+     * @return 찾은 User Aggregate 또는 null
+     */
+    fun findByUsername(username: Username): User?
+
+    /**
+     * 이메일로 사용자를 찾는다.
+     * @param email 이메일 (Value Object)
+     * @return 찾은 User Aggregate 또는 null
+     */
+    fun findByEmail(email: Email): User?
+
+    fun existsByEmail(email: Email): Boolean
+
+    fun existsByUsername(username: Username): Boolean
+
+    fun delete(user: User)
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/AddressId.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/AddressId.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+import com.restaurant.user.domain.exception.UserDomainException
+import java.io.Serializable
+import java.util.UUID
+
+@JvmInline
+value class AddressId private constructor(
+    val value: UUID,
+) : Serializable {
+    companion object {
+        fun generate(): AddressId = AddressId(UUID.randomUUID())
+
+        fun ofString(value: String): AddressId =
+            try {
+                AddressId(UUID.fromString(value))
+            } catch (e: IllegalArgumentException) {
+                throw UserDomainException.Validation.InvalidAddressIdFormat(value)
+            }
+
+        fun of(value: UUID): AddressId = AddressId(value)
+
+        fun fromUUID(value: UUID): AddressId = AddressId(value)
+    }
+
+    override fun toString(): String = value.toString()
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Email.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Email.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+
+import com.restaurant.user.domain.exception.UserDomainException
+
+/**
+ * Value object representing an email address.
+ * This class ensures that the email address is valid according to a basic pattern.
+ */
+@JvmInline
+value class Email private constructor(
+    val value: String,
+) {
+    companion object {
+        private val EMAIL_PATTERN =
+            Regex(
+                "[a-zA-Z0-9+._%\\-]{1,256}" +
+                    "@" +
+                    "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+                    "(" +
+                    "\\." +
+                    "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+                    ")+",
+            )
+
+        /**
+         * Creates a new Email from a string value.
+         * @throws UserDomainException.Validation if the email format is invalid
+         */
+        fun of(value: String): Email {
+            if (!EMAIL_PATTERN.matches(value)) {
+                throw UserDomainException.Validation.InvalidEmailFormat(value)
+            }
+            return Email(value.lowercase())
+        }
+    }
+
+    override fun toString(): String = value
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Name.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Name.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+import com.restaurant.user.domain.exception.UserDomainException
+import java.io.Serializable
+
+@JvmInline
+value class Name private constructor(
+    val value: String,
+) : Serializable {
+    init {
+        if (value.isBlank()) {
+            throw UserDomainException.Validation.InvalidNameFormat(value)
+        }
+    }
+
+    companion object {
+        private const val MIN_LENGTH = 2
+        private const val MAX_LENGTH = 50
+
+        fun of(value: String): Name {
+            if (value.isBlank() || value.length < MIN_LENGTH || value.length > MAX_LENGTH) {
+                throw UserDomainException.Validation.InvalidNameFormat(
+                    "이름은 $MIN_LENGTH 자 이상 $MAX_LENGTH 자 이하이어야 하며, 공백일 수 없습니다: '$value'",
+                )
+            }
+            return Name(value)
+        }
+    }
+
+    override fun toString(): String = value
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Password.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Password.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+
+import com.restaurant.user.domain.exception.UserDomainException
+
+/**
+ * 비밀번호 Value Object
+ */
+@JvmInline
+value class Password private constructor(
+    val value: String,
+) {
+    init {
+        if (value.isBlank()) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("Encoded password cannot be blank.")
+        }
+    }
+
+    override fun toString(): String = "********"
+
+    companion object {
+        /**
+         * Creates a Password VO from a pre-encoded password string.
+         * Basic validation is done in the init block.
+         */
+        fun of(encodedPassword: String): Password = Password(encodedPassword)
+    }
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/PhoneNumber.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/PhoneNumber.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+import com.restaurant.user.domain.exception.UserDomainException
+import java.io.Serializable
+
+@JvmInline
+value class PhoneNumber private constructor(
+    val value: String,
+) : Serializable {
+    init {
+        if (!value.matches(PHONE_NUMBER_REGEX)) {
+            throw UserDomainException.Validation.InvalidPhoneNumberFormat(value)
+        }
+    }
+
+    companion object {
+        private val PHONE_NUMBER_REGEX = Regex("^010-?\\d{4}-?\\d{4}$")
+
+        fun of(value: String): PhoneNumber {
+            val normalizedValue = value.replace("-", "")
+            if (!PHONE_NUMBER_REGEX.matches(value)) {
+                throw UserDomainException.Validation.InvalidPhoneNumberFormat("휴대폰 번호 형식이 올바르지 않습니다: $value")
+            }
+
+            return PhoneNumber(normalizedValue)
+        }
+    }
+
+    override fun toString(): String = value
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserId.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserId.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+import com.restaurant.user.domain.exception.UserDomainException
+import java.io.Serializable
+import java.util.UUID
+
+/**
+ * Value object representing a unique user identifier.
+ * This class wraps a UUID and provides type safety and validation.
+ */
+@JvmInline
+value class UserId private constructor(
+    val value: UUID,
+) : Serializable {
+    companion object {
+        /**
+         * Creates a new UserId from a UUID.
+         */
+        fun of(uuid: UUID): UserId = UserId(uuid)
+
+        /**
+         * Creates a new UserId from a string representation of a UUID.
+         * @throws UserDomainException.Validation if the string is not a valid UUID
+         */
+        fun ofString(value: String): UserId =
+            try {
+                UserId(UUID.fromString(value))
+            } catch (e: IllegalArgumentException) {
+                throw UserDomainException.Validation.InvalidUserIdFormat(value)
+            }
+
+        /**
+         * Generates a new random UserId.
+         */
+        fun generate(): UserId = UserId(UUID.randomUUID())
+
+        fun fromUUID(value: UUID): UserId = UserId(value)
+    }
+
+    override fun toString(): String = value.toString()
+}
+
+====================================================================n
+
+
+====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+package com.restaurant.user.domain.vo
+
+import com.restaurant.user.domain.exception.UserDomainException
+import java.io.Serializable
+
+@JvmInline
+value class Username private constructor(
+    val value: String,
+) : Serializable {
+    init {
+
+        if (value.isBlank() || value.length < 3 || value.length > 20) {
+            throw UserDomainException.Validation.InvalidUsernameFormat("Username must be between 3 and 20 characters: '$value'")
+        }
+    }
+
+    companion object {
+        fun of(value: String): Username {
+            try {
+                return Username(value)
+            } catch (e: UserDomainException.Validation.InvalidUsernameFormat) {
+                throw e
+            } catch (e: IllegalArgumentException) {
+                throw UserDomainException.Validation.InvalidUsernameFormat("Invalid username format: ${e.message}")
+            }
+        }
+    }
+
+    override fun toString(): String = value
+}
+
+====================================================================n
+
+
+====================================================================
+ File: settings.gradle.kts
+ Path: settings.gradle.kts
+ Timestamp: 2025-05-11 14:06:42
+====================================================================
+import org.gradle.api.initialization.resolve.RepositoriesMode
+
+/**
+ * settings.gradle.kts for the project.
+ *
+ * Configures plugin repositories and project structure for Gradle.
+ *
+ * @author junoko
+ */
+
+rootProject.name = "restaurant"
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+@Suppress("UnstableApiUsage")
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories { 
+        mavenCentral()
+        maven { url = uri("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven") }  // Add JetBrains repo for Kotlin
+        maven { url = uri("https://packages.confluent.io/maven/") }
+        // Spring Milestones and Snapshots for Spring Cloud compatibility if needed in the future
+        // maven { url = uri("https://repo.spring.io/milestone") }
+    }
+}
+
+// Common modules
+include(":domains:common:domain")
+include(":domains:common:application")
+include(":domains:common:infrastructure")
+include(":domains:common:presentation")
+
+// User modules
+include(":domains:user:domain")
+include(":domains:user:application")
+include(":domains:user:infrastructure:persistence")
+include(":domains:user:infrastructure:messaging")
+include(":domains:user:presentation")
+
+// Independent modules
+include(":independent:outbox")
+
+// Application modules
+include(":apps:user-app")
+
+====================================================================n

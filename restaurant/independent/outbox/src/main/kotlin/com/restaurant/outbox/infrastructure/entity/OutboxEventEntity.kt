@@ -37,17 +37,21 @@ class OutboxEventEntity(
     @Convert(converter = StringMapConverter::class)
     @Column(nullable = false, columnDefinition = "text")
     val headers: Map<String, String>,
+    @Column(name = "event_type", nullable = false)
+    val eventType: String,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: OutboxMessageStatus = OutboxMessageStatus.PENDING,
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
-    @Column(nullable = true)
+    @Column(name = "updated_at")
+    var updatedAt: Instant? = Instant.now(), // 추가된 필드, 생성 시 현재 시간으로 초기화
+    @Column(name = "last_attempt_time")
     var lastAttemptTime: Instant? = null,
-    @Column(nullable = false)
+    @Column(name = "retry_count", nullable = false)
     var retryCount: Int = 0,
     @Version
-    val version: Long = 0,
+    var version: Long = 0,
 ) {
     /**
      * ByteArray 필드가 포함된 엔티티의 equals/hashCode 구현
@@ -66,8 +70,10 @@ class OutboxEventEntity(
         if (headers != other.headers) return false
         if (status != other.status) return false
         if (createdAt != other.createdAt) return false
+        if (updatedAt != other.updatedAt) return false // 추가된 필드 비교
         if (lastAttemptTime != other.lastAttemptTime) return false
         if (retryCount != other.retryCount) return false
+        if (eventType != other.eventType) return false
         if (version != other.version) return false
 
         return true
@@ -82,8 +88,10 @@ class OutboxEventEntity(
         result = 31 * result + headers.hashCode()
         result = 31 * result + status.hashCode()
         result = 31 * result + createdAt.hashCode()
+        result = 31 * result + (updatedAt?.hashCode() ?: 0) // 추가된 필드 해시코드
         result = 31 * result + (lastAttemptTime?.hashCode() ?: 0)
         result = 31 * result + retryCount
+        result = 31 * result + eventType.hashCode()
         result = 31 * result + version.hashCode()
         return result
     }

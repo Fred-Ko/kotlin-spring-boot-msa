@@ -10,30 +10,70 @@ sealed class OutboxException(
     message: String? = null,
     cause: Throwable? = null,
 ) : RuntimeException(message ?: errorCode.message, cause) {
-    class MessageProcessingException(
+    class MessageNotFoundException(
+        messageId: Long,
+        cause: Throwable? = null,
+    ) : OutboxException(
+            OutboxErrorCodes.MESSAGE_NOT_FOUND,
+            "Message not found with id: $messageId",
+            cause,
+        )
+
+    class MessageProcessingFailedException(
         message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(OutboxErrorCodes.MESSAGE_PROCESSING_FAILED, message, cause)
+    ) : OutboxException(
+            OutboxErrorCodes.MESSAGE_PROCESSING_FAILED,
+            message,
+            cause,
+        )
+
+    class KafkaSendFailedException(
+        message: String? = null,
+        cause: Throwable? = null,
+    ) : OutboxException(
+            OutboxErrorCodes.KAFKA_SEND_FAILED,
+            message,
+            cause,
+        )
+
+    class MaxRetriesExceededException(
+        messageId: Long,
+        maxRetries: Int,
+        cause: Throwable? = null,
+    ) : OutboxException(
+            OutboxErrorCodes.MAX_RETRIES_EXCEEDED,
+            "Maximum retry attempts ($maxRetries) exceeded for message: $messageId",
+            cause,
+        )
+
+    class InvalidMessageStatusException(
+        currentStatus: String,
+        newStatus: String,
+        cause: Throwable? = null,
+    ) : OutboxException(
+            OutboxErrorCodes.INVALID_MESSAGE_STATUS,
+            "Invalid status transition from $currentStatus to $newStatus",
+            cause,
+        )
+
+    class DatabaseException(
+        message: String? = null,
+        cause: Throwable? = null,
+    ) : OutboxException(
+            OutboxErrorCodes.DATABASE_ERROR,
+            message,
+            cause,
+        )
 
     class SerializationException(
         message: String? = null,
         cause: Throwable? = null,
-    ) : OutboxException(OutboxErrorCodes.MESSAGE_SERIALIZATION_FAILED, message, cause)
-
-    class DeserializationException(
-        message: String? = null,
-        cause: Throwable? = null,
-    ) : OutboxException(OutboxErrorCodes.MESSAGE_DESERIALIZATION_FAILED, message, cause)
-
-    class KafkaSendException(
-        message: String? = null,
-        cause: Throwable? = null,
-    ) : OutboxException(OutboxErrorCodes.KAFKA_SEND_FAILED, message, cause)
-
-    class MaxRetriesExceededException(
-        message: String? = null,
-        cause: Throwable? = null,
-    ) : OutboxException(OutboxErrorCodes.MAX_RETRIES_EXCEEDED, message, cause)
+    ) : OutboxException(
+            OutboxErrorCodes.SERIALIZATION_ERROR,
+            message,
+            cause,
+        )
 
     /**
      * 데이터베이스 작업 관련 예외

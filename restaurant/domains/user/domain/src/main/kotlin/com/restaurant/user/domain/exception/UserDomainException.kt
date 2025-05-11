@@ -7,37 +7,37 @@ import com.restaurant.user.domain.error.UserDomainErrorCodes
  * Sealed class representing all possible domain exceptions for the User aggregate. (Rule 68)
  */
 sealed class UserDomainException(
-    override val errorCode: UserDomainErrorCodes,
-    message: String? = errorCode.message,
+    errorCode: UserDomainErrorCodes,
+    message: String? = errorCode.message, // String? 타입으로 변경하고, null일 경우 errorCode.message 사용
     cause: Throwable? = null,
-) : DomainException(errorCode, message, cause) {
+) : DomainException(errorCode, message ?: errorCode.message, cause) { // message가 null이면 errorCode.message 사용
     /**
      * Validation-related exceptions
      */
     sealed class Validation(
         errorCode: UserDomainErrorCodes,
-        message: String? = errorCode.message,
+        message: String = errorCode.message,
         cause: Throwable? = null,
     ) : UserDomainException(errorCode, message, cause) {
         class InvalidEmailFormat(
-            value: String,
+            message: String,
         ) : Validation(
                 UserDomainErrorCodes.INVALID_EMAIL_FORMAT,
-                "Invalid email format: $value",
+                message,
             )
 
         class InvalidUsernameFormat(
-            value: String,
+            message: String,
         ) : Validation(
                 UserDomainErrorCodes.INVALID_USERNAME_FORMAT,
-                "Invalid username format: $value",
+                message,
             )
 
         class InvalidUserIdFormat(
-            value: String,
+            message: String,
         ) : Validation(
                 UserDomainErrorCodes.INVALID_USER_ID_FORMAT,
-                "Invalid user ID format: $value",
+                message,
             )
 
         class InvalidPasswordFormat(
@@ -48,17 +48,17 @@ sealed class UserDomainException(
             )
 
         class InvalidNameFormat(
-            value: String,
+            message: String,
         ) : Validation(
                 UserDomainErrorCodes.INVALID_NAME_FORMAT,
-                "Invalid name format: $value",
+                message,
             )
 
         class InvalidPhoneNumberFormat(
-            value: String,
+            message: String,
         ) : Validation(
                 UserDomainErrorCodes.INVALID_PHONE_NUMBER_FORMAT,
-                "Invalid phone number format: $value",
+                message,
             )
 
         class InvalidAddressFormat(

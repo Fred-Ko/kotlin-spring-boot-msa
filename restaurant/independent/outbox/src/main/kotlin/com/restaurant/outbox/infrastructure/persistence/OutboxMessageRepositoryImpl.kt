@@ -3,8 +3,8 @@ package com.restaurant.outbox.infrastructure.persistence
 import com.restaurant.outbox.application.port.OutboxMessageRepository
 import com.restaurant.outbox.application.port.model.OutboxMessage
 import com.restaurant.outbox.application.port.model.OutboxMessageStatus
-import com.restaurant.outbox.infrastructure.persistence.extensions.toOutboxEventEntity
-import com.restaurant.outbox.infrastructure.persistence.extensions.toOutboxMessage
+import com.restaurant.outbox.infrastructure.persistence.extensions.toNewEntity
+import com.restaurant.outbox.infrastructure.persistence.extensions.toDomain
 import com.restaurant.outbox.infrastructure.persistence.repository.JpaOutboxMessageRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -16,21 +16,14 @@ class OutboxMessageRepositoryImpl(
 ) : OutboxMessageRepository {
     @Transactional
     override fun save(message: OutboxMessage): OutboxMessage {
-        val entity = message.toOutboxEventEntity()
+        val entity = message.toNewEntity()
         val savedEntity = jpaOutboxMessageRepository.save(entity)
-        return savedEntity.toOutboxMessage()
+        return savedEntity.toDomain()
     }
 
     @Transactional
-    override fun saveAll(messages: List<OutboxMessage>): List<OutboxMessage> {
-        val entities = messages.map { it.toOutboxEventEntity() }
-        val savedEntities = jpaOutboxMessageRepository.saveAll(entities)
-        return savedEntities.map { it.toOutboxMessage() }
-    }
-
-    @Transactional
-    override fun save(messages: List<OutboxMessage>) {
-        val entities = messages.map { it.toOutboxEventEntity() }
+    override fun saveAll(messages: List<OutboxMessage>) {
+        val entities = messages.map { it.toNewEntity() }
         jpaOutboxMessageRepository.saveAll(entities)
     }
 
@@ -38,14 +31,14 @@ class OutboxMessageRepositoryImpl(
     override fun findById(id: Long): OutboxMessage? =
         jpaOutboxMessageRepository
             .findById(id)
-            .map { it.toOutboxMessage() }
+            .map { it.toDomain() }
             .orElse(null)
 
     @Transactional(readOnly = true)
     override fun findByStatus(status: OutboxMessageStatus): List<OutboxMessage> =
         jpaOutboxMessageRepository
             .findByStatus(status)
-            .map { it.toOutboxMessage() }
+            .map { it.toDomain() }
 
     @Transactional
     override fun updateStatus(
@@ -60,7 +53,7 @@ class OutboxMessageRepositoryImpl(
         }
         entity.lastAttemptTime = Instant.now()
         val savedEntity = jpaOutboxMessageRepository.save(entity)
-        return savedEntity.toOutboxMessage()
+        return savedEntity.toDomain()
     }
 
     @Transactional(readOnly = true)
@@ -73,7 +66,7 @@ class OutboxMessageRepositoryImpl(
                 status = OutboxMessageStatus.FAILED,
                 maxRetries = maxRetries,
                 limit = limit,
-            ).map { it.toOutboxMessage() }
+            ).map { it.toDomain() }
 
     @Transactional
     override fun findAndMarkForProcessing(
@@ -87,7 +80,7 @@ class OutboxMessageRepositoryImpl(
                 entity.status = OutboxMessageStatus.PROCESSING
                 entity.lastAttemptTime = Instant.now()
                 val savedEntity = jpaOutboxMessageRepository.save(entity)
-                savedEntity.toOutboxMessage()
+                savedEntity.toDomain()
             }
     }
 
@@ -100,6 +93,24 @@ class OutboxMessageRepositoryImpl(
         entity.retryCount++
         entity.lastAttemptTime = Instant.now()
         val savedEntity = jpaOutboxMessageRepository.save(entity)
-        return savedEntity.toOutboxMessage()
+        return savedEntity.toDomain()
     }
+
+    @Transactional(readOnly = true)
+    override fun findUnprocessedMessages(batchSize: Int): List<OutboxMessage> =
+        TODO("JpaOutboxMessageRepository.findUnprocessedMessages(batchSize) 구현 필요")
+
+    @Transactional
+    override fun updateMessageStatus(messageId: Long, status: OutboxMessageStatus, retryCount: Int) {
+        TODO("JpaOutboxMessageRepository.updateMessageStatus(messageId, status, retryCount) 구현 필요")
+    }
+
+    @Transactional(readOnly = true)
+    override fun findByStatusAndRetryCountLessThan(
+        status: OutboxMessageStatus,
+        maxRetries: Int,
+        limit: Int
+    ): List<OutboxMessage> =
+        TODO("JpaOutboxMessageRepository.findByStatusAndRetryCountLessThan(status, maxRetries, limit) 구현 필요")
 }
+

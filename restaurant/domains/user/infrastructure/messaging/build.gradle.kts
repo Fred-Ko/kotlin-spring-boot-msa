@@ -1,77 +1,89 @@
 plugins {
     kotlin("jvm")
-    id("java-library")
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
     kotlin("plugin.spring")
-    id("com.github.davidmc24.gradle.plugin.avro")
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
+    id("org.springframework.boot") apply false
+    id("io.spring.dependency-management")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://packages.confluent.io/maven/")
+    }
 }
 
-sourceSets {
-    main {
-        java.srcDirs("src/main/java", "build/generated-src/avro/main/java")
-        kotlin.srcDirs("src/main/kotlin", "build/generated-src/avro/main/java")
+the<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension>().apply {
+    imports {
+        mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
     }
 }
 
 dependencies {
-    api(project(":domains:common:infrastructure"))
-    api(project(":domains:user:domain"))
-    api(project(":independent:outbox"))
-    
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
-    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
-    
-    // Add explicit slf4j-api dependency for MDC
-    implementation("org.slf4j:slf4j-api:2.0.16")
-    
-    // Spring
+    implementation(project(":domains:user:domain"))
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:infrastructure"))
+    implementation(project(":independent:outbox"))
+
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework:spring-tx")
-    
-    // Kafka
-    implementation("org.springframework.kafka:spring-kafka")
-    
-    // Kafka & Avro
-    implementation("org.apache.kafka:kafka-clients")
-    implementation("org.apache.avro:avro")
-    implementation("io.confluent:kafka-avro-serializer:7.6.3")
-    
-    // Test
+    implementation("org.apache.avro:avro:1.11.3")
+    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.9")
-    testImplementation("org.testcontainers:kafka:1.20.2")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.2")
 }
 
-tasks.bootJar {
-    enabled = false
-}
-
-tasks.jar {
-    enabled = true
-}
-
-// Configure Avro plugin
 avro {
-    setCreateSetters(false)
-    setFieldVisibility("PRIVATE")
-    setOutputCharacterEncoding("UTF-8")
-    stringType = "String"
+    stringType.set("String")
+    outputCharacterEncoding.set("UTF-8")
+    isCreateSetters.set(true)
+    isCreateOptionalGetters.set(false)
+    isGettersReturnOptional.set(false)
+    fieldVisibility.set("PRIVATE")
 }
 
-// Ensure generateAvro task runs before compile tasks
-tasks.named<JavaCompile>("compileJava") {
-    dependsOn(tasks.named("generateAvroJava"))
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+    sourceSets {
+        main {
+            java {
+                srcDir("build/generated-main-avro-java")
+            }
+        }
+    }
 }
 
-tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileKotlin") {
-    dependsOn(tasks.named("generateAvroJava"))
+kotlin {
+    jvmToolchain(21)
+    sourceSets.main {
+        kotlin.srcDirs(
+            "src/main/kotlin",
+            "build/generated-main-avro-java"
+        )
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        freeCompilerArgs.set(listOf("-Xjsr305=strict"))
+    }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+tasks.withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.named<com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask>("generateAvroJava") {
+    source("src/main/resources/avro")
+    setOutputDir(file("build/generated-main-avro-java"))
+}
+
+tasks.named("compileKotlin") {
+    dependsOn("generateAvroJava")
 }

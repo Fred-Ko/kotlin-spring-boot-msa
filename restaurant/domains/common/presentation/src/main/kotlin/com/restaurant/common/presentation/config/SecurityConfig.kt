@@ -9,6 +9,9 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.config.annotation.web.invoke
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+
 
 @Configuration
 @EnableWebSecurity
@@ -22,17 +25,12 @@ class SecurityConfig {
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { authz ->
-
                 authz.requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
                 authz.requestMatchers(HttpMethod.POST, "/api/v1/users/login").permitAll()
-
                 authz.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
                 authz.requestMatchers("/actuator/**").permitAll()
-
                 authz.anyRequest().authenticated()
             }
-
         return http.build()
     }
 }

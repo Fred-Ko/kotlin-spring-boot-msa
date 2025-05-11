@@ -28,7 +28,7 @@ value class Email private constructor(
          */
         fun of(value: String): Email {
             if (!EMAIL_PATTERN.matches(value)) {
-                throw UserDomainException.Validation.InvalidEmailFormat(value)
+                throw UserDomainException.Validation.InvalidEmailFormat("Invalid email format: $value")
             }
             return Email(value.lowercase())
         }

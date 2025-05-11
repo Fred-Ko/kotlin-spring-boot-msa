@@ -9,12 +9,9 @@ import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.domain.vo.Username
-import mu.KotlinLogging
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private val log = KotlinLogging.logger {}
 
 @Service
 class RegisterUserCommandHandler(
@@ -34,10 +31,9 @@ class RegisterUserCommandHandler(
                 password = password,
                 email = email,
                 name = name,
-                phoneNumber = null,
+                phoneNumber = null, // phoneNumber는 선택 사항이므로 null로 설정
             )
         userRepository.save(user)
-        log.info { "User registered: ${user.id}" }
         return user.id
     }
 }

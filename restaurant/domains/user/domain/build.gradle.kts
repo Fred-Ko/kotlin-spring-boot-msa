@@ -1,26 +1,46 @@
-plugins { kotlin("jvm") }
-
-kotlin {
-    jvmToolchain(21)
-}
-
-tasks.named("jar") {
-    enabled = false
+plugins {
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    id("java-library")
 }
 
 dependencies {
-    compileOnly(project(":domains:common:domain"))
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.23"))
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
-
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.13")
+    api(project(":domains:common:domain"))
+    
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
+    
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("io.mockk:mockk:1.13.9")
 }
 
-tasks.withType<Test>().configureEach { useJUnitPlatform() }
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
 
-tasks.withType<JavaCompile>().configureEach { enabled = false }
-tasks.withType<Jar>().configureEach { enabled = false }
-tasks.withType<ProcessResources>().configureEach { enabled = false }
+tasks {
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-Xjsr305=strict")
+            jvmTarget = "17"
+        }
+    }
+
+    withType<Test> {
+        useJUnitPlatform()
+    }
+
+}
+
+sourceSets {
+    main {
+        kotlin.srcDirs("src/main/kotlin")
+    }
+    test {
+        kotlin.srcDirs("src/test/kotlin")
+    }
+}

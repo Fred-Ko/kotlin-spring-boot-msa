@@ -10,7 +10,7 @@ value class Username private constructor(
     init {
 
         if (value.isBlank() || value.length < 3 || value.length > 20) {
-            throw UserDomainException.Validation.InvalidUsernameFormat("Username must be between 3 and 20 characters: '$value'")
+            throw UserDomainException.Validation.InvalidUsernameFormat(value)
         }
     }
 
@@ -21,7 +21,7 @@ value class Username private constructor(
             } catch (e: UserDomainException.Validation.InvalidUsernameFormat) {
                 throw e
             } catch (e: IllegalArgumentException) {
-                throw UserDomainException.Validation.InvalidUsernameFormat("Invalid username format: ${e.message}")
+                throw UserDomainException.Validation.InvalidUsernameFormat(value)
             }
         }
     }

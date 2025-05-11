@@ -45,7 +45,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
         problemDetail.title = "Type Mismatch"
-        problemDetail.detail = ex.message
+        problemDetail.detail = ex.message ?: ""
         setCommonProblemProperties(problemDetail)
         return problemDetail
     }
@@ -54,7 +54,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleDomainException(ex: DomainException): ProblemDetail {
         val problemDetail = ProblemDetail.forStatus(mapDomainExceptionToStatus(ex))
         problemDetail.title = ex.errorCode.message
-        problemDetail.detail = ex.message
+        problemDetail.detail = ex.message ?: ""
         problemDetail.setProperty("errorCode", ex.errorCode.code)
         setCommonProblemProperties(problemDetail)
         return problemDetail
@@ -64,7 +64,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleApplicationException(ex: ApplicationException): ProblemDetail {
         val problemDetail = ProblemDetail.forStatus(mapApplicationExceptionToStatus(ex))
         problemDetail.title = ex.errorCode.message
-        problemDetail.detail = ex.message
+        problemDetail.detail = ex.message ?: ""
         problemDetail.setProperty("errorCode", ex.errorCode.code)
         setCommonProblemProperties(problemDetail)
         return problemDetail
@@ -74,7 +74,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     fun handleOptimisticLockException(ex: OptimisticLockException): ProblemDetail {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT)
         problemDetail.title = "Optimistic Lock Error"
-        problemDetail.detail = ex.message
+        problemDetail.detail = ex.message ?: ""
         problemDetail.setProperty("errorCode", "COMMON-SYSTEM-OPTIMISTIC-LOCK-ERROR")
         setCommonProblemProperties(problemDetail)
         return problemDetail
@@ -85,7 +85,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         log.error(ex) { "Unhandled exception: ${ex.message}" }
         val problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR)
         problemDetail.title = "Internal Server Error"
-        problemDetail.detail = ex.message
+        problemDetail.detail = ex.message ?: ""
         setCommonProblemProperties(problemDetail)
         return problemDetail
     }

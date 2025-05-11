@@ -3,31 +3,43 @@ package com.restaurant.outbox.infrastructure.persistence.extensions
 import com.restaurant.outbox.application.port.model.OutboxMessage
 import com.restaurant.outbox.infrastructure.entity.OutboxEventEntity
 
-// Entity -> Domain
-fun OutboxEventEntity.toOutboxMessage(): OutboxMessage =
+fun OutboxEventEntity.toDomain(): OutboxMessage =
     OutboxMessage(
-        dbId = id,
-        payload = payload,
-        topic = topic,
-        headers = headers,
-        aggregateId = aggregateId,
-        aggregateType = aggregateType,
-        status = status,
-        retryCount = retryCount,
-        createdAt = createdAt,
-        lastAttemptTime = lastAttemptTime,
+        id = this.id, // dbId 대신 id 사용, nullable이므로 그대로 전달
+        aggregateId = this.aggregateId,
+        aggregateType = this.aggregateType,
+        eventType = this.eventType, // eventType 추가
+        payload = this.payload,
+        topic = this.topic,
+        headers = this.headers,
+        status = this.status,
+        retryCount = this.retryCount,
+        lastAttemptTime = this.lastAttemptTime,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
     )
 
-// Domain -> Entity
-fun OutboxMessage.toOutboxEventEntity(): OutboxEventEntity =
+fun OutboxMessage.toNewEntity(): OutboxEventEntity =
     OutboxEventEntity(
-        aggregateType = aggregateType,
-        aggregateId = aggregateId,
-        topic = topic,
-        payload = payload,
-        headers = headers,
-        status = status,
-        retryCount = retryCount,
-        createdAt = createdAt,
-        lastAttemptTime = lastAttemptTime,
+        // id는 DB에서 자동 생성되므로 null
+        aggregateId = this.aggregateId,
+        aggregateType = this.aggregateType,
+        eventType = this.eventType, // eventType 추가
+        payload = this.payload,
+        topic = this.topic,
+        headers = this.headers,
+        status = this.status,
+        retryCount = this.retryCount,
+        lastAttemptTime = this.lastAttemptTime,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt ?: java.time.Instant.now(), // updatedAt이 null이면 현재 시간 사용
     )
+
+fun OutboxMessage.toExistingEntity(existingEntity: OutboxEventEntity): OutboxEventEntity {
+    existingEntity.status = this.status
+    existingEntity.retryCount = this.retryCount
+    existingEntity.lastAttemptTime = this.lastAttemptTime
+    existingEntity.updatedAt = this.updatedAt ?: java.time.Instant.now()
+    // payload, topic, headers, aggregateId, aggregateType, eventType, createdAt 등은 일반적으로 변경되지 않음
+    return existingEntity
+}

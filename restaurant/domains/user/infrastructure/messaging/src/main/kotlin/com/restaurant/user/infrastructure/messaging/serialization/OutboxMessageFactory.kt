@@ -1,7 +1,6 @@
 package com.restaurant.user.infrastructure.messaging.serialization
 
-import com.restaurant.common.infrastructure.avro.Envelope
-import com.restaurant.outbox.port.model.OutboxMessage
+import com.restaurant.outbox.application.port.model.OutboxMessage
 import com.restaurant.user.domain.event.UserEvent
 import com.restaurant.user.infrastructure.messaging.avro.event.UserAddressAdded
 import com.restaurant.user.infrastructure.messaging.avro.event.UserAddressDeleted
@@ -20,18 +19,18 @@ import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
 
 private val log = KotlinLogging.logger {}
 
 @Component
 class OutboxMessageFactory(
-    @Value("\${kafka.topics.user-event:dev.user.domain-event.user.v1}") private val userEventTopic: String,
+    @Value("\${kafka.topics.user-event:dev.user-event}")
+    private val userEventTopic: String,
 ) {
-    /**
-     * Creates a list of OutboxMessage objects from a single DomainEvent.
-     * Typically, one event results in one message, but allows for future flexibility.
-     */
+    companion object {
+        private const val AGGREGATE_TYPE = "User"
+    }
+
     fun createMessagesFromEvent(userEvent: UserEvent): List<OutboxMessage> {
         val domainEventPayloadDto: SpecificRecordBase =
             mapToAvroPayloadDto(userEvent) ?: run {
@@ -45,40 +44,24 @@ class OutboxMessageFactory(
                 return emptyList()
             }
 
-        val envelopeDto =
-            com.restaurant.common.infrastructure.avro.Envelope(
-                userEvent.eventId.toString(),
-                "1.0",
-                userEvent.occurredAt.toEpochMilli(),
-                "user",
-                userEvent.aggregateType,
-                userEvent.aggregateId,
-                java.nio.ByteBuffer.wrap(domainPayloadBytes),
-            )
-
-        val finalPayloadBytes: ByteArray =
-            serializeRecord(envelopeDto) ?: run {
-                log.error { "Failed to serialize Envelope: ${userEvent.eventId}" }
-                return emptyList()
-            }
-
-        val targetTopic = determineTopic(userEvent)
+        val eventTypeString = userEvent::class.simpleName ?: "UnknownEvent"
 
         val headers =
             mutableMapOf(
-                "correlationId" to (MDC.get("correlationId") ?: "unknown"),
-                "eventType" to (userEvent::class.simpleName ?: "UnknownEvent"),
+                "correlationId" to (MDC.get("correlationId") ?: userEvent.eventId.toString()),
+                "eventType" to eventTypeString,
                 "aggregateId" to userEvent.aggregateId,
-                "aggregateType" to userEvent.aggregateType,
+                "aggregateType" to AGGREGATE_TYPE,
             )
 
         val outboxMessage =
             OutboxMessage(
-                payload = finalPayloadBytes,
-                topic = targetTopic,
+                payload = domainPayloadBytes,
+                topic = determineTopic(userEvent),
                 headers = headers,
                 aggregateId = userEvent.aggregateId,
-                aggregateType = userEvent.aggregateType,
+                aggregateType = AGGREGATE_TYPE,
+                eventType = eventTypeString,
             )
 
         return listOf(outboxMessage)
@@ -87,67 +70,79 @@ class OutboxMessageFactory(
     private fun mapToAvroPayloadDto(event: UserEvent): SpecificRecordBase? =
         try {
             when (event) {
-                is UserEvent.Created ->
-                    UserCreated(
-                        event.userId.value.toString(),
-                        event.username,
-                        event.email,
-                        event.name,
-                        event.phoneNumber,
-                        event.registeredAt.toEpochMilli(),
-                    )
-                is UserEvent.PasswordChanged ->
-                    UserPasswordChanged(
-                        event.userId.value.toString(),
-                        event.changedAt.toEpochMilli(),
-                    )
-                is UserEvent.ProfileUpdated ->
-                    UserProfileUpdated(
-                        event.userId.value.toString(),
-                        event.name,
-                        event.phoneNumber,
-                        event.updatedAt.toEpochMilli(),
-                    )
-                is UserEvent.AddressRegistered ->
-                    UserAddressAdded(
-                        event.userId.value.toString(),
-                        event.address.id,
-                        event.address.name,
-                        event.address.streetAddress,
-                        event.address.city,
-                        event.address.state,
-                        event.address.country,
-                        event.address.zipCode,
-                        event.address.isDefault,
-                        event.occurredAt.toEpochMilli(),
-                    )
-                is UserEvent.AddressUpdated ->
-                    UserAddressUpdated(
-                        event.userId.value.toString(),
-                        event.address.id,
-                        event.address.name,
-                        event.address.streetAddress,
-                        event.address.city,
-                        event.address.state,
-                        event.address.country,
-                        event.address.zipCode,
-                        event.address.isDefault,
-                        event.occurredAt.toEpochMilli(),
-                    )
-                is UserEvent.AddressDeleted ->
-                    UserAddressDeleted(
-                        event.userId.value.toString(),
-                        event.addressId,
-                        event.deletedAt.toEpochMilli(),
-                    )
-                is UserEvent.Withdrawn ->
-                    UserWithdrawn(
-                        event.userId.value.toString(),
-                        event.withdrawnAt.toEpochMilli(),
-                    )
-                else -> {
-                    log.warn { "Unsupported UserEvent type for Avro mapping: ${event::class.simpleName}" }
-                    null
+                is UserEvent.Created -> {
+                    UserCreated
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setUsername(event.username)
+                        .setEmail(event.email)
+                        .setName(event.name)
+                        .setPhoneNumber(event.phoneNumber)
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
+                }
+                is UserEvent.PasswordChanged -> {
+                    UserPasswordChanged
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
+                }
+                is UserEvent.ProfileUpdated -> {
+                    UserProfileUpdated
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setName(event.name)
+                        .setPhoneNumber(event.phoneNumber)
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
+                }
+                is UserEvent.AddressRegistered -> {
+                    UserAddressAdded
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setAddressId(event.address.id)
+                        .setName(event.address.name)
+                        .setStreetAddress(event.address.streetAddress)
+                        .setDetailAddress(event.address.detailAddress)
+                        .setCity(event.address.city)
+                        .setState(event.address.state)
+                        .setCountry(event.address.country)
+                        .setZipCode(event.address.zipCode)
+                        .setIsDefault(event.address.isDefault)
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
+                }
+                is UserEvent.AddressUpdated -> {
+                    UserAddressUpdated
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setAddressId(event.address.id)
+                        .setName(event.address.name)
+                        .setStreetAddress(event.address.streetAddress)
+                        .setDetailAddress(event.address.detailAddress)
+                        .setCity(event.address.city)
+                        .setState(event.address.state)
+                        .setCountry(event.address.country)
+                        .setZipCode(event.address.zipCode)
+                        .setIsDefault(event.address.isDefault)
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
+                }
+                is UserEvent.AddressDeleted -> {
+                    UserAddressDeleted
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setAddressId(event.addressId)
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
+                }
+                is UserEvent.Withdrawn -> {
+                    UserWithdrawn
+                        .newBuilder()
+                        .setUserId(event.userId.toString())
+                        .setOccurredAt(event.occurredAt.toEpochMilli())
+                        .build()
                 }
             }
         } catch (e: Exception) {
@@ -155,9 +150,9 @@ class OutboxMessageFactory(
             null
         }
 
-    private fun serializeRecord(record: SpecificRecordBase): ByteArray? =
+    private fun <T : SpecificRecordBase> serializeRecord(record: T): ByteArray? =
         try {
-            val writer: DatumWriter<SpecificRecordBase> = SpecificDatumWriter(record.schema)
+            val writer: DatumWriter<T> = SpecificDatumWriter(record.schema)
             val out = ByteArrayOutputStream()
             val encoder: BinaryEncoder = EncoderFactory.get().binaryEncoder(out, null)
             writer.write(record, encoder)

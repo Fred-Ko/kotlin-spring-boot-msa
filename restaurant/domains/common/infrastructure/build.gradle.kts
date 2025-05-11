@@ -1,49 +1,9 @@
 plugins {
     kotlin("jvm")
-    id("java-library")
-    id("org.springframework.boot")
-    id("io.spring.dependency-management")
     kotlin("plugin.spring")
     kotlin("plugin.jpa")
     kotlin("plugin.allopen")
     id("com.github.davidmc24.gradle.plugin.avro")
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
-
-dependencies {
-    implementation(project(":domains:common:domain"))
-    implementation(project(":domains:common:application"))
-    
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    
-    // Spring
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework:spring-tx")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.kafka:spring-kafka")
-    
-    // Database
-    implementation("org.postgresql:postgresql")
-    implementation("com.zaxxer:HikariCP")
-    
-    // Kafka & Avro
-    implementation("org.apache.kafka:kafka-clients")
-    implementation("org.apache.avro:avro")
-    implementation("io.confluent:kafka-avro-serializer:7.6.3")
-    
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.9")
-    testImplementation("org.testcontainers:postgresql:1.20.2")
-    testImplementation("org.testcontainers:kafka:1.20.2")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.2")
 }
 
 allOpen {
@@ -52,34 +12,24 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
-tasks.bootJar {
-    enabled = false
-}
-
-tasks.jar {
-    enabled = true
-}
-
-// Configure Avro plugin
-avro {
-    setCreateSetters(false)
-    setFieldVisibility("PRIVATE")
-    setOutputCharacterEncoding("UTF-8")
-    stringType = "String"
-}
-
-sourceSets {
-    main {
-        java.srcDirs("src/main/java", "build/generated-src/avro/main/java")
-        kotlin.srcDirs("src/main/kotlin", "build/generated-src/avro/main/java")
-    }
-}
-
-// Ensure generateAvro task runs before compile tasks
-tasks.named<JavaCompile>("compileJava") {
-    dependsOn(tasks.named("generateAvroJava"))
-}
-
-tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileKotlin") {
-    dependsOn(tasks.named("generateAvroJava"))
+dependencies {
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:application"))
+    
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3")
+    implementation("org.springframework.kafka:spring-kafka:3.1.1")
+    implementation("org.apache.avro:avro:1.11.3")
+    implementation("io.confluent:kafka-avro-serializer:7.6.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
+    
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.2.3")
+    testImplementation("org.springframework.kafka:spring-kafka-test:3.1.1")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.assertj:assertj-core:3.25.3")
+    testImplementation("org.testcontainers:testcontainers:1.19.6")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.6")
+    testImplementation("org.testcontainers:kafka:1.19.6")
 }

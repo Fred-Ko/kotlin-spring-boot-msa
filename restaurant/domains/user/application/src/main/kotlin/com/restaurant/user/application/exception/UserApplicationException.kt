@@ -1,17 +1,17 @@
 package com.restaurant.user.application.exception
 
 import com.restaurant.common.domain.error.ErrorCode
-import com.restaurant.common.domain.exception.ApplicationException
+import com.restaurant.common.application.exception.ApplicationException
 import com.restaurant.user.application.error.UserApplicationErrorCode
 
 /**
  * User Application 레이어 관련 예외 정의 (Rule 68)
  */
 sealed class UserApplicationException(
-    final override val errorCode: ErrorCode,
+    override val errorCode: ErrorCode,
     message: String? = null,
     cause: Throwable? = null,
-) : ApplicationException(errorCode, message ?: errorCode.message, cause) {
+) : ApplicationException(message ?: errorCode.message, cause) {
     /**
      * 인증 실패 관련 예외
      */
@@ -58,14 +58,17 @@ sealed class UserApplicationException(
     class UserNotFound(
         errorCode: ErrorCode,
         identifier: String,
-    ) : UserApplicationException(errorCode, "User not found with identifier: $identifier")
+        cause: Throwable? = null
+    ) : UserApplicationException(errorCode, "User not found with identifier: $identifier", cause)
 
     class InvalidCredentials(
         errorCode: ErrorCode,
-    ) : UserApplicationException(errorCode)
+        cause: Throwable? = null
+    ) : UserApplicationException(errorCode, cause = cause)
 
     class UserInactive(
         errorCode: ErrorCode,
         userId: String,
-    ) : UserApplicationException(errorCode, "User is inactive: $userId")
+        cause: Throwable? = null
+    ) : UserApplicationException(errorCode, "User is inactive: $userId", cause)
 }

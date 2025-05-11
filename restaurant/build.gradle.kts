@@ -7,31 +7,13 @@
  */
 
 plugins {
-    id("org.springframework.boot") version "3.3.4" apply false
-    id("io.spring.dependency-management") version "1.1.6" apply false
-    kotlin("jvm") version "1.9.23" apply false
-    kotlin("plugin.spring") version "1.9.23" apply false
-    kotlin("plugin.jpa") version "1.9.23" apply false
-    kotlin("plugin.allopen") version "1.9.23" apply false
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    // Only versions are declared here for subprojects
+    id("org.jetbrains.kotlin.jvm") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.spring") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.jpa") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.allopen") version "2.1.20" apply false
+    id("org.springframework.boot") version "3.2.3" apply false
+    id("io.spring.dependency-management") version "1.1.4" apply false
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1" apply false
-}
-
-allprojects {
-    group = "com.restaurant"
-    version = "0.0.1-SNAPSHOT"
-}
-
-ktlint {
-    version.set("1.2.1")
-    verbose.set(true)
-    android.set(false)
-    outputToConsole.set(true)
-    reporters {
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
-        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
-    }
-    filter {
-        exclude("**/generated/**")
-    }
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.1" apply false
 }

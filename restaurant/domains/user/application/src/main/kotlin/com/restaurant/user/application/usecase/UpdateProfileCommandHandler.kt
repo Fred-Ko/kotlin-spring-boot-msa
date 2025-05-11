@@ -8,11 +8,8 @@ import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
-import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private val log = KotlinLogging.logger {}
 
 @Service
 class UpdateProfileCommandHandler(
@@ -20,34 +17,22 @@ class UpdateProfileCommandHandler(
 ) : UpdateProfileUseCase {
     @Transactional
     override fun updateProfile(command: UpdateProfileCommand) {
-        log.info { "Attempting to update profile for userId=${command.userId}" }
-
         try {
-            val userId = UserId.ofString(command.userId)
-            val user = userRepository.findById(userId) ?: throw UserDomainException.User.NotFound(userId.toString())
+            val userIdVo = UserId.ofString(command.userId)
+            val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
 
-            val updatedName = Name.of(command.name)
-            val updatedPhoneNumber = command.phoneNumber?.let { PhoneNumber.of(it) }
+            val name = Name.of(command.name)
+            val phoneNumber = command.phoneNumber?.let { PhoneNumber.of(it) }
 
-            val updatedUser =
-                user.updateProfile(
-                    newName = updatedName,
-                    newPhoneNumber = updatedPhoneNumber,
-                )
+            val updatedUser = user.updateProfile(name, phoneNumber)
 
             userRepository.save(updatedUser)
-            log.info { "Profile updated successfully for userId=${userId.value}" }
         } catch (de: UserDomainException) {
-            log.warn(
-                de,
-            ) { "Domain error during profile update for userId=${command.userId}: code=${de.errorCode.code}, message=${de.message}" }
             throw de
         } catch (iae: IllegalArgumentException) {
-            log.warn(iae) { "Invalid data during profile update for userId=${command.userId}: ${iae.message}" }
-            throw UserApplicationException.BadRequest("Invalid profile data format: ${iae.message}", iae)
+            throw UserApplicationException.BadRequest("Invalid input format.", iae)
         } catch (e: Exception) {
-            log.error(e) { "Unexpected error during profile update for userId=${command.userId}: ${e.message}" }
-            throw UserApplicationException.UnexpectedError(cause = e)
+            throw UserApplicationException.UnexpectedError(message = "Failed to update profile due to an unexpected error.", cause = e)
         }
     }
 }

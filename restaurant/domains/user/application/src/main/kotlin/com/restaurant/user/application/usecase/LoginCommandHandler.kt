@@ -2,17 +2,14 @@ package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.LoginCommand
 import com.restaurant.user.application.dto.query.LoginResult
-import com.restaurant.user.application.error.UserApplicationErrorCode
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.application.port.input.LoginUseCase
+import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
-import com.restaurant.user.domain.vo.Email
-import mu.KotlinLogging
+import com.restaurant.user.domain.vo.Email // Username 대신 Email import
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private val log = KotlinLogging.logger {}
 
 @Service
 class LoginCommandHandler(
@@ -21,32 +18,34 @@ class LoginCommandHandler(
 ) : LoginUseCase {
     @Transactional(readOnly = true)
     override fun login(command: LoginCommand): LoginResult {
-        log.info { "Processing login command for email: ${command.email}" }
+        try {
+            // username 대신 email 사용
+            val emailVo = Email.of(command.email)
+            // findByUsername 대신 findByEmail 사용 (UserRepository에 해당 메소드 필요)
+            val user = userRepository.findByEmail(emailVo)
+                ?: throw UserDomainException.User.InvalidCredentials(command.email)
 
-        val email = Email.of(command.email)
+            if (!passwordEncoder.matches(command.password, user.password.value)) {
+                throw UserDomainException.User.InvalidCredentials(command.email)
+            }
 
-        val user =
-            userRepository.findByEmail(email)
-                ?: throw UserApplicationException.UserNotFound(UserApplicationErrorCode.USER_NOT_FOUND_BY_EMAIL, command.email)
+            // 실제 토큰 생성 로직은 여기에 구현되어야 합니다.
+            // 임시로 빈 문자열을 사용합니다.
+            val accessToken = "dummy-access-token"
+            val refreshToken = "dummy-refresh-token"
 
-        if (!passwordEncoder.matches(command.password, user.password.value)) {
-            log.warn { "Invalid password attempt for email: ${command.email}" }
-            throw UserApplicationException.InvalidCredentials(UserApplicationErrorCode.INVALID_CREDENTIALS)
+            return LoginResult(
+                userId = user.id.value.toString(),
+                username = user.username.value,
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+            )
+        } catch (de: UserDomainException.User.InvalidCredentials) {
+            throw de
+        } catch (iae: IllegalArgumentException) {
+            throw UserApplicationException.BadRequest("Invalid email or password format.", iae)
+        } catch (e: Exception) {
+            throw UserApplicationException.UnexpectedError(message = "Login failed due to an unexpected error.", cause = e)
         }
-
-        if (!user.isActive()) {
-            log.warn { "Attempt to login with inactive user: ${command.email}" }
-            throw UserApplicationException.UserInactive(UserApplicationErrorCode.USER_INACTIVE, user.id.value.toString())
-        }
-
-        val fakeToken = "fake-jwt-token-for-${user.id.value}"
-
-        log.info { "User logged in successfully: ${user.email.value}" }
-        return LoginResult(
-            userId = user.id.value.toString(),
-            username = user.username.value,
-            accessToken = fakeToken,
-            refreshToken = "fake-refresh-token",
-        )
     }
 }

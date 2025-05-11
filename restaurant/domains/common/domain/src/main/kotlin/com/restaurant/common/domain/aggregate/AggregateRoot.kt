@@ -13,12 +13,12 @@ abstract class AggregateRoot {
     /**
      * Returns the list of recorded domain events.
      */
-    fun getDomainEvents(): List<DomainEvent> = domainEvents.toList()
+    open fun getDomainEvents(): List<DomainEvent> = domainEvents.toList()
 
     /**
      * Clears the list of recorded domain events.
      */
-    fun clearDomainEvents() {
+    open fun clearDomainEvents() {
         domainEvents.clear()
     }
 

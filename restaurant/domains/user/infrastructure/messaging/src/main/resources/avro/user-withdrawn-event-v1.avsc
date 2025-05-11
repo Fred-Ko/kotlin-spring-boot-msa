@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "UserWithdrawn",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "occurredAt", "type": "long"}
+  ]
+}

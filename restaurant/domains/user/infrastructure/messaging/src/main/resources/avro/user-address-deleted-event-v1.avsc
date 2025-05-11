@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "UserAddressDeleted",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "addressId", "type": "string"},
+    {"name": "occurredAt", "type": "long"}
+  ]
+}

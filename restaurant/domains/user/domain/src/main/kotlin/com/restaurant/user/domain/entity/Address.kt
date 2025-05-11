@@ -13,6 +13,7 @@ data class Address private constructor(
     val addressId: AddressId,
     val name: String,
     val streetAddress: String,
+    val detailAddress: String?,
     val city: String,
     val state: String,
     val country: String,
@@ -44,6 +45,7 @@ data class Address private constructor(
     fun updateDetails(
         name: String,
         streetAddress: String,
+        detailAddress: String?,
         city: String,
         state: String,
         country: String,
@@ -53,6 +55,7 @@ data class Address private constructor(
         validateZipCode(zipCode)
         if (this.name == name &&
             this.streetAddress == streetAddress &&
+            this.detailAddress == detailAddress &&
             this.city == city &&
             this.state == state &&
             this.country == country &&
@@ -64,6 +67,7 @@ data class Address private constructor(
         return this.copy(
             name = name,
             streetAddress = streetAddress,
+            detailAddress = detailAddress,
             city = city,
             state = state,
             country = country,
@@ -79,6 +83,7 @@ data class Address private constructor(
             id = addressId.value.toString(),
             name = name,
             streetAddress = streetAddress,
+            detailAddress = detailAddress,
             city = city,
             state = state,
             country = country,
@@ -97,6 +102,7 @@ data class Address private constructor(
             addressId: AddressId,
             name: String,
             streetAddress: String,
+            detailAddress: String?,
             city: String,
             state: String,
             country: String,
@@ -109,6 +115,7 @@ data class Address private constructor(
                 addressId = addressId,
                 name = name,
                 streetAddress = streetAddress,
+                detailAddress = detailAddress,
                 city = city,
                 state = state,
                 country = country,
@@ -124,6 +131,7 @@ data class Address private constructor(
             addressId: AddressId,
             name: String,
             streetAddress: String,
+            detailAddress: String?,
             city: String,
             state: String,
             country: String,
@@ -137,6 +145,7 @@ data class Address private constructor(
                 addressId = addressId,
                 name = name,
                 streetAddress = streetAddress,
+                detailAddress = detailAddress,
                 city = city,
                 state = state,
                 country = country,

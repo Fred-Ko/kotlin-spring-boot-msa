@@ -7,11 +7,8 @@ import com.restaurant.user.application.port.input.GetUserProfileQuery
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.UserId
-import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-
-private val log = KotlinLogging.logger {}
 
 @Service
 class GetUserProfileQueryHandler(
@@ -19,52 +16,38 @@ class GetUserProfileQueryHandler(
 ) : GetUserProfileQuery {
     @Transactional(readOnly = true)
     override fun getUserProfile(query: GetUserProfileByIdQuery): UserProfileDto {
-        log.debug { "Fetching user profile for userId=${query.userId}" }
-
         try {
-            val userIdVo = UserId.ofString(query.userId)
-            val user = userRepository.findById(userIdVo) ?: throw UserDomainException.User.NotFound(userIdVo.toString())
+            val userId = UserId.ofString(query.userId)
+            val user = userRepository.findById(userId) ?: throw UserDomainException.User.NotFound(userId.toString())
 
-            val dto =
-                UserProfileDto(
-                    id = user.id.value.toString(),
-                    email = user.email.value,
-                    name = user.name.value,
-                    username = user.username.value,
-                    phoneNumber = user.phoneNumber?.value,
-                    userType = user.userType.name,
-                    addresses =
-                        user.addresses.map {
-                            UserProfileDto.AddressDto(
-                                id = it.addressId.value.toString(),
-                                street = it.street,
-                                detail = it.detail,
-                                zipCode = it.zipCode,
-                                isDefault = it.isDefault,
-                            )
-                        },
-                    createdAt = user.createdAt,
-                    updatedAt = user.updatedAt,
-                    status = user.status.name,
-                    version = user.version,
-                )
-
-            log.info { "User profile fetched successfully, userId=${userIdVo.value}" }
-            return dto
+            return UserProfileDto(
+                id = user.id.value.toString(),
+                username = user.username.value,
+                email = user.email.value,
+                name = user.name.value,
+                phoneNumber = user.phoneNumber?.value,
+                addresses =
+                user.addresses.map { address ->
+                    UserProfileDto.AddressDto(
+                        id = address.addressId.value.toString(),
+                        street = address.streetAddress, // ?: "" 제거
+                        detail = address.detailAddress, // ?: "" 제거
+                        zipCode = address.zipCode, // ?: "" 제거
+                        isDefault = address.isDefault,
+                    )
+                },
+                userType = user.userType.name,
+                status = user.status.name,
+                createdAt = user.createdAt,
+                updatedAt = user.updatedAt,
+                version = user.version,
+            )
         } catch (de: UserDomainException.User.NotFound) {
-            log.warn { "User profile query failed, user not found: userId=${query.userId}" }
-            throw de
-        } catch (de: UserDomainException) {
-            log.warn(
-                de,
-            ) { "Domain validation error during profile query for user ${query.userId}: code=${de.errorCode.code}, message=${de.message}" }
             throw de
         } catch (iae: IllegalArgumentException) {
-            log.warn(iae) { "Invalid user ID format for query: ${query.userId}" }
-            throw UserApplicationException.BadRequest("Invalid user ID format", iae)
+            throw UserApplicationException.BadRequest("Invalid user ID format.", iae)
         } catch (e: Exception) {
-            log.error(e) { "Unexpected error during profile query for user ${query.userId}: ${e.message}" }
-            throw UserApplicationException.UnexpectedError(cause = e)
+            throw UserApplicationException.UnexpectedError(message = "Failed to fetch profile due to an unexpected error.", cause = e)
         }
     }
 }

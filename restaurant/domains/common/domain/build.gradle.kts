@@ -1,31 +1,20 @@
 plugins {
-    kotlin("jvm")
+    id("java-library")
+    kotlin("jvm") // Kotlin 플러그인 추가
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
-
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.23")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.23")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation("jakarta.validation:jakarta.validation-api:3.0.2")
-
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.13")
-}
-
-kotlin {
-    jvmToolchain(21)
-    compilerOptions {
-        freeCompilerArgs.add("-Xjsr305=strict")
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
 
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
 }
-

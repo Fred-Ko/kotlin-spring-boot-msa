@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "UserAddressUpdated",
+  "namespace": "com.restaurant.user.infrastructure.messaging.avro.event",
+  "fields": [
+    {"name": "userId", "type": "string"},
+    {"name": "addressId", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "streetAddress", "type": "string"},
+    {"name": "detailAddress", "type": ["null", "string"], "default": null},
+    {"name": "city", "type": "string"},
+    {"name": "state", "type": "string"},
+    {"name": "country", "type": "string"},
+    {"name": "zipCode", "type": "string"},
+    {"name": "isDefault", "type": "boolean"},
+    {"name": "occurredAt", "type": "long"}
+  ]
+}
