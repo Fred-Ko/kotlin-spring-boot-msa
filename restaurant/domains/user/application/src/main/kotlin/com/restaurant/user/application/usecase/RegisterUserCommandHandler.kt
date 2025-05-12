@@ -1,7 +1,7 @@
 package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.RegisterUserCommand
-import com.restaurant.user.application.port.input.RegisterUserUseCase
+import com.restaurant.user.application.port.RegisterUserUseCase
 import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email

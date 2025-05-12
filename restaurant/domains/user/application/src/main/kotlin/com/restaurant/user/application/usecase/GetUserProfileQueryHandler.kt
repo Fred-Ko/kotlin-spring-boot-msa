@@ -3,7 +3,7 @@ package com.restaurant.user.application.usecase
 import com.restaurant.user.application.dto.query.GetUserProfileByIdQuery
 import com.restaurant.user.application.dto.query.UserProfileDto
 import com.restaurant.user.application.exception.UserApplicationException
-import com.restaurant.user.application.port.input.GetUserProfileQuery
+import com.restaurant.user.application.port.GetUserProfileQuery
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.UserId

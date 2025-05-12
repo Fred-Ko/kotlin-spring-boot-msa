@@ -5,13 +5,10 @@ import com.restaurant.outbox.application.port.model.OutboxMessageStatus
 
 /**
  * Outbox 메시지 저장소에 대한 포트 인터페이스.
- * 이 인터페이스는 Outbox 메시지의 저장, 조회, 상태 업데이트 등의 작업을 정의합니다.
  */
 interface OutboxMessageRepository {
     /**
      * 단일 Outbox 메시지를 저장합니다.
-     * 이 메서드는 원자적으로 실행되어야 합니다.
-     *
      * @param message 저장할 메시지
      * @return 저장된 메시지
      */

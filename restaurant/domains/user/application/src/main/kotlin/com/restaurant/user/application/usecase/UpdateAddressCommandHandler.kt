@@ -2,7 +2,7 @@ package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.UpdateAddressCommand
 import com.restaurant.user.application.exception.UserApplicationException
-import com.restaurant.user.application.port.input.UpdateAddressUseCase
+import com.restaurant.user.application.port.UpdateAddressUseCase
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository

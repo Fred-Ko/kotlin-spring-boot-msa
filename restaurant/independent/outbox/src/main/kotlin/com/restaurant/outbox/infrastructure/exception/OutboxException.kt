@@ -2,9 +2,7 @@ package com.restaurant.outbox.infrastructure.exception
 
 import com.restaurant.outbox.infrastructure.error.OutboxErrorCodes
 
-/**
- * Outbox 모듈에서 발생하는 예외의 베이스 클래스
- */
+/** Outbox 예외 베이스 클래스 */
 sealed class OutboxException(
     val errorCode: OutboxErrorCodes,
     message: String? = null,
@@ -14,82 +12,75 @@ sealed class OutboxException(
         messageId: Long,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.MESSAGE_NOT_FOUND,
-            "Message not found with id: $messageId",
-            cause,
-        )
+        OutboxErrorCodes.MESSAGE_NOT_FOUND,
+        "Message not found with id: $messageId",
+        cause,
+    )
 
     class MessageProcessingFailedException(
         message: String? = null,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.MESSAGE_PROCESSING_FAILED,
-            message,
-            cause,
-        )
+        OutboxErrorCodes.MESSAGE_PROCESSING_FAILED,
+        message,
+        cause,
+    )
 
     class KafkaSendFailedException(
         message: String? = null,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.KAFKA_SEND_FAILED,
-            message,
-            cause,
-        )
+        OutboxErrorCodes.KAFKA_SEND_FAILED,
+        message,
+        cause,
+    )
 
     class MaxRetriesExceededException(
         messageId: Long,
         maxRetries: Int,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.MAX_RETRIES_EXCEEDED,
-            "Maximum retry attempts ($maxRetries) exceeded for message: $messageId",
-            cause,
-        )
+        OutboxErrorCodes.MAX_RETRIES_EXCEEDED,
+        "Maximum retry attempts ($maxRetries) exceeded for message: $messageId",
+        cause,
+    )
 
     class InvalidMessageStatusException(
         currentStatus: String,
         newStatus: String,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.INVALID_MESSAGE_STATUS,
-            "Invalid status transition from $currentStatus to $newStatus",
-            cause,
-        )
+        OutboxErrorCodes.INVALID_MESSAGE_STATUS,
+        "Invalid status transition from $currentStatus to $newStatus",
+        cause,
+    )
 
     class DatabaseException(
         message: String? = null,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.DATABASE_ERROR,
-            message,
-            cause,
-        )
+        OutboxErrorCodes.DATABASE_ERROR,
+        message,
+        cause,
+    )
 
     class SerializationException(
         message: String? = null,
         cause: Throwable? = null,
     ) : OutboxException(
-            OutboxErrorCodes.SERIALIZATION_ERROR,
-            message,
-            cause,
-        )
+        OutboxErrorCodes.SERIALIZATION_ERROR,
+        message,
+        cause,
+    )
 
-    /**
-     * 데이터베이스 작업 관련 예외
-     */
     class DatabaseOperationException(
         message: String? = null,
         cause: Throwable? = null,
     ) : OutboxException(OutboxErrorCodes.DATABASE_OPERATION_FAILED, message, cause)
 
-    /**
-     * 예상치 못한 인프라 예외
-     */
+
     class UnexpectedInfrastructureException(
         message: String? = null,
         cause: Throwable? = null,
     ) : OutboxException(OutboxErrorCodes.UNEXPECTED_INFRA_ERROR, message, cause)
-
-    // Removed duplicated simple data class exceptions (SerializationFailed, etc.)
 }

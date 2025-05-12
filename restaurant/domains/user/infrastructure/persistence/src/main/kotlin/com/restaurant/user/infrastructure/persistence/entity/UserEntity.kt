@@ -1,7 +1,7 @@
 package com.restaurant.user.infrastructure.persistence.entity
 
-import com.restaurant.user.domain.aggregate.UserStatus
-import com.restaurant.user.domain.aggregate.UserType
+import com.restaurant.user.domain.vo.UserStatus
+import com.restaurant.user.domain.vo.UserType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType

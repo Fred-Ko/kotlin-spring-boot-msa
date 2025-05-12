@@ -6,12 +6,6 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-repositories {
-    mavenCentral()
-    maven {
-        url = uri("https://packages.confluent.io/maven/")
-    }
-}
 
 the<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension>().apply {
     imports {

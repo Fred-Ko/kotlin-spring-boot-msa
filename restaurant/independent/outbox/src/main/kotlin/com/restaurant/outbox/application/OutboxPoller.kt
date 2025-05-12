@@ -19,7 +19,7 @@ class OutboxPoller(
     private val batchSize = 100
     private val maxRetries = 3
 
-    @Scheduled(fixedRate = 1000) // 1초마다 실행
+    @Scheduled(fixedRate = 1000) 
     @Transactional
     fun pollAndProcessMessages() {
         try {
@@ -45,10 +45,10 @@ class OutboxPoller(
                         e.message,
                     )
                     message.id?.let {
-                        // PENDING 상태로 변경하고 재시도 횟수 증가
+                        
                         outboxMessageRepository.updateStatus(it, OutboxMessageStatus.PENDING, true)
                     }
-                } catch (e: Exception) { // 그 외 예상치 못한 오류
+                } catch (e: Exception) { 
                     logger.error(
                         "Unexpected error processing message: {}, Error: {}",
                         message.id,
@@ -56,7 +56,7 @@ class OutboxPoller(
                         e,
                     )
                     message.id?.let {
-                        // 예상치 못한 오류는 FAILED로 처리하고 재시도 횟수 증가
+                        
                         outboxMessageRepository.updateStatus(it, OutboxMessageStatus.FAILED, true)
                     }
                 }
@@ -66,11 +66,11 @@ class OutboxPoller(
         }
     }
 
-    @Scheduled(fixedRate = 300000) // 5분마다 실행
+    @Scheduled(fixedRate = 300000) 
     @Transactional
     fun retryFailedMessages() {
         try {
-            // 재시도 횟수가 maxRetries 미만인 FAILED 상태의 메시지들을 조회
+            
             val failedMessages: List<OutboxMessage> = outboxMessageRepository.findByStatusAndRetryCountLessThan(
                 status = OutboxMessageStatus.FAILED,
                 maxRetries = maxRetries,
@@ -86,7 +86,7 @@ class OutboxPoller(
             failedMessages.forEach { message: OutboxMessage ->
                 try {
                     message.id?.let {
-                        // 상태를 PENDING으로 변경하고, 재시도 횟수는 여기서 증가시키지 않음
+                        
                         outboxMessageRepository.updateStatus(it, OutboxMessageStatus.PENDING, false)
                         logger.info("Message ID {} marked as PENDING for retry.", it)
                     }

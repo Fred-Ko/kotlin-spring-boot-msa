@@ -1,8 +1,6 @@
 package com.restaurant.outbox.application.port.model
 
-/**
- * Outbox 메시지의 상태를 나타내는 enum
- */
+/** Outbox 메시지 상태 enum */
 enum class OutboxMessageStatus {
     /**
      * 처리 대기 중인 메시지

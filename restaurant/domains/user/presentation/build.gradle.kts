@@ -4,9 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:presentation"))
-    implementation(project(":domains:user:domain"))
     implementation(project(":domains:user:application"))
     
     implementation("org.springframework.boot:spring-boot-starter-web:3.2.3")

@@ -2,7 +2,7 @@ package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.UpdateProfileCommand
 import com.restaurant.user.application.exception.UserApplicationException
-import com.restaurant.user.application.port.input.UpdateProfileUseCase
+import com.restaurant.user.application.port.UpdateProfileUseCase
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Name

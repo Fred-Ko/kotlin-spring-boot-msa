@@ -3,7 +3,7 @@ package com.restaurant.user.application.usecase
 import com.restaurant.user.application.dto.command.LoginCommand
 import com.restaurant.user.application.dto.query.LoginResult
 import com.restaurant.user.application.exception.UserApplicationException
-import com.restaurant.user.application.port.input.LoginUseCase
+import com.restaurant.user.application.port.LoginUseCase
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email // Username 대신 Email import

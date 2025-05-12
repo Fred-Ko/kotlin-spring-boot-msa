@@ -11,6 +11,8 @@ import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.vo.UserStatus
+import com.restaurant.user.domain.vo.UserType
 import com.restaurant.user.domain.vo.Username
 import java.time.Instant
 

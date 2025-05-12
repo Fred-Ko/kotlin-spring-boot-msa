@@ -4,8 +4,8 @@ import com.restaurant.outbox.application.port.OutboxMessageRepository
 import com.restaurant.outbox.application.port.model.OutboxMessage
 import com.restaurant.outbox.infrastructure.entity.OutboxEventEntity
 import com.restaurant.outbox.application.port.model.OutboxMessageStatus
-import com.restaurant.outbox.infrastructure.persistence.extensions.toDomain // 주석 복원
-import com.restaurant.outbox.infrastructure.persistence.extensions.toNewEntity // 주석 복원
+import com.restaurant.outbox.infrastructure.persistence.extensions.toDomain
+import com.restaurant.outbox.infrastructure.persistence.extensions.toNewEntity
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
@@ -89,7 +89,7 @@ class OutboxMessageRepositoryImpl(
                 val savedEntity = jpaOutboxEventRepository.save(entity)
                 savedEntity.toDomain() 
             } catch (e: Exception) {
-                // TODO: 로깅 추가 (e.g., log.error("Failed to mark message for processing: ${entity.id}", e))
+                
                 null
             }
         }

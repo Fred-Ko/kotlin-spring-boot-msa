@@ -2,7 +2,7 @@ package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.DeleteUserCommand
 import com.restaurant.user.application.exception.UserApplicationException
-import com.restaurant.user.application.port.input.DeleteUserUseCase
+import com.restaurant.user.application.port.DeleteUserUseCase
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.UserId

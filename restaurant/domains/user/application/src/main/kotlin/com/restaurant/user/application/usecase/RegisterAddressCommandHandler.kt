@@ -2,7 +2,7 @@ package com.restaurant.user.application.usecase
 
 import com.restaurant.user.application.dto.command.RegisterAddressCommand
 import com.restaurant.user.application.exception.UserApplicationException
-import com.restaurant.user.application.port.input.RegisterAddressUseCase
+import com.restaurant.user.application.port.RegisterAddressUseCase
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository

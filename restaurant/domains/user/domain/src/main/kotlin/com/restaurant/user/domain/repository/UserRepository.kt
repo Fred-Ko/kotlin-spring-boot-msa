@@ -11,7 +11,6 @@ interface UserRepository {
     fun findByUsername(username: Username): User?
 
     fun findByEmail(email: Email): User? // findByEmail 메서드 추가
-
     fun existsByUsername(username: Username): Boolean
 
     fun existsByEmail(email: Email): Boolean

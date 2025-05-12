@@ -1,19 +1,13 @@
 package com.restaurant.user.infrastructure.persistence.extensions
 
 import com.restaurant.user.domain.aggregate.User
-import com.restaurant.user.domain.aggregate.UserStatus
-import com.restaurant.user.domain.aggregate.UserType
-import com.restaurant.user.domain.entity.Address
-import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.domain.vo.Username
-import com.restaurant.user.infrastructure.persistence.entity.AddressEntity
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
-import java.time.Instant
 
 fun UserEntity.toDomain(): User {
     val userDomainId = UserId.of(this.domainId)

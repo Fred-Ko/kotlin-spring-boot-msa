@@ -15,10 +15,7 @@ import jakarta.persistence.Table
 import jakarta.persistence.Version
 import java.time.Instant
 
-/**
- * JPA Entity for Outbox messages.
- * Rule 83
- */
+/** Outbox 메시지 JPA Entity */
 @Entity
 @Table(name = "outbox_events")
 class OutboxEventEntity(
@@ -53,9 +50,6 @@ class OutboxEventEntity(
     @Version
     var version: Long = 0,
 ) {
-    /**
-     * ByteArray 필드가 포함된 엔티티의 equals/hashCode 구현
-     */
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
