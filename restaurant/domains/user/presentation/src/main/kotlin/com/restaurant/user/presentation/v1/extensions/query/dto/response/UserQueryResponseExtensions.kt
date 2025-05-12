@@ -1,6 +1,5 @@
 package com.restaurant.user.presentation.v1.extensions.query.dto.response
 
-import com.restaurant.user.application.dto.query.AddressDto
 import com.restaurant.user.application.dto.query.UserProfileDto
 import com.restaurant.user.presentation.v1.api.UserAddressController
 import com.restaurant.user.presentation.v1.api.UserController

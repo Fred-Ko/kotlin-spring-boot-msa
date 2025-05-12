@@ -16,7 +16,7 @@ dependencies {
     implementation(project(":domains:user:infrastructure:messaging"))
     implementation(project(":domains:user:presentation"))
     implementation(project(":independent:outbox"))
-    
+
     implementation("org.springframework.boot:spring-boot-starter-web:3.2.3")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.2.3")
     implementation("org.springframework.boot:spring-boot-starter-actuator:3.2.3")
@@ -26,9 +26,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
-    
+
     runtimeOnly("org.postgresql:postgresql:42.7.2")
-    
+
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.2.3")
     testImplementation("org.springframework.kafka:spring-kafka-test:3.1.1")
     testImplementation("io.mockk:mockk:1.13.9")
@@ -38,4 +38,8 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.19.6")
     testImplementation("org.testcontainers:postgresql:1.19.6")
     testImplementation("org.testcontainers:kafka:1.19.6")
+}
+
+tasks.bootJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
