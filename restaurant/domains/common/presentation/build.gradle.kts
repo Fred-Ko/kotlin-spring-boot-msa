@@ -9,7 +9,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web:3.2.3")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.2.3")
-    implementation("org.springframework.boot:spring-boot-starter-hateoas:3.2.3")
+
     implementation("org.springframework.boot:spring-boot-starter-security:3.2.3") // Spring Security 추가
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3") // JPA 추가
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")

@@ -12,6 +12,8 @@ import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
+import com.restaurant.common.infrastructure.persistence.entity.BaseEntity
+
 @Entity
 @Table(name = "addresses")
 class AddressEntity(
@@ -36,14 +38,10 @@ class AddressEntity(
     val zipCode: String,
     @Column(nullable = false)
     val isDefault: Boolean,
-    @Column(nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now(),
-    @Column(nullable = false)
-    val updatedAt: Instant = Instant.now(),
     @Column(nullable = false)
     val version: Long = 0L,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     var user: UserEntity? = null // UserEntity와의 관계 추가
-)
+) : BaseEntity()

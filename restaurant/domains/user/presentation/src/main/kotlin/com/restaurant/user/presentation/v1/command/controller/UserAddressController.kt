@@ -5,10 +5,8 @@ import com.restaurant.user.presentation.v1.command.dto.request.UpdateAddressRequ
 import com.restaurant.user.presentation.v1.command.extensions.dto.request.toCommand
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.dto.command.DeleteAddressCommand
-import com.restaurant.user.application.port.DeleteAddressUseCase
-import com.restaurant.user.application.port.RegisterAddressUseCase
-import com.restaurant.user.application.port.UpdateAddressUseCase
+import com.restaurant.user.application.dto.command.*
+import com.restaurant.user.application.port.*
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 
@@ -33,10 +31,10 @@ class UserAddressController(
     fun registerAddress(
         @PathVariable userId: UUID,
         @Valid @RequestBody request: RegisterAddressRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
+        
     ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to register address for user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), correlationId)
+        log.info { "Received request to register address for user ID: $userId" }
+        val command = request.toCommand(UserId.of(userId))
         val addressId: AddressId = registerAddressUseCase.registerAddress(command)
 
         val location = ServletUriComponentsBuilder
@@ -49,7 +47,7 @@ class UserAddressController(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Address registered successfully.",
-                correlationId = correlationId
+                
             )
         )
     }
@@ -59,16 +57,16 @@ class UserAddressController(
         @PathVariable userId: UUID,
         @PathVariable addressId: UUID,
         @Valid @RequestBody request: UpdateAddressRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
+        
     ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to update address ID: $addressId for user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), AddressId.of(addressId), correlationId)
+        log.info { "Received request to update address ID: $addressId for user ID: $userId" }
+        val command = request.toCommand(UserId.of(userId), AddressId.of(addressId))
         updateAddressUseCase.updateAddress(command)
         return ResponseEntity.ok(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Address updated successfully.",
-                correlationId = correlationId
+                
             )
         )
     }
@@ -77,9 +75,9 @@ class UserAddressController(
     fun deleteAddress(
         @PathVariable userId: UUID,
         @PathVariable addressId: UUID,
-        @RequestHeader("X-Correlation-Id") correlationId: String
+        
     ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to delete address ID: $addressId for user ID: $userId" }
+        log.info { "Received request to delete address ID: $addressId for user ID: $userId" }
         val command = DeleteAddressCommand(
             userId = UserId.of(userId).value.toString(),
             addressId = AddressId.of(addressId).value.toString()
@@ -89,7 +87,7 @@ class UserAddressController(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Address deleted successfully.",
-                correlationId = correlationId
+                
             )
         )
     }

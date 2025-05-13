@@ -9,10 +9,14 @@ import com.restaurant.user.infrastructure.persistence.extensions.toDomain
 import com.restaurant.user.infrastructure.persistence.extensions.toEntity
 import org.springframework.stereotype.Repository
 
+import com.restaurant.outbox.application.port.OutboxMessageRepository
+import com.restaurant.user.infrastructure.messaging.serialization.OutboxMessageFactory
+
 @Repository
 class UserRepositoryImpl(
     private val springDataJpaUserRepository: SpringDataJpaUserRepository,
-    // private val outboxMessageRepository: OutboxMessageRepository, // Outbox 관련 의존성은 Rule 84, 139에 따라 필요시 주입
+    private val outboxMessageRepository: OutboxMessageRepository,
+    private val outboxMessageFactory: OutboxMessageFactory
 ) : UserRepository {
     override fun findById(id: UserId): User? {
         return springDataJpaUserRepository.findByDomainId(id.value)?.toDomain()
@@ -38,16 +42,12 @@ class UserRepositoryImpl(
         val userEntity = user.toEntity()
         val savedEntity = springDataJpaUserRepository.save(userEntity)
 
-        // Rule 85, 139: 도메인 이벤트 처리 및 Outbox 저장 로직 (아래는 예시이며, 실제 구현 필요)
-        // val domainEvents = user.getDomainEvents()
-        // if (domainEvents.isNotEmpty()) {
-        //     val outboxMessages = domainEvents.map { event ->
-        //         // DomainEventAvroSerializer, OutboxMessageFactory 등을 사용하여 OutboxMessage 생성
-        //         // 예: OutboxMessage(payload = serialize(event), topic = "user-events", headers = mapOf(...))
-        //     }
-        //     outboxMessageRepository.saveAll(outboxMessages) // Outbox 저장
-        //     user.clearDomainEvents() // 이벤트 클리어
-        // }
+        val domainEvents = user.getDomainEvents()
+        if (domainEvents.isNotEmpty()) {
+            val outboxMessages = domainEvents.flatMap { outboxMessageFactory.createMessagesFromEvent(it) }
+            outboxMessageRepository.saveAll(outboxMessages)
+            user.clearDomainEvents()
+        }
         return savedEntity.toDomain()
     }
 

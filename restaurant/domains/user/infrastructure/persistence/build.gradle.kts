@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":domains:user:domain"))
     implementation(project(":domains:user:application"))
     implementation(project(":independent:outbox"))
+    implementation(project(":domains:user:infrastructure:messaging"))
     
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3")
     implementation("org.flywaydb:flyway-core:9.22.3")

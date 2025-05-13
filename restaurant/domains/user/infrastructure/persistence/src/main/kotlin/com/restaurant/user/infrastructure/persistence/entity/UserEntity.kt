@@ -18,6 +18,8 @@ import java.time.Instant
 import java.util.Objects
 import java.util.UUID
 
+import com.restaurant.common.infrastructure.persistence.entity.BaseEntity
+
 @Entity
 @Table(name = "users")
 class UserEntity(
@@ -45,13 +47,8 @@ class UserEntity(
     var addresses: MutableList<AddressEntity> = mutableListOf(), // MutableList로 변경
     @Version
     @Column(nullable = false)
-    val version: Long = 0L,
-    @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: Instant = Instant.now(),
-    @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant = Instant.now(),
-    // UserEntity에는 defaultAddressId 필드가 없습니다.
-) {
+    val version: Long = 0L
+) : BaseEntity() {
     // AddressEntity 추가를 위한 편의 메서드 (선택적, 양방향 관계 설정 시 유용)
     fun addAddress(address: AddressEntity) {
         addresses.add(address)
@@ -78,6 +75,6 @@ class UserEntity(
 
     override fun toString(): String {
         val defaultAddressDomainId = addresses.find { it.isDefault }?.domainId?.toString() ?: "N/A"
-        return "UserEntity(id=$id, domainId=$domainId, username='$username', email='$email', userType=$userType, defaultAddressDomainId=${defaultAddressDomainId}, addresses=${addresses.size}, createdAt=$createdAt, updatedAt=$updatedAt, version=$version)"
+        return "UserEntity(id=$id, domainId=$domainId, username='$username', email='$email', userType=$userType, defaultAddressDomainId=${defaultAddressDomainId}, addresses=${addresses.size}, createdAt=${this.createdAt}, updatedAt=${this.updatedAt}, version=$version)"
     }
 }

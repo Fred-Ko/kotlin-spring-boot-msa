@@ -7,6 +7,7 @@ import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.domain.vo.Username
+import com.restaurant.common.infrastructure.persistence.entity.BaseEntity
 import com.restaurant.user.infrastructure.persistence.entity.UserEntity
 
 fun UserEntity.toDomain(): User {
@@ -29,8 +30,8 @@ fun UserEntity.toDomain(): User {
         status = this.status,
         addresses = domainAddresses,
         // defaultAddressId = domainAddresses.find { it.isDefault }?.addressId, // User.kt에 defaultAddressId 파라미터가 없을 수 있으므로 주석 처리
-        createdAt = this.createdAt,
-        updatedAt = this.updatedAt,
+        createdAt = this.createdAt ?: java.time.Instant.now(),
+        updatedAt = this.updatedAt ?: java.time.Instant.now(),
         version = this.version
     )
 }
@@ -46,9 +47,7 @@ fun User.toEntity(): UserEntity {
             phoneNumber = this.phoneNumber?.value,
             userType = this.userType,
             status = this.status,
-            version = this.version,
-            createdAt = this.createdAt,
-            updatedAt = this.updatedAt
+            version = this.version
             // UserEntity 생성자에서 defaultAddressId 제거됨
         )
 

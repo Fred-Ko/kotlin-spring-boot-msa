@@ -92,16 +92,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     private fun setCommonProblemProperties(problemDetail: ProblemDetail) {
         problemDetail.setProperty("timestamp", OffsetDateTime.now().toString())
-        problemDetail.setProperty("correlationId", getCorrelationId())
     }
-
-    private fun getCorrelationId(): String =
-        try {
-            val mdc = org.slf4j.MDC.getCopyOfContextMap()
-            mdc?.get("correlationId") ?: UUID.randomUUID().toString()
-        } catch (e: Exception) {
-            UUID.randomUUID().toString()
-        }
 
     private fun mapDomainExceptionToStatus(ex: DomainException): HttpStatus =
         when (ex.errorCode.code) {

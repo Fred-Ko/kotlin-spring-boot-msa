@@ -31,7 +31,11 @@ class OutboxMessageFactory(
         private const val AGGREGATE_TYPE = "User"
     }
 
-    fun createMessagesFromEvent(userEvent: UserEvent): List<OutboxMessage> {
+    fun createMessagesFromEvent(event: com.restaurant.common.domain.event.DomainEvent): List<OutboxMessage> {
+        // 현재는 UserEvent만 처리
+        if (event !is UserEvent) return emptyList()
+        val userEvent = event
+
         val domainEventPayloadDto: SpecificRecordBase =
             mapToAvroPayloadDto(userEvent) ?: run {
                 log.error { "Failed to map UserEvent to Avro DTO: ${userEvent::class.simpleName}" }
@@ -48,7 +52,7 @@ class OutboxMessageFactory(
 
         val headers =
             mutableMapOf(
-                "correlationId" to (MDC.get("correlationId") ?: userEvent.eventId.toString()),
+                
                 "eventType" to eventTypeString,
                 "aggregateId" to userEvent.aggregateId,
                 "aggregateType" to AGGREGATE_TYPE,

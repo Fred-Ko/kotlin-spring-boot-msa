@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":independent:outbox"))
 
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.kafka:spring-kafka:3.2.3")
     implementation("org.apache.avro:avro:1.11.3")
     implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
 

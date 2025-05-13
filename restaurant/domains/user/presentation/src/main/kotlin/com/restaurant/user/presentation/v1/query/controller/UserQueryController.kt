@@ -13,8 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
+
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -51,17 +50,13 @@ class UserQueryController(
     )
     fun getUserProfile(
         @PathVariable userId: UUID,
-        @RequestHeader("X-Correlation-Id") correlationId: String
+        
     ): ResponseEntity<UserProfileResponseV1> {
-        log.info { "[Correlation ID: $correlationId] Received request to get profile for user ID: $userId" }
+        log.info { "Received request to get profile for user ID: $userId" }
         val query = GetUserProfileByIdQuery(userId = UserId.of(userId).value.toString())
         val userProfileDto = getUserProfileQuery.getUserProfile(query)
-        val responseDto = userProfileDto.toResponseV1(correlationId)
+        val responseDto = userProfileDto.toResponseV1()
 
-        responseDto.add(
-            linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId, correlationId)).withSelfRel()
-            // TODO: Add update-profile and change-password links if needed, ensure UserController is imported and available
-        )
         log.info { "Returning user profile for ID: $userId" }
         return ResponseEntity.ok(responseDto)
     }
