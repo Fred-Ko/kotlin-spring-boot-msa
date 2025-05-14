@@ -6,6 +6,19 @@ plugins {
     id("com.github.davidmc24.gradle.plugin.avro")
 }
 
+avro {
+    // 옵션 제거: createSetters, fieldVisibility는 공식 확장에 없음
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir("src/main/resources/avro")
+        }
+    }
+}
+
+
 allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
@@ -16,7 +29,7 @@ dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
     
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3") // JPA 어노테이션 사용 목적
     implementation("org.springframework.kafka:spring-kafka:3.1.1")
     implementation("org.apache.avro:avro:1.11.3")
     implementation("io.confluent:kafka-avro-serializer:7.6.0")

@@ -25,12 +25,16 @@ class SecurityConfig {
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { authz ->
+                // 최소한의 공개 엔드포인트만 permitAll
                 authz.requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
                 authz.requestMatchers(HttpMethod.POST, "/api/v1/users/login").permitAll()
                 authz.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 authz.requestMatchers("/actuator/**").permitAll()
+                // 나머지는 인증 필요
                 authz.anyRequest().authenticated()
             }
+            // JWT 인증 필터를 추가하려면 아래와 같이 확장
+            // .addFilterBefore(JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
     }
 }

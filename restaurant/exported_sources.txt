@@ -1,54 +1,449 @@
+아래는 domains/common경로의 프로젝트 구조와 코드가 포함되어 있습니다.
+아래 정보를 보고 리팩토링 할 부분이 있는지 검토하고 문제점을 지적하라.
+단 대화는 모두 한글로 진행한다..
+
 ==============================================================
 
 # Project Structure
 
-domains/user/presentation
-├── build.gradle.kts
-└── src
-    └── main
-        └── kotlin
-            └── com
-                └── restaurant
-                    └── user
-                        └── presentation
-                            └── v1
-                                ├── api
-                                │   ├── UserAddressController.kt
-                                │   ├── UserController.kt
-                                │   └── UserQueryController.kt
+domains/common
+├── application
+│   ├── build.gradle.kts
+│   └── src
+│       └── main
+│           └── kotlin
+│               └── com
+│                   └── restaurant
+│                       └── common
+│                           └── application
+│                               ├── dto
+│                               │   ├── command
+│                               │   └── query
+│                               ├── error
+│                               ├── exception
+│                               │   └── ApplicationException.kt
+│                               ├── port
+│                               └── usecase
+├── domain
+│   ├── build.gradle.kts
+│   └── src
+│       └── main
+│           └── kotlin
+│               └── com
+│                   └── restaurant
+│                       └── common
+│                           └── domain
+│                               ├── aggregate
+│                               │   └── AggregateRoot.kt
+│                               ├── error
+│                               │   ├── CommonSystemErrorCode.kt
+│                               │   └── ErrorCode.kt
+│                               ├── event
+│                               │   └── DomainEvent.kt
+│                               └── exception
+│                                   └── DomainException.kt
+├── infrastructure
+│   ├── build.gradle.kts
+│   ├── persistence
+│   │   └── BaseEntity.kt
+│   └── src
+│       └── main
+│           └── kotlin
+│               └── com
+│                   └── restaurant
+│                       └── common
+│                           └── infrastructure
+│                               ├── error
+│                               ├── exception
+│                               ├── messaging
+│                               │   └── config
+│                               └── persistence
+│                                   └── entity
+│                                       └── BaseEntity.kt
+└── presentation
+    ├── build.gradle.kts
+    └── src
+        └── main
+            └── kotlin
+                └── com
+                    └── restaurant
+                        └── common
+                            └── presentation
+                                ├── GlobalExceptionHandler.kt
+                                ├── config
+                                │   └── SecurityConfig.kt
                                 ├── dto
-                                │   ├── request
-                                │   │   ├── ChangePasswordRequestV1.kt
-                                │   │   ├── DeleteUserRequestV1.kt
-                                │   │   ├── LoginRequestV1.kt
-                                │   │   ├── RegisterAddressRequestV1.kt
-                                │   │   ├── RegisterUserRequestV1.kt
-                                │   │   ├── UpdateAddressRequestV1.kt
-                                │   │   └── UpdateProfileRequestV1.kt
                                 │   └── response
-                                │       ├── AddressResponseV1.kt
-                                │       ├── LoginResponseV1.kt
-                                │       └── UserProfileResponseV1.kt
-                                └── extensions
-                                    ├── command
-                                    │   └── dto
-                                    │       └── request
-                                    │           └── UserCommandRequestExtensions.kt
-                                    └── query
-                                        └── dto
-                                            └── response
-                                                └── UserQueryResponseExtensions.kt
+                                │       └── CommandResultResponse.kt
+                                └── filter
 
-20 directories, 16 files
+55 directories, 15 files
 ==============================================================
 
 
 
 
 ====================================================================
- File: domains/user/presentation/build.gradle.kts
- Path: domains/user/presentation/build.gradle.kts
- Timestamp: 2025-05-12 18:18:48
+ File: domains/common/application/build.gradle.kts
+ Path: domains/common/application/build.gradle.kts
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+plugins {
+    `java-library`
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    id("io.spring.dependency-management")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.2.3")
+    }
+}
+
+dependencies {
+    api(project(":domains:common:domain"))
+    
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-kotlin:2.2.0")
+    
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/application/src/main/kotlin/com/restaurant/common/application/exception/ApplicationException.kt
+ Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/exception/ApplicationException.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.application.exception
+
+import com.restaurant.common.domain.error.ErrorCode
+
+/**
+ * Base class for all custom application exceptions.
+ * Represents errors occurring in the application layer (e.g., use case execution failures).
+ * Requires subclasses to provide an ErrorCode. (Rule 68)
+ */
+abstract class ApplicationException(
+    message: String? = null,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause) {
+    /**
+     * The error code associated with this application exception.
+     */
+    abstract val errorCode: ErrorCode
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/domain/build.gradle.kts
+ Path: domains/common/domain/build.gradle.kts
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+plugins {
+    id("java-library")
+    kotlin("jvm") // Kotlin 플러그인 추가
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("com.fasterxml.uuid:java-uuid-generator:4.3.0")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.assertj:assertj-core")
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.domain.aggregate
+
+import com.restaurant.common.domain.event.DomainEvent
+
+/**
+ * Base class for all Aggregate Roots.
+ * Provides methods to manage domain events.
+ * Rule 17, 18
+ */
+abstract class AggregateRoot {
+    private val domainEvents: MutableList<DomainEvent> = mutableListOf()
+
+    /**
+     * Returns the list of recorded domain events.
+     */
+    open fun getDomainEvents(): List<DomainEvent> = domainEvents.toList()
+
+    /**
+     * Clears the list of recorded domain events.
+     */
+    open fun clearDomainEvents() {
+        domainEvents.clear()
+    }
+
+    /**
+     * Adds a domain event to the list of recorded events.
+     * This method is internal to ensure it's only called within the Aggregate implementation.
+     */
+    internal fun addDomainEvent(event: DomainEvent) {
+        domainEvents.add(event)
+    }
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.domain.error
+
+/**
+ * Common system-level error codes.
+ */
+enum class CommonSystemErrorCode(
+    override val code: String,
+    override val message: String,
+) : ErrorCode {
+    INTERNAL_SERVER_ERROR("COMMON-001", "Internal server error"),
+    INVALID_REQUEST("COMMON-002", "Invalid request"),
+    RESOURCE_NOT_FOUND("COMMON-003", "Resource not found"),
+    UNAUTHORIZED("COMMON-004", "Unauthorized"),
+    FORBIDDEN("COMMON-005", "Forbidden"),
+    VALIDATION_ERROR("COMMON-006", "Validation error"),
+    CONFLICT("COMMON-007", "Conflict"),
+    TOO_MANY_REQUESTS("COMMON-008", "Too many requests"),
+    SERVICE_UNAVAILABLE("COMMON-009", "Service unavailable"),
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.domain.error
+
+/**
+ * Base interface for all error codes in the system.
+ * Error codes should follow the format: {DOMAIN}-{LAYER}-{CODE}
+ */
+interface ErrorCode {
+    /**
+     * The unique code for this error.
+     * Format: {DOMAIN}-{LAYER}-{CODE}
+     * Example: USER-DOMAIN-001, USER-APP-002
+     */
+    val code: String
+
+    /**
+     * A human-readable message describing this error.
+     */
+    val message: String
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.domain.event
+
+import java.time.Instant
+import java.util.UUID
+
+/**
+ * Base interface for domain events. (Rule 32)
+ */
+interface DomainEvent {
+    val eventId: UUID
+    val occurredAt: Instant
+    val aggregateId: String
+    val aggregateType: String
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
+ Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.domain.exception
+
+import com.restaurant.common.domain.error.ErrorCode
+
+/**
+ * Base class for all custom domain exceptions.
+ * Requires subclasses to provide an ErrorCode. (Rule 68)
+ */
+open class DomainException(
+    val errorCode: ErrorCode,
+    override val message: String = errorCode.message,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause)
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/infrastructure/build.gradle.kts
+ Path: domains/common/infrastructure/build.gradle.kts
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+plugins {
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    kotlin("plugin.jpa")
+    kotlin("plugin.allopen")
+    id("com.github.davidmc24.gradle.plugin.avro")
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
+dependencies {
+    implementation(project(":domains:common:domain"))
+    implementation(project(":domains:common:application"))
+    
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3")
+    implementation("org.springframework.kafka:spring-kafka:3.1.1")
+    implementation("org.apache.avro:avro:1.11.3")
+    implementation("io.confluent:kafka-avro-serializer:7.6.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
+    
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.2.3")
+    testImplementation("org.springframework.kafka:spring-kafka-test:3.1.1")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.assertj:assertj-core:3.25.3")
+    testImplementation("org.testcontainers:testcontainers:1.19.6")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.6")
+    testImplementation("org.testcontainers:kafka:1.19.6")
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/infrastructure/persistence/BaseEntity.kt
+ Path: domains/common/infrastructure/persistence/BaseEntity.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.infrastructure.persistence
+
+import jakarta.persistence.Column
+import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
+import java.time.Instant
+
+@MappedSuperclass
+abstract class BaseEntity {
+    @Column(name = "created_at", nullable = false, updatable = false)
+    open var createdAt: Instant = Instant.now()
+
+    @Column(name = "updated_at", nullable = false)
+    open var updatedAt: Instant = Instant.now()
+
+    @PrePersist
+    fun onCreate() {
+        createdAt = Instant.now()
+        updatedAt = Instant.now()
+    }
+
+    @PreUpdate
+    fun onUpdate() {
+        updatedAt = Instant.now()
+    }
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/persistence/entity/BaseEntity.kt
+ Path: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/persistence/entity/BaseEntity.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.infrastructure.persistence.entity
+
+import jakarta.persistence.Column
+import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.PrePersist
+import jakarta.persistence.PreUpdate
+import java.time.Instant
+
+/**
+ * Base entity class for JPA entities providing common fields like
+ * creation and update timestamps.
+ */
+@MappedSuperclass
+abstract class BaseEntity {
+    @Column(name = "created_at", nullable = false, updatable = false)
+    var createdAt: Instant = Instant.now()
+        protected set
+
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: Instant = Instant.now()
+        protected set
+
+    @PrePersist
+    protected fun onCreate() {
+        createdAt = Instant.now()
+        updatedAt = Instant.now()
+    }
+
+    @PreUpdate
+    protected fun onUpdate() {
+        updatedAt = Instant.now()
+    }
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/presentation/build.gradle.kts
+ Path: domains/common/presentation/build.gradle.kts
+ Timestamp: 2025-05-14 15:12:15
 ====================================================================
 plugins {
     kotlin("jvm")
@@ -57,19 +452,20 @@ plugins {
 
 dependencies {
     implementation(project(":domains:common:domain"))
-    implementation(project(":domains:common:presentation"))
-    implementation(project(":domains:user:domain"))
-    implementation(project(":domains:user:application"))
-    
+    implementation(project(":domains:common:application"))
+
     implementation("org.springframework.boot:spring-boot-starter-web:3.2.3")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.2.3")
-    implementation("org.springframework.boot:spring-boot-starter-hateoas:3.2.3")
+
+    implementation("org.springframework.boot:spring-boot-starter-security:3.2.3") // Spring Security 추가
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.2.3") // JPA 추가
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5") // Kotlin Logging 추가
+
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
-    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
-    
+
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.2.3")
     testImplementation("io.mockk:mockk:1.13.9")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
@@ -80,331 +476,162 @@ dependencies {
 
 
 ====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/api/UserAddressController.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/api/UserAddressController.kt
- Timestamp: 2025-05-12 18:18:48
+ File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/GlobalExceptionHandler.kt
+ Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/GlobalExceptionHandler.kt
+ Timestamp: 2025-05-14 15:12:15
 ====================================================================
-package com.restaurant.user.presentation.v1.api
+package com.restaurant.common.presentation
 
-import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.dto.command.DeleteAddressCommand
-import com.restaurant.user.application.port.inbound.DeleteAddressUseCase
-import com.restaurant.user.application.port.inbound.RegisterAddressUseCase
-import com.restaurant.user.application.port.inbound.UpdateAddressUseCase
-import com.restaurant.user.domain.vo.AddressId
-import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.presentation.v1.dto.request.RegisterAddressRequestV1
-import com.restaurant.user.presentation.v1.dto.request.UpdateAddressRequestV1
-import com.restaurant.user.presentation.v1.extensions.command.dto.request.toCommand
-import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.validation.Valid
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import java.util.UUID
-
-private val log = KotlinLogging.logger {}
-
-@RestController
-@RequestMapping("/api/v1/users/{userId}/addresses")
-class UserAddressController(
-    private val registerAddressUseCase: RegisterAddressUseCase,
-    private val updateAddressUseCase: UpdateAddressUseCase,
-    private val deleteAddressUseCase: DeleteAddressUseCase
-) {
-
-    @PostMapping
-    fun registerAddress(
-        @PathVariable userId: UUID,
-        @Valid @RequestBody request: RegisterAddressRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to register address for user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), correlationId)
-        val addressId: AddressId = registerAddressUseCase.registerAddress(command)
-
-        val location = ServletUriComponentsBuilder
-            .fromCurrentRequest()
-            .path("/{addressId}")
-            .buildAndExpand(addressId.value)
-            .toUri()
-
-        return ResponseEntity.created(location).body(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "Address registered successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-
-    @PutMapping("/{addressId}")
-    fun updateAddress(
-        @PathVariable userId: UUID,
-        @PathVariable addressId: UUID,
-        @Valid @RequestBody request: UpdateAddressRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to update address ID: $addressId for user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), AddressId.of(addressId), correlationId)
-        updateAddressUseCase.updateAddress(command)
-        return ResponseEntity.ok(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "Address updated successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-
-    @DeleteMapping("/{addressId}")
-    fun deleteAddress(
-        @PathVariable userId: UUID,
-        @PathVariable addressId: UUID,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to delete address ID: $addressId for user ID: $userId" }
-        val command = DeleteAddressCommand(
-            userId = UserId.of(userId).value.toString(),
-            addressId = AddressId.of(addressId).value.toString()
-        )
-        deleteAddressUseCase.deleteAddress(command)
-        return ResponseEntity.ok(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "Address deleted successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-}
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/api/UserController.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/api/UserController.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.api
-
-import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.dto.command.DeleteUserCommand
-import com.restaurant.user.application.port.inbound.*
-import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.presentation.v1.dto.request.*
-import com.restaurant.user.presentation.v1.extensions.command.dto.request.toCommand
-import io.github.oshai.kotlinlogging.KotlinLogging
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.responses.ApiResponse
-import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.validation.Valid
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import java.util.UUID
-
-private val log = KotlinLogging.logger {}
-
-@Tag(
-    name = "User Commands",
-    description = "API for user account management (registration, login, profile updates, password change, deletion)",
-)
-@RestController
-@RequestMapping("/api/v1/users")
-class UserController(
-    private val registerUserUseCase: RegisterUserUseCase,
-    private val loginUseCase: LoginUseCase,
-    private val updateProfileUseCase: UpdateProfileUseCase,
-    private val changePasswordUseCase: ChangePasswordUseCase,
-    private val deleteUserUseCase: DeleteUserUseCase
-    // private val userProfileImageUseCase: UserProfileImageUseCase // 프로필 이미지 기능은 추후 구현
-) {
-    @PostMapping("/register")
-    @Operation(summary = "Register a new user")
-    @ApiResponse(responseCode = "201", description = "User registered successfully")
-    fun registerUser(
-        @Valid @RequestBody request: RegisterUserRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to register user: ${request.username}" }
-        val command = request.toCommand(correlationId)
-        val userId: UserId = registerUserUseCase.register(command)
-
-        val location = ServletUriComponentsBuilder
-            .fromCurrentContextPath()
-            .path("/api/v1/users/{userId}/profile")
-            .buildAndExpand(userId.value)
-            .toUri()
-
-        return ResponseEntity.created(location).body(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "User registered successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-
-    @PostMapping("/login")
-    @Operation(summary = "Login a user")
-    @ApiResponse(responseCode = "200", description = "User logged in successfully")
-    fun login(
-        @Valid @RequestBody request: LoginRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received login request for user: ${request.email}" }
-        val command = request.toCommand(correlationId)
-        val loginResult = loginUseCase.login(command)
-        return ResponseEntity.ok(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "Login successful. Token: ${loginResult.accessToken}",
-                correlationId = correlationId
-            )
-        )
-    }
-
-    @PutMapping("/{userId}/profile")
-    @Operation(summary = "Update user profile")
-    @ApiResponse(responseCode = "200", description = "Profile updated successfully")
-    fun updateProfile(
-        @Parameter(description = "User ID") @PathVariable userId: UUID,
-        @Valid @RequestBody request: UpdateProfileRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to update profile for user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), correlationId)
-        updateProfileUseCase.updateProfile(command)
-        return ResponseEntity.ok(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "User profile updated successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-
-    @PatchMapping("/{userId}/password")
-    @Operation(summary = "Change user password")
-    @ApiResponse(responseCode = "200", description = "Password changed successfully")
-    fun changePassword(
-        @Parameter(description = "User ID") @PathVariable userId: UUID,
-        @Valid @RequestBody request: ChangePasswordRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to change password for user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), correlationId)
-        changePasswordUseCase.changePassword(command)
-        return ResponseEntity.ok(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "User password changed successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-
-    @DeleteMapping("/{userId}")
-    @Operation(summary = "Delete user account")
-    @ApiResponse(responseCode = "200", description = "User deleted successfully")
-    fun deleteUser(
-        @Parameter(description = "User ID") @PathVariable userId: UUID,
-        @Valid @RequestBody request: DeleteUserRequestV1,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<CommandResultResponse> {
-        log.info { "[Correlation ID: $correlationId] Received request to delete user ID: $userId" }
-        val command = request.toCommand(UserId.of(userId), correlationId)
-        deleteUserUseCase.deleteUser(command)
-        return ResponseEntity.ok(
-            CommandResultResponse(
-                status = "SUCCESS",
-                message = "User deleted successfully.",
-                correlationId = correlationId
-            )
-        )
-    }
-}
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/api/UserQueryController.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/api/UserQueryController.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.api
-
-import com.restaurant.user.application.dto.query.GetUserProfileByIdQuery
-import com.restaurant.user.application.port.inbound.GetUserProfileQuery
-import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.presentation.v1.dto.response.UserProfileResponseV1
-import com.restaurant.user.presentation.v1.extensions.query.dto.response.toResponseV1
-import io.github.oshai.kotlinlogging.KotlinLogging
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.responses.ApiResponse
-import io.swagger.v3.oas.annotations.responses.ApiResponses
-import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
+import com.restaurant.common.application.exception.ApplicationException
+import com.restaurant.common.domain.exception.DomainException
+import jakarta.persistence.OptimisticLockException
+import mu.KotlinLogging
+import org.slf4j.MDC
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
+import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import java.time.OffsetDateTime
 import java.util.UUID
 
 private val log = KotlinLogging.logger {}
 
-@RestController
-@RequestMapping("/api/v1/users")
-@Tag(name = "User Queries", description = "API for querying user information")
-class UserQueryController(
-    private val getUserProfileQuery: GetUserProfileQuery
-) {
-    @GetMapping("/{userId}/profile")
-    @Operation(summary = "Get user profile", description = "Retrieves user profile information by User ID.")
-    @ApiResponses(
-        value = [
-            ApiResponse(
-                responseCode = "200",
-                description = "Profile retrieved successfully",
-                content = [Content(mediaType = "application/json", schema = Schema(implementation = UserProfileResponseV1::class))],
-            ),
-            ApiResponse(
-                responseCode = "400",
-                description = "Invalid UUID format",
-                content = [Content(mediaType = "application/problem+json", schema = Schema(implementation = ProblemDetail::class))],
-            ),
-            ApiResponse(
-                responseCode = "404",
-                description = "User not found",
-                content = [Content(mediaType = "application/problem+json", schema = Schema(implementation = ProblemDetail::class))],
-            ),
-        ],
-    )
-    fun getUserProfile(
-        @PathVariable userId: UUID,
-        @RequestHeader("X-Correlation-Id") correlationId: String
-    ): ResponseEntity<UserProfileResponseV1> {
-        log.info { "[Correlation ID: $correlationId] Received request to get profile for user ID: $userId" }
-        val query = GetUserProfileByIdQuery(userId = UserId.of(userId).value.toString())
-        val userProfileDto = getUserProfileQuery.getUserProfile(query)
-        val responseDto = userProfileDto.toResponseV1(correlationId)
-
-        responseDto.add(
-            linkTo(methodOn(UserQueryController::class.java).getUserProfile(userId, correlationId)).withSelfRel(),
-            linkTo(UserController::class.java).slash(userId).slash("profile").withRel("update-profile"),
-            linkTo(UserController::class.java).slash(userId).slash("password").withRel("change-password"),
+@RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleMethodArgumentNotValid(ex: MethodArgumentNotValidException): ProblemDetail {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Validation Failed"
+        problemDetail.detail = ex.bindingResult.fieldErrors.joinToString(", ") { it.defaultMessage ?: it.field }
+        problemDetail.setProperty(
+            "invalid-params",
+            ex.bindingResult.fieldErrors.map { fieldError ->
+                mapOf(
+                    "field" to fieldError.field,
+                    "rejectedValue" to fieldError.rejectedValue,
+                    "message" to (fieldError.defaultMessage ?: ""),
+                )
+            },
         )
-        log.info { "Returning user profile for ID: $userId" }
-        return ResponseEntity.ok(responseDto)
+        setCommonProblemProperties(problemDetail)
+        return problemDetail
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Type Mismatch"
+        problemDetail.detail = ex.message ?: ""
+        setCommonProblemProperties(problemDetail)
+        return problemDetail
+    }
+
+    @ExceptionHandler(DomainException::class)
+    fun handleDomainException(ex: DomainException): ProblemDetail {
+        val problemDetail = ProblemDetail.forStatus(mapDomainExceptionToStatus(ex))
+        problemDetail.title = ex.errorCode.message
+        problemDetail.detail = ex.message ?: ""
+        problemDetail.setProperty("errorCode", ex.errorCode.code)
+        setCommonProblemProperties(problemDetail)
+        return problemDetail
+    }
+
+    @ExceptionHandler(ApplicationException::class)
+    fun handleApplicationException(ex: ApplicationException): ProblemDetail {
+        val problemDetail = ProblemDetail.forStatus(mapApplicationExceptionToStatus(ex))
+        problemDetail.title = ex.errorCode.message
+        problemDetail.detail = ex.message ?: ""
+        problemDetail.setProperty("errorCode", ex.errorCode.code)
+        setCommonProblemProperties(problemDetail)
+        return problemDetail
+    }
+
+    @ExceptionHandler(OptimisticLockException::class)
+    fun handleOptimisticLockException(ex: OptimisticLockException): ProblemDetail {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT)
+        problemDetail.title = "Optimistic Lock Error"
+        problemDetail.detail = ex.message ?: ""
+        problemDetail.setProperty("errorCode", "COMMON-SYSTEM-OPTIMISTIC-LOCK-ERROR")
+        setCommonProblemProperties(problemDetail)
+        return problemDetail
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleGenericException(ex: Exception): ProblemDetail {
+        log.error(ex) { "Unhandled exception: ${ex.message}" }
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+        problemDetail.title = "Internal Server Error"
+        problemDetail.detail = ex.message ?: ""
+        setCommonProblemProperties(problemDetail)
+        return problemDetail
+    }
+
+    private fun setCommonProblemProperties(problemDetail: ProblemDetail) {
+        problemDetail.setProperty("timestamp", OffsetDateTime.now().toString())
+    }
+
+    private fun mapDomainExceptionToStatus(ex: DomainException): HttpStatus =
+        when (ex.errorCode.code) {
+            "USER-DOMAIN-NOT-FOUND" -> HttpStatus.NOT_FOUND
+            "USER-DOMAIN-VALIDATION" -> HttpStatus.BAD_REQUEST
+            else -> HttpStatus.BAD_REQUEST
+        }
+
+    private fun mapApplicationExceptionToStatus(ex: ApplicationException): HttpStatus =
+        when (ex.errorCode.code) {
+            "USER-APPLICATION-BAD-REQUEST" -> HttpStatus.BAD_REQUEST
+            else -> HttpStatus.INTERNAL_SERVER_ERROR
+        }
+}
+
+====================================================================
+
+
+====================================================================
+ File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/SecurityConfig.kt
+ Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/SecurityConfig.kt
+ Timestamp: 2025-05-14 15:12:15
+====================================================================
+package com.restaurant.common.presentation.config
+
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.config.annotation.web.invoke
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+
+
+@Configuration
+@EnableWebSecurity
+class SecurityConfig {
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
+    @Bean
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+        http
+            .csrf { it.disable() }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .authorizeHttpRequests { authz ->
+                authz.requestMatchers(HttpMethod.POST, "/api/v1/users/register").permitAll()
+                authz.requestMatchers(HttpMethod.POST, "/api/v1/users/login").permitAll()
+                authz.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                authz.requestMatchers("/actuator/**").permitAll()
+                authz.anyRequest().authenticated()
+            }
+        return http.build()
     }
 }
 
@@ -412,465 +639,15 @@ class UserQueryController(
 
 
 ====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/ChangePasswordRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/ChangePasswordRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
+ File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
+ Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
+ Timestamp: 2025-05-14 15:12:15
 ====================================================================
-package com.restaurant.user.presentation.v1.dto.request
+package com.restaurant.common.presentation.dto.response
 
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
-
-data class ChangePasswordRequestV1(
-    @field:Schema(description = "현재 비밀번호", example = "currentPassword123")
-    @field:NotBlank(message = "현재 비밀번호는 필수 입력 항목입니다.")
-    @field:Size(min = 8, message = "비밀번호는 최소 8자리 이상이어야 합니다.")
-    val currentPassword: String,
-    @field:Schema(description = "새 비밀번호", example = "newPassword456")
-    @field:NotBlank(message = "새 비밀번호는 필수 입력 항목입니다.")
-    @field:Size(min = 8, message = "비밀번호는 최소 8자리 이상이어야 합니다.")
-    val newPassword: String,
+data class CommandResultResponse(
+    val status: String = "SUCCESS",
+    val message: String
 )
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/DeleteUserRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/DeleteUserRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.request
-
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
-
-data class DeleteUserRequestV1(
-    @field:Schema(description = "현재 비밀번호 확인", example = "currentPassword123")
-    @field:NotBlank(message = "현재 비밀번호는 필수 입력 항목입니다.")
-    @field:Size(min = 8, message = "비밀번호는 최소 8자리 이상이어야 합니다.")
-    val currentPassword: String,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/LoginRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/LoginRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.request
-
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotBlank
-
-data class LoginRequestV1(
-    @field:Schema(description = "사용자 이메일", example = "user@example.com")
-    @field:NotBlank(message = "이메일은 필수 입력 항목입니다.")
-    @field:Email(message = "유효한 이메일 형식이 아닙니다.")
-    val email: String,
-    @field:Schema(description = "사용자 비밀번호", example = "password123")
-    @field:NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
-    val password: String,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/RegisterAddressRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/RegisterAddressRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.request
-
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
-
-data class RegisterAddressRequestV1(
-    @field:Schema(description = "도로명 주소", example = "선릉로 433")
-    @field:NotBlank(message = "도로명 주소는 필수 입력 항목입니다.")
-    val street: String,
-    @field:Schema(description = "상세 주소", example = "101호")
-    val detail: String?,
-    @field:Schema(description = "우편번호", example = "06211")
-    @field:NotBlank(message = "우편번호는 필수 입력 항목입니다.")
-    @field:Size(min = 5, max = 5, message = "우편번호는 5자리여야 합니다.")
-    val zipCode: String,
-    @field:Schema(description = "기본 주소 여부", example = "false")
-    val isDefault: Boolean? = false,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/RegisterUserRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/RegisterUserRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-/**
- * 사용자 등록 요청 DTO
- *
- * Contains validation and schema annotations for user registration API.
- *
- * @author junoko
- */
-package com.restaurant.user.presentation.v1.dto.request
-
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Pattern
-import jakarta.validation.constraints.Size
-
-@Schema(description = "사용자 등록 요청")
-data class RegisterUserRequestV1(
-    @Schema(description = "사용자 이메일", example = "test@example.com")
-    @field:NotBlank(message = "이메일은 필수 입력 항목입니다.")
-    @field:Email(message = "유효한 이메일 형식이 아닙니다.")
-    val email: String,
-    @Schema(description = "비밀번호", example = "password123!")
-    @field:NotBlank(message = "비밀번호는 필수 입력 항목입니다.")
-    @field:Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
-    val password: String,
-    @Schema(description = "사용자 이름", example = "홍길동")
-    @field:NotBlank(message = "이름은 필수 입력 항목입니다.")
-    val name: String,
-    @Schema(description = "사용자 아이디", example = "testuser")
-    @field:NotBlank(message = "사용자 아이디는 필수 입력 항목입니다.")
-    @field:Size(min = 3, max = 20, message = "사용자 아이디는 3자 이상 20자 이하이어야 합니다.")
-    val username: String,
-    @Schema(description = "전화번호 (선택)", example = "010-1234-5678")
-    @field:Pattern(regexp = "^\\d{2,3}-\\d{3,4}-\\d{4}$", message = "유효한 전화번호 형식이 아닙니다 (예: 010-1234-5678)")
-    val phoneNumber: String? = null,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/UpdateAddressRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/UpdateAddressRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.request
-
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
-
-data class UpdateAddressRequestV1(
-    @field:Schema(description = "도로명 주소", example = "테헤란로 123")
-    @field:NotBlank(message = "도로명 주소는 필수 입력 항목입니다.")
-    val street: String,
-    @field:Schema(description = "상세 주소", example = "456호")
-    val detail: String?,
-    @field:Schema(description = "우편번호", example = "12345")
-    @field:NotBlank(message = "우편번호는 필수 입력 항목입니다.")
-    @field:Size(min = 5, max = 5, message = "우편번호는 5자리여야 합니다.")
-    val zipCode: String,
-    @field:Schema(description = "기본 주소 여부", example = "true")
-    val isDefault: Boolean? = false,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/UpdateProfileRequestV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/request/UpdateProfileRequestV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.request
-
-import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
-
-data class UpdateProfileRequestV1(
-    @field:Schema(description = "사용자 이름", example = "홍길동")
-    @field:NotBlank(message = "이름은 필수 입력 항목입니다.")
-    val name: String,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/response/AddressResponseV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/response/AddressResponseV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.response
-
-import io.swagger.v3.oas.annotations.media.Schema
-
-data class AddressResponseV1(
-    @Schema(description = "주소 ID", example = "550e8400-e29b-41d4-a716-446655440000")
-    val id: String,
-    @Schema(description = "도로명 주소", example = "서울시 강남구 테헤란로 123")
-    val street: String,
-    @Schema(description = "상세 주소", example = "456동 789호")
-    val detail: String,
-    @Schema(description = "우편번호", example = "12345")
-    val zipCode: String,
-    @Schema(description = "기본 주소 여부", example = "true")
-    val isDefault: Boolean,
-)
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/response/LoginResponseV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/response/LoginResponseV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.response
-
-import io.swagger.v3.oas.annotations.media.Schema
-import org.springframework.hateoas.RepresentationModel
-
-@Schema(description = "로그인 응답 V1")
-data class LoginResponseV1(
-    @Schema(description = "사용자 ID (UUID)")
-    val userId: String,
-    @Schema(description = "사용자 이름")
-    val username: String,
-    @Schema(description = "액세스 토큰")
-    val accessToken: String,
-    @Schema(description = "리프레시 토큰")
-    val refreshToken: String,
-) : RepresentationModel<LoginResponseV1>()
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/response/UserProfileResponseV1.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/dto/response/UserProfileResponseV1.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.dto.response
-
-import com.fasterxml.jackson.annotation.JsonFormat
-import io.swagger.v3.oas.annotations.media.Schema
-import org.springframework.hateoas.RepresentationModel
-import org.springframework.hateoas.server.core.Relation
-import java.time.Instant
-
-/**
- * 사용자 프로필 정보 응답 DTO (Rule 1.4, 39)
- */
-@Relation(collectionRelation = "users", itemRelation = "user")
-@Schema(description = "사용자 프로필 응답")
-data class UserProfileResponseV1(
-    @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000") val id: String,
-    @Schema(description = "사용자 이메일", example = "test@example.com") val email: String,
-    @Schema(description = "사용자 이름", example = "홍길동") val name: String,
-    @Schema(description = "사용자 아이디", example = "testuser") val username: String,
-    @Schema(description = "전화번호", example = "010-1234-5678", nullable = true) val phoneNumber: String?,
-    @Schema(description = "사용자 타입", example = "CUSTOMER") val userType: String,
-    @Schema(description = "주소 목록") val addresses: List<AddressResponseV1> = emptyList(),
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
-    @Schema(description = "계정 생성 시간", example = "2023-01-01 12:00:00")
-    val createdAt: Instant,
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
-    @Schema(description = "계정 최종 수정 시간", example = "2023-01-01 12:00:00")
-    val updatedAt: Instant,
-    val status: String,
-    val version: Long,
-) : RepresentationModel<UserProfileResponseV1>()
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/extensions/command/dto/request/UserCommandRequestExtensions.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/extensions/command/dto/request/UserCommandRequestExtensions.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.extensions.command.dto.request
-
-import com.restaurant.user.application.dto.command.*
-import com.restaurant.user.domain.vo.AddressId
-import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.presentation.v1.dto.request.*
-// import java.util.UUID // Controller에서 UUID를 받지만 Command DTO는 String ID를 사용
-
-fun RegisterUserRequestV1.toCommand(correlationId: String): RegisterUserCommand =
-    RegisterUserCommand(
-        email = this.email,
-        password = this.password,
-        name = this.name,
-        username = this.username
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-fun LoginRequestV1.toCommand(correlationId: String): LoginCommand =
-    LoginCommand(
-        email = this.email,
-        password = this.password
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-fun UpdateProfileRequestV1.toCommand(userId: UserId, correlationId: String): UpdateProfileCommand =
-    UpdateProfileCommand(
-        userId = userId.value.toString(),
-        name = this.name,
-        phoneNumber = null // Request DTO에 phoneNumber 필드 추가 필요 또는 기본값 처리
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-fun ChangePasswordRequestV1.toCommand(userId: UserId, correlationId: String): ChangePasswordCommand =
-    ChangePasswordCommand(
-        userId = userId.value.toString(),
-        currentPassword = this.currentPassword,
-        newPassword = this.newPassword
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-fun DeleteUserRequestV1.toCommand(userId: UserId, correlationId: String): DeleteUserCommand =
-    DeleteUserCommand(
-        userId = userId.value.toString(),
-        password = this.currentPassword
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-// RegisterAddressRequestV1에는 name, city, state, country 필드가 없음.
-// Command DTO의 해당 필드들은 임시로 빈 문자열 또는 기본값으로 채우거나, nullable로 변경 필요.
-fun RegisterAddressRequestV1.toCommand(userId: UserId, correlationId: String): RegisterAddressCommand =
-    RegisterAddressCommand(
-        userId = userId.value.toString(),
-        name = "Default Address Name", // 임시값, Request DTO에 필드 추가 필요
-        street = this.street,
-        detail = this.detail ?: "",
-        city = "Default City", // 임시값, Request DTO에 필드 추가 필요
-        state = "Default State", // 임시값, Request DTO에 필드 추가 필요
-        country = "Default Country", // 임시값, Request DTO에 필드 추가 필요
-        zipCode = this.zipCode,
-        isDefault = this.isDefault ?: false
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-// UpdateAddressRequestV1에는 name, city, state, country 필드가 없음.
-fun UpdateAddressRequestV1.toCommand(
-    userId: UserId,
-    addressId: AddressId,
-    correlationId: String
-): UpdateAddressCommand =
-    UpdateAddressCommand(
-        userId = userId.value.toString(),
-        addressId = addressId.value.toString(),
-        name = "Default Address Name", // 임시값, Request DTO에 필드 추가 필요
-        street = this.street,
-        detail = this.detail ?: "",
-        city = "Default City", // 임시값, Request DTO에 필드 추가 필요
-        state = "Default State", // 임시값, Request DTO에 필드 추가 필요
-        country = "Default Country", // 임시값, Request DTO에 필드 추가 필요
-        zipCode = this.zipCode,
-        isDefault = this.isDefault ?: false
-        // correlationId = correlationId // Command DTO에 필드 추가 필요
-    )
-
-====================================================================
-
-
-====================================================================
- File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/extensions/query/dto/response/UserQueryResponseExtensions.kt
- Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/extensions/query/dto/response/UserQueryResponseExtensions.kt
- Timestamp: 2025-05-12 18:18:48
-====================================================================
-package com.restaurant.user.presentation.v1.extensions.query.dto.response
-
-import com.restaurant.user.application.dto.query.UserProfileDto
-import com.restaurant.user.presentation.v1.api.UserAddressController
-import com.restaurant.user.presentation.v1.api.UserController
-import com.restaurant.user.presentation.v1.api.UserQueryController
-import com.restaurant.user.presentation.v1.dto.request.ChangePasswordRequestV1
-import com.restaurant.user.presentation.v1.dto.request.DeleteUserRequestV1
-import com.restaurant.user.presentation.v1.dto.request.RegisterAddressRequestV1
-import com.restaurant.user.presentation.v1.dto.request.UpdateProfileRequestV1
-import com.restaurant.user.presentation.v1.dto.response.AddressResponseV1
-import com.restaurant.user.presentation.v1.dto.response.UserProfileResponseV1
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn
-import java.util.UUID
-
-fun UserProfileDto.toResponseV1(correlationId: String): UserProfileResponseV1 {
-    val userIdAsUuid = UUID.fromString(this.id)
-    val response =
-        UserProfileResponseV1(
-            id = this.id,
-            email = this.email,
-            username = this.username,
-            name = this.name,
-            phoneNumber = this.phoneNumber,
-            userType = this.userType,
-            addresses = this.addresses.map { addressDto: UserProfileDto.AddressDto -> addressDto.toResponseV1() },
-            createdAt = this.createdAt,
-            updatedAt = this.updatedAt,
-            status = this.status,
-            version = this.version,
-        )
-
-    response.add(
-        linkTo(methodOn(UserQueryController::class.java).getUserProfile(userIdAsUuid, correlationId)).withSelfRel(),
-        linkTo(
-            methodOn(
-                UserController::class.java,
-            ).updateProfile(
-                userIdAsUuid,
-                UpdateProfileRequestV1(name = "dummyName"),
-                correlationId,
-            ),
-        ).withRel("update-profile"),
-        linkTo(
-            methodOn(
-                UserController::class.java,
-            ).changePassword(
-                userIdAsUuid,
-                ChangePasswordRequestV1(currentPassword = "dummyPassword", newPassword = "dummyNewPassword"),
-                correlationId,
-            ),
-        ).withRel("change-password"),
-        linkTo(
-            methodOn(UserController::class.java).deleteUser(
-                userIdAsUuid,
-                DeleteUserRequestV1(currentPassword = "dummyPassword"),
-                correlationId,
-            ),
-        ).withRel("delete-user"),
-        linkTo(
-            methodOn(
-                UserAddressController::class.java,
-            ).registerAddress(
-                userIdAsUuid,
-                RegisterAddressRequestV1(
-                    street = "dummy street",
-                    detail = "dummy detail",
-                    zipCode = "00000",
-                    isDefault = false,
-                ),
-                correlationId,
-            ),
-        ).withRel("register-address"),
-    )
-    return response
-}
-
-fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 =
-    AddressResponseV1(
-        id = this.id,
-        street = this.street ?: "",
-        detail = this.detail ?: "",
-        zipCode = this.zipCode ?: "",
-        isDefault = this.isDefault,
-    )
 
 ====================================================================

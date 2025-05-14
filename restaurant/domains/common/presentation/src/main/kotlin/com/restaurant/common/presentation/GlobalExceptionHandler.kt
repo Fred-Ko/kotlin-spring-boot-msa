@@ -24,7 +24,9 @@ private val log = KotlinLogging.logger {}
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleMethodArgumentNotValid(ex: MethodArgumentNotValidException): ProblemDetail {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        val errorCode = com.restaurant.common.domain.error.CommonSystemErrorCode.VALIDATION_ERROR
+        log.error("Validation failed, errorCode={}", errorCode.code, ex)
+        val problemDetail = ProblemDetail.forStatus(errorCode.defaultHttpStatus)
         problemDetail.title = "Validation Failed"
         problemDetail.detail = ex.bindingResult.fieldErrors.joinToString(", ") { it.defaultMessage ?: it.field }
         problemDetail.setProperty(
@@ -37,22 +39,27 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
                 )
             },
         )
+        problemDetail.setProperty("errorCode", errorCode.code)
         setCommonProblemProperties(problemDetail)
         return problemDetail
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ProblemDetail {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        val errorCode = com.restaurant.common.domain.error.CommonSystemErrorCode.INVALID_REQUEST
+        log.error("Type mismatch, errorCode={}", errorCode.code, ex)
+        val problemDetail = ProblemDetail.forStatus(errorCode.defaultHttpStatus)
         problemDetail.title = "Type Mismatch"
         problemDetail.detail = ex.message ?: ""
+        problemDetail.setProperty("errorCode", errorCode.code)
         setCommonProblemProperties(problemDetail)
         return problemDetail
     }
 
     @ExceptionHandler(DomainException::class)
     fun handleDomainException(ex: DomainException): ProblemDetail {
-        val problemDetail = ProblemDetail.forStatus(mapDomainExceptionToStatus(ex))
+        log.error("Domain exception occurred, errorCode={}", ex.errorCode.code, ex)
+        val problemDetail = ProblemDetail.forStatus(ex.errorCode.defaultHttpStatus)
         problemDetail.title = ex.errorCode.message
         problemDetail.detail = ex.message ?: ""
         problemDetail.setProperty("errorCode", ex.errorCode.code)
@@ -62,7 +69,8 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(ApplicationException::class)
     fun handleApplicationException(ex: ApplicationException): ProblemDetail {
-        val problemDetail = ProblemDetail.forStatus(mapApplicationExceptionToStatus(ex))
+        log.error("Application exception occurred, errorCode={}", ex.errorCode.code, ex)
+        val problemDetail = ProblemDetail.forStatus(ex.errorCode.defaultHttpStatus)
         problemDetail.title = ex.errorCode.message
         problemDetail.detail = ex.message ?: ""
         problemDetail.setProperty("errorCode", ex.errorCode.code)
@@ -72,20 +80,24 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(OptimisticLockException::class)
     fun handleOptimisticLockException(ex: OptimisticLockException): ProblemDetail {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT)
-        problemDetail.title = "Optimistic Lock Error"
+        val errorCode = com.restaurant.common.domain.error.CommonSystemErrorCode.OPTIMISTIC_LOCK_ERROR
+        log.error("Optimistic lock error, errorCode={}", errorCode.code, ex)
+        val problemDetail = ProblemDetail.forStatus(errorCode.defaultHttpStatus)
+        problemDetail.title = errorCode.message
         problemDetail.detail = ex.message ?: ""
-        problemDetail.setProperty("errorCode", "COMMON-SYSTEM-OPTIMISTIC-LOCK-ERROR")
+        problemDetail.setProperty("errorCode", errorCode.code)
         setCommonProblemProperties(problemDetail)
         return problemDetail
     }
 
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ProblemDetail {
-        log.error(ex) { "Unhandled exception: ${ex.message}" }
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-        problemDetail.title = "Internal Server Error"
+        val errorCode = com.restaurant.common.domain.error.CommonSystemErrorCode.INTERNAL_SERVER_ERROR
+        log.error("Unhandled exception, errorCode={}", errorCode.code, ex)
+        val problemDetail = ProblemDetail.forStatus(errorCode.defaultHttpStatus)
+        problemDetail.title = errorCode.message
         problemDetail.detail = ex.message ?: ""
+        problemDetail.setProperty("errorCode", errorCode.code)
         setCommonProblemProperties(problemDetail)
         return problemDetail
     }
@@ -94,16 +106,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         problemDetail.setProperty("timestamp", OffsetDateTime.now().toString())
     }
 
-    private fun mapDomainExceptionToStatus(ex: DomainException): HttpStatus =
-        when (ex.errorCode.code) {
-            "USER-DOMAIN-NOT-FOUND" -> HttpStatus.NOT_FOUND
-            "USER-DOMAIN-VALIDATION" -> HttpStatus.BAD_REQUEST
-            else -> HttpStatus.BAD_REQUEST
-        }
+    // 매핑 함수 제거: 각 ErrorCode의 defaultHttpStatus를 직접 사용하므로 불필요
 
-    private fun mapApplicationExceptionToStatus(ex: ApplicationException): HttpStatus =
-        when (ex.errorCode.code) {
-            "USER-APPLICATION-BAD-REQUEST" -> HttpStatus.BAD_REQUEST
-            else -> HttpStatus.INTERNAL_SERVER_ERROR
-        }
 }

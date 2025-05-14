@@ -4,6 +4,8 @@ package com.restaurant.common.domain.error
  * Base interface for all error codes in the system.
  * Error codes should follow the format: {DOMAIN}-{LAYER}-{CODE}
  */
+import org.springframework.http.HttpStatus
+
 interface ErrorCode {
     /**
      * The unique code for this error.
@@ -16,4 +18,9 @@ interface ErrorCode {
      * A human-readable message describing this error.
      */
     val message: String
+
+    /**
+     * The default HTTP status associated with this error.
+     */
+    val defaultHttpStatus: HttpStatus
 }
