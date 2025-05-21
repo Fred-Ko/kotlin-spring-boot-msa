@@ -24,8 +24,7 @@ cat <<'EOF' >a
 - 작업지시서는 어떤 파일이 어떤 부분이 잘못작성되었고 어떻게 고쳐야한다. 그리고 근거는 무엇이다 라는 명시적 문장이 있어야 한다.
 - 작업지시서에 코드 레벨을 너무 자세하게 설명하지 않아도 된다.
 - 작업지시서 제일 하단에는 모든 작업이 끝나고 확인해야할 체크리스트를 작성한다.
-- 이프로젝트는 Kotlin 으로 작성되어있다. Java는 사용하지 않는다.
-- 최신 스테이블 버전 목록은 작업지시서에 생략하지 않고 꼭 기입한다.
+- ktlint 는 사용하지 않는다. (현재 단계에서는 그 어떤 린트도 제외)
 
 작업 지시서에 항상 상단에 첨부할 문구
 ```
@@ -84,8 +83,8 @@ echo -e "==============================================================\n\n" >>$
 # Collect and append Kotlin/Gradle files with enhanced separators
 find domains/user domains/common settings.gradle.kts build.gradle.kts apps independent gradle/libs.versions.toml \
   -type d \( -name build -o -name bin -o -name test \) -prune -o \
-  -type f \( -name "*.kt" -o -name "*.kts" -o -name "*.gradle" -o -name "*toml" -o -name "settings.gradle.kts" -o -name "build.gradle.kts" -o -name "*.avsc" \) -print | \
-  sort -u | \
+  -type f \( -name "*.kt" -o -name "*.kts" -o -name "*.gradle" -o -name "*toml" -o -name "settings.gradle.kts" -o -name "build.gradle.kts" -o -name "*.avsc" \) -print |
+  sort -u |
   while IFS= read -r file; do
     {
       echo -e "\n\n===================================================================="
