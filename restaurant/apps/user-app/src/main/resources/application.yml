@@ -2,71 +2,67 @@ spring:
   application:
     name: user-service
   profiles:
-    active: local
-  config:
-    import: optional:configserver:http://localhost:8888
-
-# --- Development Profile (application-dev.yml) ---
-spring:
-  config:
-    activate:
-      on-profile: dev
+    active: dev
+  # Config Server 연결 제거 (시작 지연 원인일 수 있음)
+  # config:
+  #   import: optional:configserver:http://localhost:8888
+  # Flyway 비활성화
+  flyway:
+    enabled: false
   datasource:
     url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password:
+    username: test
+    password: test
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
-    properties:
-      schema.registry.url: http://localhost:8081
-    consumer:
-      group-id: user-app-consumer-group
-
-kafka:
-  topics:
-    user-event: dev.user.domain-event.user.v1
-
-logging:
-  level:
-    root: INFO
-    com.restaurant: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
-
-# --- Staging/Production Profile (별도 파일 또는 외부 설정 관리) ---
-# 민감 정보(DB 비밀번호, API 키 등)는 환경 변수 또는 Secret Manager 사용
-# 예시:
-# spring.datasource.password: ${DB_PASSWORD}
-# spring.kafka.properties.schema.registry.url: ${SCHEMA_REGISTRY_URL}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
 server:
-  port: 8081
+  port: 8090
 
-# Swagger/OpenAPI 설정
+# SpringDoc 설정 - 간단하고 안정적인 설정
 springdoc:
   swagger-ui:
+    enabled: true
     path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
   api-docs:
-    path: /v1/api-docs
+    enabled: true
+    path: /v3/api-docs
+  packages-to-scan:
+    - com.restaurant.user.presentation
+    - com.restaurant.common.presentation
 
 app:
   problem:
     base-url: https://test-api.restaurant.com/probs
 
-# Outbox Polling configuration (Example)
+# Outbox Polling configuration (Disabled for now)
 outbox:
   polling:
-    enabled: true
-    fixed-delay: 1000 # Poll every 1 second
-    batch-size: 100
+    enabled: false
+    fixed-delay: 5000 # Poll every 5 seconds (reduced frequency)
+    batch-size: 10
+
+# Logging 설정
+logging:
+  level:
+    com.restaurant: INFO
+    org.hibernate.SQL: DEBUG
+    org.springdoc: DEBUG
+    io.swagger: DEBUG
+# --- Staging/Production Profile (별도 파일 또는 외부 설정 관리) ---
+# 민감 정보(DB 비밀번호, API 키 등)는 환경 변수 또는 Secret Manager 사용
+# 예시:
+# spring.datasource.password: ${DB_PASSWORD}
+# spring.kafka.properties.schema.registry.url: ${SCHEMA_REGISTRY_URL}

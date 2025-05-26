@@ -1,8 +1,8 @@
 package com.restaurant.user.application.query.handler
 
-import com.restaurant.user.application.dto.query.GetUserProfileByIdQuery
-import com.restaurant.user.application.dto.query.UserProfileDto
 import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
+import com.restaurant.user.application.query.dto.UserProfileDto
 import com.restaurant.user.application.query.usecase.GetUserProfileQuery
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
@@ -27,15 +27,15 @@ class GetUserProfileQueryHandler(
                 name = user.name.value,
                 phoneNumber = user.phoneNumber?.value,
                 addresses =
-                user.addresses.map { address ->
-                    UserProfileDto.AddressDto(
-                        id = address.addressId.value.toString(),
-                        street = address.streetAddress,
-                        detail = address.detailAddress,
-                        zipCode = address.zipCode,
-                        isDefault = address.isDefault,
-                    )
-                },
+                    user.addresses.map { address ->
+                        UserProfileDto.AddressDto(
+                            id = address.addressId.value.toString(),
+                            street = address.streetAddress,
+                            detail = address.detailAddress,
+                            zipCode = address.zipCode,
+                            isDefault = address.isDefault,
+                        )
+                    },
                 userType = user.userType.name,
                 status = user.status.name,
                 createdAt = user.createdAt,

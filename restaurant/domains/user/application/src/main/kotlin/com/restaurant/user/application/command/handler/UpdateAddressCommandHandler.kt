@@ -1,8 +1,8 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.dto.command.UpdateAddressCommand
-import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.command.dto.UpdateAddressCommand
 import com.restaurant.user.application.command.usecase.UpdateAddressUseCase
+import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository

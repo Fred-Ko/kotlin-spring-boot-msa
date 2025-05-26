@@ -1,8 +1,8 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.dto.command.DeleteAddressCommand
-import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.command.dto.DeleteAddressCommand
 import com.restaurant.user.application.command.usecase.DeleteAddressUseCase
+import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId

@@ -1,7 +1,7 @@
 package com.restaurant.outbox.infrastructure.entity
 
-import com.restaurant.outbox.application.port.model.OutboxMessageStatus
-import com.restaurant.outbox.infrastructure.persistence.converter.StringMapConverter
+import com.restaurant.outbox.application.dto.model.OutboxMessageStatus
+import com.restaurant.outbox.infrastructure.converter.StringMapConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity

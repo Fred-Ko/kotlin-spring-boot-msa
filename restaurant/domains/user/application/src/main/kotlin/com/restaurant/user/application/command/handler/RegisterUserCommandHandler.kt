@@ -1,6 +1,6 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.dto.command.RegisterUserCommand
+import com.restaurant.user.application.command.dto.RegisterUserCommand
 import com.restaurant.user.application.command.usecase.RegisterUserUseCase
 import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.repository.UserRepository

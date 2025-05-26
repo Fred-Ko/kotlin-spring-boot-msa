@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 
+@Schema(description = "사용자 로그인 요청")
 data class LoginRequestV1(
     @field:Schema(description = "사용자 이메일", example = "user@example.com")
     @field:NotBlank(message = "이메일은 필수 입력 항목입니다.")

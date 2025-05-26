@@ -7,23 +7,51 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        jakarta.persistence.lock.timeout: 0
   kafka:
     bootstrap-servers: localhost:9092
+    schema-registry-url: http://localhost:8081
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      acks: all
+      retries: 3
+      enable-idempotence: true
+      batch-size: 16384
+      buffer-memory: 33554432
+      compression-type: lz4
+      properties:
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 30000
+        max.block.ms: 60000
+        max.in.flight.requests.per.connection: 1
   flyway:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
     validate-on-migrate: true
 
+outbox:
+  polling:
+    batch-size: 100
+    max-retries: 3
+    pending-messages-interval: 1000
+    failed-messages-interval: 300000
+  retry:
+    exponential-backoff: true
+    initial-interval: 1000
+    max-interval: 60000
+    multiplier: 2.0
+
 logging:
   level:
-    com.restaurant.outbox: DEBUG
-    org.hibernate.SQL: DEBUG
+    com.restaurant.outbox: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"

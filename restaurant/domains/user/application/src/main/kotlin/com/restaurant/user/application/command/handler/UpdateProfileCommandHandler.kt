@@ -1,8 +1,8 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.dto.command.UpdateProfileCommand
-import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.command.dto.UpdateProfileCommand
 import com.restaurant.user.application.command.usecase.UpdateProfileUseCase
+import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Name

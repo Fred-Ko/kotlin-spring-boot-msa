@@ -9,7 +9,7 @@ import java.time.Instant
  * Address Domain Entity (Rule 11)
  * User Aggregate에 속하지만 자체 식별자를 가짐.
  */
-data class Address private constructor(
+data class Address constructor(
     val addressId: AddressId,
     val name: String,
     val streetAddress: String,

@@ -1,9 +1,9 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.dto.command.LoginCommand
-import com.restaurant.user.application.dto.query.LoginResult
-import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.command.dto.LoginCommand
 import com.restaurant.user.application.command.usecase.LoginUseCase
+import com.restaurant.user.application.exception.UserApplicationException
+import com.restaurant.user.application.query.dto.LoginResult
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
@@ -20,8 +20,9 @@ class LoginCommandHandler(
     override fun login(command: LoginCommand): LoginResult {
         try {
             val emailVo = Email.of(command.email)
-            val user = userRepository.findByEmail(emailVo)
-                ?: throw UserDomainException.User.InvalidCredentials(command.email)
+            val user =
+                userRepository.findByEmail(emailVo)
+                    ?: throw UserDomainException.User.InvalidCredentials(command.email)
 
             if (!passwordEncoder.matches(command.password, user.password.value)) {
                 throw UserDomainException.User.InvalidCredentials(command.email)

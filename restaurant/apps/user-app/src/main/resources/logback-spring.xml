@@ -5,22 +5,10 @@
 
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="unknown-app"/>
 
-    <!-- Define a console appender using Logstash JSON encoder -->
-    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <providers>
-                <!-- Default providers -->
-                <timestamp>
-                    <timeZone>UTC</timeZone>
-                </timestamp>
-                <logLevel/>
-                <loggerName/>
-                <threadName/>
-                <message/>
-                <stackTrace/>
-                <!-- Include MDC properties -->
-                <mdc/>
-            </providers>
+    <!-- Define a console appender using standard pattern encoder -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -55,25 +43,23 @@
 
     <!-- Configure the root logger -->
     <root level="INFO">
-        <!-- Use the JSON console appender -->
-        <appender-ref ref="JSON_CONSOLE"/>
-        <!-- Optionally keep the standard Spring Boot console appender -->
-        <!-- <appender-ref ref="CONSOLE" /> -->
+        <!-- Use the standard console appender -->
+        <appender-ref ref="CONSOLE"/>
         <!-- Optionally add a file appender -->
         <!-- <appender-ref ref="FILE" /> -->
     </root>
 
     <!-- Example: Set specific logger level -->
     <logger name="com.restaurant" level="DEBUG" additivity="false">
-        <appender-ref ref="JSON_CONSOLE"/>
+        <appender-ref ref="CONSOLE"/>
     </logger>
 
     <!-- Turn off verbose logging from Kafka clients unless needed -->
     <logger name="org.apache.kafka" level="WARN" additivity="false">
-         <appender-ref ref="JSON_CONSOLE"/>
+         <appender-ref ref="CONSOLE"/>
     </logger>
     <logger name="org.springframework.kafka" level="WARN" additivity="false">
-         <appender-ref ref="JSON_CONSOLE"/>
+         <appender-ref ref="CONSOLE"/>
     </logger>
 
 </configuration> 

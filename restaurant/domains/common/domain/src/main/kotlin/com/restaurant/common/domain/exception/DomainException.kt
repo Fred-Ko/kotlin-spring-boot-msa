@@ -6,8 +6,9 @@ import com.restaurant.common.domain.error.ErrorCode
  * Base class for all custom domain exceptions.
  * Requires subclasses to provide an ErrorCode. (Rule 68)
  */
-open class DomainException(
-    val errorCode: ErrorCode,
-    override val message: String = errorCode.message,
+abstract class DomainException(
+    message: String? = null,
     cause: Throwable? = null,
-) : RuntimeException(message, cause)
+) : RuntimeException(message, cause) {
+    abstract val errorCode: ErrorCode
+}

@@ -17,11 +17,13 @@ data class UserProfileResponseV1(
     @Schema(description = "사용자 타입", example = "CUSTOMER") val userType: String,
     @Schema(description = "주소 목록") val addresses: List<AddressResponseV1> = emptyList(),
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
-    @Schema(description = "계정 생성 시간", example = "2023-01-01 12:00:00")
+    @Schema(description = "계정 생성 시간", example = "2023-01-01T12:00:00.000000000Z")
     val createdAt: Instant,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
-    @Schema(description = "계정 최종 수정 시간", example = "2023-01-01 12:00:00")
+    @Schema(description = "계정 최종 수정 시간", example = "2023-01-01T12:00:00.000000000Z")
     val updatedAt: Instant,
+    @Schema(description = "계정 상태", example = "ACTIVE", allowableValues = ["ACTIVE", "INACTIVE", "SUSPENDED"])
     val status: String,
-    val version: Long
+    @Schema(description = "엔티티 버전 (낙관적 락)", example = "1")
+    val version: Long,
 )

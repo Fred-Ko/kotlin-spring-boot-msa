@@ -1,6 +1,6 @@
 package com.restaurant.user.application.command.usecase
 
-import com.restaurant.user.application.dto.command.RegisterUserCommand
+import com.restaurant.user.application.command.dto.RegisterUserCommand
 import com.restaurant.user.domain.vo.UserId
 
 /**

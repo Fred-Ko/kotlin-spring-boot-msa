@@ -81,7 +81,7 @@ tree domains independent apps gradle \
 echo -e "==============================================================\n\n" >>$OUTPUT_FILE
 
 # Collect and append Kotlin/Gradle files with enhanced separators
-find domains/user domains/common settings.gradle.kts build.gradle.kts apps independent gradle/libs.versions.toml \
+find domains/user domains/common settings.gradle.kts build.gradle.kts apps independent \
   -type d \( -name build -o -name bin -o -name test \) -prune -o \
   -type f \( -name "*.kt" -o -name "*.kts" -o -name "*.gradle" -o -name "*toml" -o -name "settings.gradle.kts" -o -name "build.gradle.kts" -o -name "*.avsc" \) -print |
   sort -u |
@@ -99,7 +99,7 @@ find domains/user domains/common settings.gradle.kts build.gradle.kts apps indep
       echo -e " Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S')"
       echo -e "===================================================================="
       cat "$file"
-      echo -e "\n====================================================================n"
+      echo -e "\n===================================================================="
     } >>"$OUTPUT_FILE"
   done
 

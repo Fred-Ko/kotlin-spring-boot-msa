@@ -2,11 +2,19 @@ spring:
   application:
     name: user-service
 
+  security:
+    enabled: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
   datasource:
     url: jdbc:h2:mem:userdb
     driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    username: test
+    password: test
 
   jpa:
     hibernate:
@@ -22,13 +30,18 @@ spring:
       path: /h2-console
 
 server:
-  port: 8080
+  port: 8888
 
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.restaurant: DEBUG
+    org.springdoc: DEBUG
+
+springdoc:
+  packagesToScan:
+    - com.restaurant.user.presentation
 
 app:
   problem:

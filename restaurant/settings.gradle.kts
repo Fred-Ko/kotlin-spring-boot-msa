@@ -39,8 +39,6 @@ include(":domains:common:presentation")
 include(":domains:user:domain")
 include(":domains:user:application")
 include(":domains:user:infrastructure")
-include(":domains:user:infrastructure:persistence")
-include(":domains:user:infrastructure:messaging")
 include(":domains:user:presentation")
 
 // Independent modules

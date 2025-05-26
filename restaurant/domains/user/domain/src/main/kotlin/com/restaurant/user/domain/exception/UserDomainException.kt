@@ -7,15 +7,15 @@ import com.restaurant.user.domain.error.UserDomainErrorCodes
  * Sealed class representing all possible domain exceptions for the User aggregate. (Rule 68)
  */
 sealed class UserDomainException(
-    errorCode: UserDomainErrorCodes,
+    override val errorCode: UserDomainErrorCodes,
     message: String? = errorCode.message, // String? 타입으로 변경하고, null일 경우 errorCode.message 사용
     cause: Throwable? = null,
-) : DomainException(errorCode, message ?: errorCode.message, cause) { // message가 null이면 errorCode.message 사용
+) : DomainException(message, cause) { // DomainException 생성자 변경에 따라 수정
     /**
      * Validation-related exceptions
      */
     sealed class Validation(
-        errorCode: UserDomainErrorCodes,
+        override val errorCode: UserDomainErrorCodes,
         message: String = errorCode.message,
         cause: Throwable? = null,
     ) : UserDomainException(errorCode, message, cause) {
@@ -80,7 +80,7 @@ sealed class UserDomainException(
      * User-related exceptions
      */
     sealed class User(
-        errorCode: UserDomainErrorCodes,
+        override val errorCode: UserDomainErrorCodes,
         message: String? = errorCode.message,
         cause: Throwable? = null,
     ) : UserDomainException(errorCode, message, cause) {
@@ -127,7 +127,7 @@ sealed class UserDomainException(
      * Address-related exceptions
      */
     sealed class Address(
-        errorCode: UserDomainErrorCodes,
+        override val errorCode: UserDomainErrorCodes,
         message: String? = errorCode.message,
         cause: Throwable? = null,
     ) : UserDomainException(errorCode, message, cause) {
@@ -190,11 +190,8 @@ sealed class UserDomainException(
     }
 
     class PersistenceError(
+        override val errorCode: UserDomainErrorCodes = UserDomainErrorCodes.PERSISTENCE_ERROR,
         message: String,
         cause: Throwable? = null,
-    ) : UserDomainException(
-            UserDomainErrorCodes.PERSISTENCE_ERROR,
-            message,
-            cause,
-        )
+    ) : UserDomainException(errorCode, message, cause)
 }
