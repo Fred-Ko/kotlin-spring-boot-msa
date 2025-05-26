@@ -32,7 +32,7 @@ class LoginCommandHandler(
             val refreshToken = "dummy-refresh-token"
 
             return LoginResult(
-                userId = user.id.value.toString(),
+                id = user.id.value.toString(),
                 username = user.username.value,
                 accessToken = accessToken,
                 refreshToken = refreshToken,

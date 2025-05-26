@@ -1,6 +1,7 @@
 package com.restaurant.user.domain.event
 
 import com.restaurant.common.domain.event.DomainEvent
+import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
@@ -16,10 +17,10 @@ sealed class UserEvent : DomainEvent {
 
     @Contextual abstract override val occurredAt: Instant
 
-    @Contextual abstract val userId: UserId
+    @Contextual abstract val id: UserId
 
     override val aggregateId: String
-        get() = userId.value.toString()
+        get() = id.value.toString()
     override val aggregateType: String
         get() = "User"
 
@@ -33,22 +34,7 @@ sealed class UserEvent : DomainEvent {
         val name: String,
         val phoneNumber: String?,
         val userType: String,
-        @Contextual override val userId: UserId,
-        @Contextual override val eventId: UUID = UUID.randomUUID(),
-        @Contextual override val occurredAt: Instant,
-    ) : UserEvent()
-
-    /**
-     * User Updated Event
-     */
-    @Serializable
-    data class Updated(
-        val username: String?,
-        val email: String?,
-        val name: String?,
-        val phoneNumber: String?,
-        val userType: String?,
-        @Contextual override val userId: UserId,
+        @Contextual override val id: UserId,
         @Contextual override val eventId: UUID = UUID.randomUUID(),
         @Contextual override val occurredAt: Instant,
     ) : UserEvent()
@@ -58,7 +44,7 @@ sealed class UserEvent : DomainEvent {
      */
     @Serializable
     data class Deleted(
-        @Contextual override val userId: UserId,
+        @Contextual override val id: UserId,
         @Contextual override val eventId: UUID = UUID.randomUUID(),
         @Contextual override val occurredAt: Instant,
     ) : UserEvent()
@@ -68,7 +54,7 @@ sealed class UserEvent : DomainEvent {
      */
     @Serializable
     data class PasswordChanged(
-        @Contextual override val userId: UserId,
+        @Contextual override val id: UserId,
         @Contextual override val eventId: UUID = UUID.randomUUID(),
         @Contextual override val occurredAt: Instant,
     ) : UserEvent()
@@ -80,13 +66,84 @@ sealed class UserEvent : DomainEvent {
     data class ProfileUpdated(
         val name: String,
         val phoneNumber: String?,
-        @Contextual override val userId: UserId,
+        @Contextual override val id: UserId,
         @Contextual override val eventId: UUID = UUID.randomUUID(),
         @Contextual override val occurredAt: Instant,
     ) : UserEvent()
 
     /**
-     * Represents address data within user events.
+     * User Address Added Event
+     */
+    @Serializable
+    data class AddressAdded(
+        @Contextual val addressId: AddressId,
+        @Contextual override val id: UserId,
+        @Contextual override val eventId: UUID = UUID.randomUUID(),
+        @Contextual override val occurredAt: Instant,
+    ) : UserEvent()
+
+    /**
+     * User Address Updated Event
+     */
+    @Serializable
+    data class AddressUpdated(
+        @Contextual val addressId: AddressId,
+        val name: String,
+        val streetAddress: String,
+        val detailAddress: String?,
+        val city: String,
+        val state: String,
+        val country: String,
+        val zipCode: String,
+        val isDefault: Boolean,
+        @Contextual override val id: UserId,
+        @Contextual override val eventId: UUID = UUID.randomUUID(),
+        @Contextual override val occurredAt: Instant,
+    ) : UserEvent()
+
+    /**
+     * User Address Deleted Event
+     */
+    @Serializable
+    data class AddressDeleted(
+        @Contextual val addressId: AddressId,
+        @Contextual override val id: UserId,
+        @Contextual override val eventId: UUID = UUID.randomUUID(),
+        @Contextual override val occurredAt: Instant,
+    ) : UserEvent()
+
+    /**
+     * User Withdrawn Event
+     */
+    @Serializable
+    data class Withdrawn(
+        @Contextual override val id: UserId,
+        @Contextual override val eventId: UUID = UUID.randomUUID(),
+        @Contextual override val occurredAt: Instant,
+    ) : UserEvent()
+
+    /**
+     * User Deactivated Event
+     */
+    @Serializable
+    data class Deactivated(
+        @Contextual override val id: UserId,
+        @Contextual override val eventId: UUID = UUID.randomUUID(),
+        @Contextual override val occurredAt: Instant,
+    ) : UserEvent()
+
+    /**
+     * User Activated Event
+     */
+    @Serializable
+    data class Activated(
+        @Contextual override val id: UserId,
+        @Contextual override val eventId: UUID = UUID.randomUUID(),
+        @Contextual override val occurredAt: Instant,
+    ) : UserEvent()
+
+    /**
+     * Address Data for events (Rule 33, 34)
      */
     @Serializable
     data class AddressData(
@@ -100,47 +157,4 @@ sealed class UserEvent : DomainEvent {
         val zipCode: String,
         val isDefault: Boolean,
     )
-
-    /**
-     * User Address Added Event
-     */
-    @Serializable
-    data class AddressRegistered(
-        val address: AddressData,
-        @Contextual override val userId: UserId,
-        @Contextual override val eventId: UUID = UUID.randomUUID(),
-        @Contextual override val occurredAt: Instant,
-    ) : UserEvent()
-
-    /**
-     * User Address Updated Event
-     */
-    @Serializable
-    data class AddressUpdated(
-        val address: AddressData,
-        @Contextual override val userId: UserId,
-        @Contextual override val eventId: UUID = UUID.randomUUID(),
-        @Contextual override val occurredAt: Instant,
-    ) : UserEvent()
-
-    /**
-     * User Address Deleted Event (Renamed from Removed)
-     */
-    @Serializable
-    data class AddressDeleted(
-        val addressId: String,
-        @Contextual override val userId: UserId,
-        @Contextual override val eventId: UUID = UUID.randomUUID(),
-        @Contextual override val occurredAt: Instant,
-    ) : UserEvent()
-
-    /**
-     * User Withdrawn Event (Renamed from UserWithdrawn)
-     */
-    @Serializable
-    data class Withdrawn(
-        @Contextual override val userId: UserId,
-        @Contextual override val eventId: UUID = UUID.randomUUID(),
-        @Contextual override val occurredAt: Instant,
-    ) : UserEvent()
 }

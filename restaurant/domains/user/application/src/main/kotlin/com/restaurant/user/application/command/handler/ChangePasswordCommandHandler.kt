@@ -22,8 +22,10 @@ class ChangePasswordCommandHandler(
             val userId = UserId.ofString(command.userId)
             val user = userRepository.findById(userId) ?: throw UserDomainException.User.NotFound(command.userId)
 
-            val newPassword = Password.of(passwordEncoder.encode(command.newPassword))
-            val updatedUser = user.changePassword(newPassword)
+            val currentPassword = Password.of(command.currentPassword)
+            val encodedNewPassword = passwordEncoder.encode(command.newPassword)
+            val newPassword = Password.of(encodedNewPassword)
+            val updatedUser = user.changePassword(currentPassword, newPassword)
 
             userRepository.save(updatedUser)
         } catch (de: UserDomainException) {

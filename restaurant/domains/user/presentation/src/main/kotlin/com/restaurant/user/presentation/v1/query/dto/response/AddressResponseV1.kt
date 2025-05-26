@@ -9,9 +9,9 @@ data class AddressResponseV1(
     @Schema(description = "주소 이름", example = "집")
     val name: String,
     @Schema(description = "도로명 주소", example = "서울시 강남구 테헤란로 123")
-    val street: String,
+    val streetAddress: String,
     @Schema(description = "상세 주소", example = "456동 789호")
-    val detail: String,
+    val detailAddress: String?,
     @Schema(description = "도시", example = "서울시")
     val city: String,
     @Schema(description = "주/도", example = "서울특별시")

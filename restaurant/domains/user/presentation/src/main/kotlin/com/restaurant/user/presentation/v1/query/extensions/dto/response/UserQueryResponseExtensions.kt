@@ -22,12 +22,12 @@ fun UserProfileDto.toResponseV1(): UserProfileResponseV1 =
 fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 =
     AddressResponseV1(
         id = this.id,
-        name = "",
-        street = this.street ?: "",
-        detail = this.detail ?: "",
-        city = "",
-        state = "",
-        country = "",
-        zipCode = this.zipCode ?: "",
+        name = this.name,
+        streetAddress = this.streetAddress,
+        detailAddress = this.detailAddress,
+        city = this.city,
+        state = this.state,
+        country = this.country,
+        zipCode = this.zipCode,
         isDefault = this.isDefault,
     )

@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication(
     exclude = [
@@ -23,7 +24,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
         ManagementWebSecurityAutoConfiguration::class,
     ],
 )
-// Scan components in config, user.presentation, user.application, user.infra (Outbox 제외)
+// Scan components in config, user.presentation, user.application, user.infra, outbox
 @ComponentScan(
     basePackages = [
         "com.restaurant.common.presentation",
@@ -31,22 +32,23 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
         "com.restaurant.user.application",
         "com.restaurant.user.infrastructure",
         "com.restaurant.apps.user.config",
-        // Outbox 관련 패키지 제거
+        "com.restaurant.outbox.application",
+        "com.restaurant.outbox.infrastructure",
     ],
 )
 @EnableJpaRepositories(
     basePackages = [
         "com.restaurant.user.infrastructure.repository",
-        // Outbox 관련 Repository 제거
+        "com.restaurant.outbox.infrastructure.repository",
     ],
 )
 @EntityScan(
     basePackages = [
         "com.restaurant.user.infrastructure.entity",
-        // Outbox 관련 Entity 제거
+        "com.restaurant.outbox.infrastructure.entity",
     ],
 )
-// @EnableScheduling // Outbox Poller 비활성화
+@EnableScheduling // Outbox Poller 활성화
 open class UserApplication
 
 fun main(args: Array<String>) {

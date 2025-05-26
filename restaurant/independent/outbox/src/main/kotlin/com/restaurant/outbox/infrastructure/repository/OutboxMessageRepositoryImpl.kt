@@ -1,12 +1,12 @@
 package com.restaurant.outbox.infrastructure.repository
 
+import com.restaurant.outbox.application.dto.OutboxMessage
 import com.restaurant.outbox.application.dto.OutboxMessageRepository
-import com.restaurant.outbox.application.dto.model.OutboxMessage
-import com.restaurant.outbox.application.dto.model.OutboxMessageStatus
+import com.restaurant.outbox.application.dto.OutboxMessageStatus
 import com.restaurant.outbox.infrastructure.entity.OutboxEventEntity
 import com.restaurant.outbox.infrastructure.exception.OutboxException
-import com.restaurant.outbox.infrastructure.persistence.extensions.toDomain
-import com.restaurant.outbox.infrastructure.persistence.extensions.toEntity
+import com.restaurant.outbox.infrastructure.extensions.toDomain
+import com.restaurant.outbox.infrastructure.extensions.toEntity
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -103,26 +103,6 @@ open class OutboxMessageRepositoryImpl(
             )
         }
     }
-
-    @Transactional(readOnly = true)
-    override fun findFailedMessagesExceedingRetryCount(
-        maxRetries: Int,
-        limit: Int,
-    ): List<OutboxMessage> =
-        try {
-            jpaOutboxEventRepository
-                .findByStatusAndRetryCountGreaterThanEqual(
-                    OutboxMessageStatus.FAILED,
-                    maxRetries,
-                    PageRequest.of(0, limit),
-                ).map { it.toDomain() }
-        } catch (e: Exception) {
-            logger.error("Failed to find failed messages exceeding retry count", e)
-            throw OutboxException.DatabaseOperationException(
-                "Failed to find failed messages exceeding retry count",
-                e,
-            )
-        }
 
     /**
      * Rule 87: 동시성 제어를 위한 데이터베이스 수준 잠금 사용

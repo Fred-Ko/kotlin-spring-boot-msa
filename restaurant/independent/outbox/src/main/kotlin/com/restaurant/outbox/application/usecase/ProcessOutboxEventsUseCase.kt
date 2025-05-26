@@ -1,6 +1,6 @@
 package com.restaurant.outbox.application.usecase
 
-import com.restaurant.outbox.application.dto.model.OutboxMessage
+import com.restaurant.outbox.application.dto.OutboxMessage
 
 /**
  * Outbox 이벤트 처리를 위한 Use Case 인터페이스

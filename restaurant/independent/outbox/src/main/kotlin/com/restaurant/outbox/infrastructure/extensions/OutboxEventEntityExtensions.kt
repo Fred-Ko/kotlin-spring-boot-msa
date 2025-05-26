@@ -1,6 +1,6 @@
-package com.restaurant.outbox.infrastructure.persistence.extensions
+package com.restaurant.outbox.infrastructure.extensions
 
-import com.restaurant.outbox.application.dto.model.OutboxMessage
+import com.restaurant.outbox.application.dto.OutboxMessage
 import com.restaurant.outbox.infrastructure.entity.OutboxEventEntity
 
 fun OutboxEventEntity.toDomain(): OutboxMessage =

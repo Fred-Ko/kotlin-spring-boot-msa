@@ -15,7 +15,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    implementation("com.sksamuel.avro4k:avro4k-core:0.41.0")
+    implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
     

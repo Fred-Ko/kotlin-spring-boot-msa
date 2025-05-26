@@ -1,4 +1,4 @@
-package com.restaurant.outbox.application.dto.model
+package com.restaurant.outbox.application.dto
 
 /** Outbox 메시지 상태 enum */
 enum class OutboxMessageStatus {

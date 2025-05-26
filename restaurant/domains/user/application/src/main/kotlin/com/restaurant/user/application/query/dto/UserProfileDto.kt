@@ -17,9 +17,13 @@ data class UserProfileDto(
 ) {
     data class AddressDto(
         val id: String,
-        val street: String?, // Nullable로 변경
-        val detail: String?, // Nullable로 변경
-        val zipCode: String?, // Nullable로 변경
+        val name: String,
+        val streetAddress: String,
+        val detailAddress: String?,
+        val city: String,
+        val state: String,
+        val country: String,
+        val zipCode: String,
         val isDefault: Boolean,
     )
 }

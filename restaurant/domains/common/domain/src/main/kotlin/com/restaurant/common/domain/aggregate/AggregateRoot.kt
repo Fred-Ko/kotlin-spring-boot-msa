@@ -24,9 +24,9 @@ abstract class AggregateRoot {
 
     /**
      * Adds a domain event to the list of recorded events.
-     * This method is internal to ensure it's only called within the Aggregate implementation.
+     * This method is protected to ensure it's only called within the Aggregate implementation.
      */
-    internal fun addDomainEvent(event: DomainEvent) {
+    protected fun addDomainEvent(event: DomainEvent) {
         domainEvents.add(event)
     }
 }

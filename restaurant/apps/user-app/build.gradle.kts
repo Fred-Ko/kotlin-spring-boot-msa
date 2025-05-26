@@ -12,6 +12,26 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
+// Force kotlinx-serialization versions before dependencies
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1")
+        
+        eachDependency {
+            if (requested.group == "org.jetbrains.kotlinx" && requested.name.contains("serialization")) {
+                if (requested.name.contains("bom")) {
+                    // Skip BOM entirely
+                    return@eachDependency
+                }
+                useVersion("1.8.1")
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
@@ -55,6 +75,11 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.21.0")
     testImplementation("org.testcontainers:postgresql:1.21.0")
     testImplementation("org.testcontainers:kafka:1.21.0")
+
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("io.confluent:kafka-avro-serializer:7.5.0") // Confluent Kafka version should match your Kafka broker version
+    // Avro4k dependencies for Kotlin serialization with Avro
+    implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0") // Latest version of avro4k
 }
 
 tasks.bootJar {

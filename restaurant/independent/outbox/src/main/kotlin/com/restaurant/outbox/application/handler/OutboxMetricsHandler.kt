@@ -1,7 +1,7 @@
 package com.restaurant.outbox.application.handler
 
 import com.restaurant.outbox.application.dto.OutboxMessageRepository
-import com.restaurant.outbox.application.dto.model.OutboxMessageStatus
+import com.restaurant.outbox.application.dto.OutboxMessageStatus
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

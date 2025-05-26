@@ -24,8 +24,8 @@ fun AddressDto.toResponseV1(): AddressResponseV1 =
     AddressResponseV1(
         id = this.id,
         name = this.name,
-        street = this.streetAddress,
-        detail = this.detailAddress ?: "",
+        streetAddress = this.streetAddress,
+        detailAddress = this.detailAddress,
         city = this.city,
         state = this.state,
         country = this.country,

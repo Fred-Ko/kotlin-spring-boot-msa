@@ -30,8 +30,12 @@ class GetUserProfileQueryHandler(
                     user.addresses.map { address ->
                         UserProfileDto.AddressDto(
                             id = address.addressId.value.toString(),
-                            street = address.streetAddress,
-                            detail = address.detailAddress,
+                            name = address.name,
+                            streetAddress = address.streetAddress,
+                            detailAddress = address.detailAddress,
+                            city = address.city,
+                            state = address.state,
+                            country = address.country,
                             zipCode = address.zipCode,
                             isDefault = address.isDefault,
                         )

@@ -109,7 +109,7 @@ class UserController(
         val loginResult = loginUseCase.login(command)
         return ResponseEntity.ok(
             LoginResponseV1(
-                userId = loginResult.userId,
+                id = loginResult.id,
                 username = loginResult.username,
                 accessToken = loginResult.accessToken,
                 refreshToken = loginResult.refreshToken

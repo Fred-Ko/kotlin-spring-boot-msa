@@ -1,6 +1,6 @@
 package com.restaurant.outbox.infrastructure.repository
 
-import com.restaurant.outbox.application.dto.model.OutboxMessageStatus
+import com.restaurant.outbox.application.dto.OutboxMessageStatus
 import com.restaurant.outbox.infrastructure.entity.OutboxEventEntity
 import jakarta.persistence.LockModeType
 import org.springframework.data.domain.Pageable
@@ -49,7 +49,7 @@ interface JpaOutboxEventRepository : JpaRepository<OutboxEventEntity, Long> {
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(
-        "SELECT e FROM OutboxEventEntity e WHERE e.status = com.restaurant.outbox.application.dto.model.OutboxMessageStatus.PENDING ORDER BY e.createdAt ASC",
+        "SELECT e FROM OutboxEventEntity e WHERE e.status = com.restaurant.outbox.application.dto.OutboxMessageStatus.PENDING ORDER BY e.createdAt ASC",
     )
     fun findUnprocessedEventsWithLock(pageable: Pageable): List<OutboxEventEntity>
 }

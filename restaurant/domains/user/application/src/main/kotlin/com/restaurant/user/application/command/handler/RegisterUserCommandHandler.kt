@@ -8,6 +8,7 @@ import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.Password
 import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.vo.UserType
 import com.restaurant.user.domain.vo.Username
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -32,6 +33,7 @@ class RegisterUserCommandHandler(
                 email = email,
                 name = name,
                 phoneNumber = null,
+                userType = UserType.CUSTOMER,
             )
         userRepository.save(user)
         return user.id

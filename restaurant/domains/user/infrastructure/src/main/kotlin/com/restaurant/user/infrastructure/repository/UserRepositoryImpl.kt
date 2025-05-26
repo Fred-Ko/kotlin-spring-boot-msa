@@ -1,12 +1,12 @@
 package com.restaurant.user.infrastructure.repository
 
-// import com.restaurant.outbox.application.dto.OutboxMessageRepository // Outbox 제거
+import com.restaurant.outbox.application.dto.OutboxMessageRepository
 import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.domain.vo.Username
-// import com.restaurant.user.infrastructure.mapper.DomainEventToOutboxMessageConverter // Outbox 제거
+import com.restaurant.user.infrastructure.mapper.DomainEventToOutboxMessageConverter
 import com.restaurant.user.infrastructure.mapper.toDomain
 import com.restaurant.user.infrastructure.mapper.toEntity
 import org.springframework.stereotype.Repository
@@ -14,8 +14,8 @@ import org.springframework.stereotype.Repository
 @Repository
 class UserRepositoryImpl(
     private val springDataJpaUserRepository: SpringDataJpaUserRepository,
-    // private val outboxMessageRepository: OutboxMessageRepository, // Outbox 제거
-    // private val domainEventToOutboxMessageConverter: DomainEventToOutboxMessageConverter, // Outbox 제거
+    private val outboxMessageRepository: OutboxMessageRepository,
+    private val domainEventToOutboxMessageConverter: DomainEventToOutboxMessageConverter,
 ) : UserRepository {
     override fun findById(id: UserId): User? = springDataJpaUserRepository.findByDomainId(id.value)?.toDomain()
 
@@ -35,8 +35,7 @@ class UserRepositoryImpl(
 
         val savedEntity = springDataJpaUserRepository.save(userEntity)
 
-        // 도메인 이벤트 처리 임시 비활성화 (Outbox 없이는 처리할 수 없음)
-        /*
+        // 도메인 이벤트 처리
         val domainEvents = user.getDomainEvents()
         if (domainEvents.isNotEmpty()) {
             val outboxMessages = domainEvents.map { domainEventToOutboxMessageConverter.convert(it) }
@@ -45,11 +44,7 @@ class UserRepositoryImpl(
             }
             user.clearDomainEvents()
         }
-        */
-        
-        // 도메인 이벤트 클리어만 수행
-        user.clearDomainEvents()
-        
+
         return savedEntity.toDomain()
     }
 

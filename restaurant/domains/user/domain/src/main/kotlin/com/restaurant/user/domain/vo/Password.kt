@@ -15,6 +15,24 @@ value class Password private constructor(
         }
     }
 
+    fun validate() {
+        if (value.length < 8) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("Password must be at least 8 characters long.")
+        }
+        if (!value.contains(Regex("[A-Z]"))) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one uppercase letter.")
+        }
+        if (!value.contains(Regex("[a-z]"))) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one lowercase letter.")
+        }
+        if (!value.contains(Regex("[0-9]"))) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one digit.")
+        }
+        if (!value.contains(Regex("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?~`]"))) {
+            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one special character.")
+        }
+    }
+
     override fun toString(): String = "********"
 
     companion object {

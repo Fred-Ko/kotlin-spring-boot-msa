@@ -1,7 +1,7 @@
 package com.restaurant.outbox.application.dto
 
-import com.restaurant.outbox.application.dto.model.OutboxMessage
-import com.restaurant.outbox.application.dto.model.OutboxMessageStatus
+import com.restaurant.outbox.application.dto.OutboxMessage
+import com.restaurant.outbox.application.dto.OutboxMessageStatus
 
 /**
  * Outbox 메시지 저장소에 대한 포트 인터페이스.
@@ -52,20 +52,6 @@ interface OutboxMessageRepository {
         newStatus: OutboxMessageStatus,
         incrementRetry: Boolean = false,
     ): OutboxMessage?
-
-    /**
-     * 특정 시간 이전에 생성된 실패 상태의 메시지들을 조회합니다. (이름 변경 또는 삭제 고려)
-     * 이름이 역할과 맞지 않을 수 있음: 실제로는 재시도 횟수가 maxRetries *미만*인 것을 찾아야 함.
-     * findMessagesToRetryByStatusAndRetryCountLessThan 로 대체 예정.
-     *
-     * @param maxRetries 최대 재시도 횟수 (이 값 *미만*인 것을 찾음)
-     * @param limit 조회할 최대 메시지 수
-     * @return 조회된 메시지 목록
-     */
-    fun findFailedMessagesExceedingRetryCount( // 이 메서드는 이름이 오해의 소지가 있음.
-        maxRetries: Int,
-        limit: Int,
-    ): List<OutboxMessage>
 
     /**
      * 특정 상태의 메시지를 조회하여 처리 중(PROCESSING) 상태로 변경합니다.

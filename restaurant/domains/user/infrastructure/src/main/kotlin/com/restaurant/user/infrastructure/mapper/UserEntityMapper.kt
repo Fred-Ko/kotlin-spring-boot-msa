@@ -29,9 +29,8 @@ fun UserEntity.toDomain(): User {
         userType = this.userType,
         status = this.status,
         addresses = domainAddresses,
-        // defaultAddressId = domainAddresses.find { it.isDefault }?.addressId, // User.kt에 defaultAddressId 파라미터가 없을 수 있으므로 주석 처리
-        createdAt = this.createdAt ?: java.time.Instant.now(),
-        updatedAt = this.updatedAt ?: java.time.Instant.now(),
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
         version = this.version,
     )
 }
@@ -48,7 +47,6 @@ fun User.toEntity(): UserEntity {
             userType = this.userType,
             status = this.status,
             version = this.version,
-            // UserEntity 생성자에서 defaultAddressId 제거됨
         )
 
     // addresses 변환 및 양방향 관계 설정

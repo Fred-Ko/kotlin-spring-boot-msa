@@ -25,6 +25,30 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  kafka:
+    bootstrap-servers: localhost:9092 # Kafka cluster - Rule VII.2.18
+    admin:
+      auto-create: true
+      fail-fast: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer # Rule VII.1.3.1.4, Rule VII.2.19
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer # Rule VII.1.3.1.4, Rule VII.2.17
+      properties:
+        schema.registry.url: http://localhost:8081 # Use localhost and mapped port for host execution
+        allow.auto.create.topics: true
+        # Add other producer properties as needed, e.g., acks, retries, batch.size
+    consumer:
+      group-id: user-app-group # Specify a meaningful consumer group ID
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer # Rule VII.2.17
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer # Rule VII.1.3.2.3, Rule VII.2.17
+      properties:
+        schema.registry.url: http://localhost:8081 # Use localhost and mapped port for host execution
+        specific.avro.reader: false # Rule VII.1.3.2.3
+        # Add other consumer properties as needed, e.g., auto.offset.reset, enable.auto.commit
+    # Add listener container factory properties if needed for explicit configuration
+    # listener:
+    #   ack-mode: RECORD
+    #   concurrency: 3
 
 server:
   port: 8090
@@ -47,10 +71,10 @@ app:
   problem:
     base-url: https://test-api.restaurant.com/probs
 
-# Outbox Polling configuration (Disabled for now)
+# Outbox Polling configuration (Enabled for testing)
 outbox:
   polling:
-    enabled: false
+    enabled: true
     fixed-delay: 5000 # Poll every 5 seconds (reduced frequency)
     batch-size: 10
 

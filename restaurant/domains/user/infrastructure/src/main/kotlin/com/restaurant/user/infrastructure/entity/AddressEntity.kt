@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.time.Instant
 import java.util.UUID
 
@@ -38,6 +39,7 @@ class AddressEntity(
     val zipCode: String,
     @Column(nullable = false)
     val isDefault: Boolean,
+    @Version
     @Column(nullable = false)
     val version: Long = 0L,
 

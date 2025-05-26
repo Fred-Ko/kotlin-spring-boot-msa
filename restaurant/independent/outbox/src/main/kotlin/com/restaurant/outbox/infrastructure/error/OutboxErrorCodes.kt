@@ -1,9 +1,11 @@
 package com.restaurant.outbox.infrastructure.error
 
+import com.restaurant.common.domain.error.ErrorCode
+
 enum class OutboxErrorCodes(
-    val code: String,
-    val message: String,
-) {
+    override val code: String,
+    override val message: String,
+) : ErrorCode {
     MESSAGE_NOT_FOUND("OUTBOX-001", "Outbox message not found"),
     MESSAGE_PROCESSING_FAILED("OUTBOX-002", "Failed to process outbox message"),
     KAFKA_SEND_FAILED("OUTBOX-003", "Failed to send message to Kafka"),

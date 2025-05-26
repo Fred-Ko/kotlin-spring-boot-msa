@@ -1,8 +1,8 @@
 package com.restaurant.outbox.application.handler
 
 import com.restaurant.outbox.application.dto.OutboxMessageRepository
-import com.restaurant.outbox.application.dto.model.OutboxMessage
-import com.restaurant.outbox.application.dto.model.OutboxMessageStatus
+import com.restaurant.outbox.application.dto.OutboxMessage
+import com.restaurant.outbox.application.dto.OutboxMessageStatus
 import com.restaurant.outbox.application.usecase.ProcessOutboxEventsUseCase
 import com.restaurant.outbox.infrastructure.exception.OutboxException
 import com.restaurant.outbox.infrastructure.messaging.OutboxMessageSender

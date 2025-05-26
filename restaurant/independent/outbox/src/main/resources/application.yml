@@ -16,6 +16,9 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     schema-registry-url: http://localhost:8081
+    admin:
+      auto-create: true
+      fail-fast: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
@@ -30,6 +33,7 @@ spring:
         request.timeout.ms: 30000
         max.block.ms: 60000
         max.in.flight.requests.per.connection: 1
+        allow.auto.create.topics: true
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -47,6 +51,11 @@ outbox:
     initial-interval: 1000
     max-interval: 60000
     multiplier: 2.0
+  topic:
+    # 자동 생성되는 토픽의 기본 설정
+    default-partitions: 3
+    default-replication-factor: 1
+    default-retention-hours: 168
 
 logging:
   level:

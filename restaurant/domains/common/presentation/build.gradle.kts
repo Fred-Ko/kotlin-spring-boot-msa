@@ -13,6 +13,9 @@ java {
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
+    implementation(project(":domains:user:domain"))
+    implementation(project(":domains:user:application"))
+    implementation(project(":independent:outbox"))
 
     implementation("org.springframework.boot:spring-boot-starter-web:3.5.0")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.5.0")

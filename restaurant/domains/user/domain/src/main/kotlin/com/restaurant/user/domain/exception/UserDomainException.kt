@@ -181,6 +181,13 @@ sealed class UserDomainException(
                 message,
             )
 
+        class MultipleDefaults(
+            message: String = "Multiple default addresses found.",
+        ) : Address(
+                UserDomainErrorCodes.MULTIPLE_DEFAULT_ADDRESSES,
+                message,
+            )
+
         class MultipleDefaultsOnInit(
             val reason: String = "Cannot initialize user with multiple default addresses.",
         ) : Address(

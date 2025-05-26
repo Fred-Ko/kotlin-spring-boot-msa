@@ -1,6 +1,6 @@
 package com.restaurant.outbox.infrastructure.messaging
 
-import com.restaurant.outbox.application.dto.model.OutboxMessage
+import com.restaurant.outbox.application.dto.OutboxMessage
 import com.restaurant.outbox.infrastructure.exception.OutboxException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier

@@ -52,6 +52,8 @@ open class KafkaOutboxProducerConfig(
                 ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 120000,
                 ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG to 30000,
                 ProducerConfig.MAX_BLOCK_MS_CONFIG to 60000,
+                // 토픽 자동 생성 설정 - 발행 시 토픽이 없으면 자동 생성
+                "allow.auto.create.topics" to true,
             )
         return DefaultKafkaProducerFactory(configProps)
     }

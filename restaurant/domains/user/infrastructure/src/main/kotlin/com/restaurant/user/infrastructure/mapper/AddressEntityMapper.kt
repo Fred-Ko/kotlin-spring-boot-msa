@@ -17,8 +17,8 @@ fun AddressEntity.toDomain(): Address =
         country = this.country,
         zipCode = this.zipCode,
         isDefault = this.isDefault,
-        createdAt = this.createdAt ?: java.time.Instant.now(),
-        updatedAt = this.updatedAt ?: java.time.Instant.now(),
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
         version = this.version,
     )
 

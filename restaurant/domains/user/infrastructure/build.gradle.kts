@@ -25,6 +25,26 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
+// Force kotlinx-serialization versions before dependencies
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1")
+        
+        eachDependency {
+            if (requested.group == "org.jetbrains.kotlinx" && requested.name.contains("serialization")) {
+                if (requested.name.contains("bom")) {
+                    // Skip BOM entirely
+                    return@eachDependency
+                }
+                useVersion("1.8.1")
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:infrastructure")) // For BaseEntity if needed
@@ -40,10 +60,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.7") // Logging
 
-    // For Avro4k and Kafka
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1") // kotlinx.serialization core
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1") // For JSON if needed, Avro4k uses core
-    implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0") // Avro4k core
+    // For Avro4k and Kafka - explicitly force latest versions
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0")
 
     implementation("org.springframework.kafka:spring-kafka:4.0.0-M2")
 
