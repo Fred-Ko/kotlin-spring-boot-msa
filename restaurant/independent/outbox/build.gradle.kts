@@ -19,23 +19,36 @@ allOpen {
 }
 
 dependencies {
-    // Common 모듈 의존성 추가
-    // implementation(project(":domains:common:domain")) 
-    implementation("org.springframework.cloud:spring-cloud-starter-stream-kafka:4.1.2")
+    // Spring Boot & JPA
     implementation("org.springframework.boot:spring-boot-starter:3.5.0")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.0")
+    
+    // Spring Kafka (KafkaTemplate 사용)
     implementation("org.springframework.kafka:spring-kafka:4.0.0-M2")
+    
+    // Confluent Schema Registry for JSON Schema support
+    implementation("io.confluent:kafka-json-schema-serializer:7.5.1")
+    implementation("io.confluent:kafka-schema-registry-client:7.5.1")
+    
+    // Database migration
     implementation("org.flywaydb:flyway-core:11.8.2")
+    
+    // Jackson for JSON processing
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
+    
+    // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-    implementation("io.github.oshai:kotlin-logging-jvm:7.0.7")
-    implementation("io.confluent:kafka-avro-serializer:7.5.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     
+    // Logging
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.7")
+    
+    // Database drivers
     runtimeOnly("org.postgresql:postgresql:42.7.5")
     runtimeOnly("com.h2database:h2:2.3.232")
     
+    // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.0")
     testImplementation("org.springframework.kafka:spring-kafka-test:4.0.0-M2")
     testImplementation("io.mockk:mockk:1.14.2")

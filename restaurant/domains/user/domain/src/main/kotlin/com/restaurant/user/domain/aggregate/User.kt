@@ -1,5 +1,6 @@
 package com.restaurant.user.domain.aggregate
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.restaurant.common.domain.aggregate.AggregateRoot
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.event.UserEvent
@@ -14,12 +15,13 @@ import com.restaurant.user.domain.vo.UserStatus
 import com.restaurant.user.domain.vo.UserType
 import com.restaurant.user.domain.vo.Username
 import java.time.Instant
-import com.fasterxml.jackson.annotation.JsonIgnore
+import kotlin.ConsistentCopyVisibility
 
 /**
  * User Aggregate Root (Rule 10)
  * 사용자와 관련된 모든 비즈니스 로직을 담당하는 Aggregate Root
  */
+@ConsistentCopyVisibility
 data class User private constructor(
     val id: UserId,
     val username: Username,
@@ -35,7 +37,6 @@ data class User private constructor(
     @JsonIgnore
     val version: Long = 0L,
 ) : AggregateRoot() {
-
     companion object {
         private const val MAX_ADDRESSES = 10
 
@@ -52,21 +53,23 @@ data class User private constructor(
             userType: UserType,
         ): User {
             val now = Instant.now()
-            val user = User(
-                id = id,
-                username = username,
-                email = email,
-                password = password,
-                name = name,
-                phoneNumber = phoneNumber,
-                userType = userType,
-                status = UserStatus.ACTIVE,
-                addresses = emptyList(),
-                createdAt = now,
-                updatedAt = now,
-                version = 0L,
-            )
+            val user =
+                User(
+                    id = id,
+                    username = username,
+                    email = email,
+                    password = password,
+                    name = name,
+                    phoneNumber = phoneNumber,
+                    userType = userType,
+                    status = UserStatus.ACTIVE,
+                    addresses = emptyList(),
+                    createdAt = now,
+                    updatedAt = now,
+                    version = 0L,
+                )
 
+            // addDomainEvent는 protected 메서드
             user.addDomainEvent(
                 UserEvent.Created(
                     username = username.value,
@@ -76,7 +79,7 @@ data class User private constructor(
                     userType = userType.name,
                     id = id,
                     occurredAt = now,
-                )
+                ),
             )
 
             return user
@@ -137,12 +140,13 @@ data class User private constructor(
             return this
         }
 
-        val updatedUser = copy(
-            name = name,
-            phoneNumber = phoneNumber,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                name = name,
+                phoneNumber = phoneNumber,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.ProfileUpdated(
@@ -150,7 +154,7 @@ data class User private constructor(
                 phoneNumber = phoneNumber?.value,
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -178,17 +182,18 @@ data class User private constructor(
         // Validate new password strength/format
         newPassword.validate()
 
-        val updatedUser = copy(
-            password = newPassword,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                password = newPassword,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.PasswordChanged(
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -210,27 +215,29 @@ data class User private constructor(
             throw UserDomainException.Address.DuplicateAddressId(address.addressId.value.toString())
         }
 
-        val updatedAddresses = if (address.isDefault) {
-            // 새 주소가 기본 주소라면, 기존 기본 주소들을 비기본으로 변경
-            val newAddresses = addresses.map { it.copy(isDefault = false) }.toMutableList()
-            newAddresses.add(address)
-            newAddresses.toList()
-        } else {
-            addresses + address
-        }
+        val updatedAddresses =
+            if (address.isDefault) {
+                // 새 주소가 기본 주소라면, 기존 기본 주소들을 비기본으로 변경
+                val newAddresses = addresses.map { it.copy(isDefault = false) }.toMutableList()
+                newAddresses.add(address)
+                newAddresses.toList()
+            } else {
+                addresses + address
+            }
 
-        val updatedUser = copy(
-            addresses = updatedAddresses,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                addresses = updatedAddresses,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.AddressAdded(
                 addressId = address.addressId,
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -254,20 +261,22 @@ data class User private constructor(
             throw UserDomainException.User.AlreadyWithdrawn()
         }
 
-        val existingAddress = addresses.find { it.addressId == addressId }
-            ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
+        val existingAddress =
+            addresses.find { it.addressId == addressId }
+                ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
 
-        val updatedAddress = existingAddress.copy(
-            name = name.value,
-            streetAddress = streetAddress,
-            detailAddress = detailAddress,
-            city = city,
-            state = state,
-            country = country,
-            zipCode = zipCode,
-            isDefault = isDefault,
-            updatedAt = Instant.now()
-        )
+        val updatedAddress =
+            existingAddress.copy(
+                name = name.value,
+                streetAddress = streetAddress,
+                detailAddress = detailAddress,
+                city = city,
+                state = state,
+                country = country,
+                zipCode = zipCode,
+                isDefault = isDefault,
+                updatedAt = Instant.now(),
+            )
 
         val updatedAddresses = addresses.map { if (it.addressId == addressId) updatedAddress else it }
 
@@ -275,11 +284,12 @@ data class User private constructor(
             throw UserDomainException.Address.MultipleDefaults()
         }
 
-        val updatedUser = copy(
-            addresses = updatedAddresses,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                addresses = updatedAddresses,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.AddressUpdated(
@@ -294,7 +304,7 @@ data class User private constructor(
                 zipCode = zipCode,
                 isDefault = isDefault,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -308,23 +318,25 @@ data class User private constructor(
             throw UserDomainException.User.AlreadyWithdrawn()
         }
 
-        val existingAddress = addresses.find { it.addressId == addressId }
-            ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
+        val existingAddress =
+            addresses.find { it.addressId == addressId }
+                ?: throw UserDomainException.Address.NotFound(addressId.value.toString())
 
         val updatedAddresses = addresses.filter { it.addressId != addressId }
 
-        val updatedUser = copy(
-            addresses = updatedAddresses,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                addresses = updatedAddresses,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.AddressDeleted(
                 addressId = addressId,
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -341,17 +353,18 @@ data class User private constructor(
             return this
         }
 
-        val updatedUser = copy(
-            status = UserStatus.INACTIVE,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                status = UserStatus.INACTIVE,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.Deactivated(
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -368,17 +381,18 @@ data class User private constructor(
             return this
         }
 
-        val updatedUser = copy(
-            status = UserStatus.ACTIVE,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                status = UserStatus.ACTIVE,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.Activated(
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser
@@ -392,17 +406,18 @@ data class User private constructor(
             return this
         }
 
-        val updatedUser = copy(
-            status = UserStatus.WITHDRAWN,
-            updatedAt = Instant.now(),
-            version = this.version + 1,
-        )
+        val updatedUser =
+            copy(
+                status = UserStatus.WITHDRAWN,
+                updatedAt = Instant.now(),
+                version = this.version + 1,
+            )
 
         updatedUser.addDomainEvent(
             UserEvent.Withdrawn(
                 id = id,
                 occurredAt = Instant.now(),
-            )
+            ),
         )
 
         return updatedUser

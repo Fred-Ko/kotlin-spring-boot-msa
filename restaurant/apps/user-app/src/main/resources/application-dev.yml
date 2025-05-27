@@ -29,6 +29,31 @@ spring:
       enabled: true
       path: /h2-console
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    admin:
+      auto-create: true
+      fail-fast: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer
+      properties:
+        auto.register.schemas: false
+        use.latest.version: false
+        latest.compatibility.strict: false
+        id.compatibility.strict: false
+    properties:
+      "[schema.registry.url]": http://localhost:8081
+    consumer:
+      group-id: user-service-dev-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
+      properties:
+        json.value.type: com.restaurant.user.domain.event.UserEvent
+        spring.json.trusted.packages: "*"
+        latest.compatibility.strict: false
+        id.compatibility.strict: false
+
 server:
   port: 8888
 
@@ -37,7 +62,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.restaurant: DEBUG
-    org.springdoc: DEBUG
+    org.springdoc: INFO
+    io.swagger.v3.core.converter: WARN
 
 springdoc:
   packagesToScan:
@@ -46,3 +72,8 @@ springdoc:
 app:
   problem:
     base-url: https://dev-api.restaurant.com/probs
+
+# Outbox Polling configuration (Enabled for dev with Kafka)
+outbox:
+  polling:
+    enabled: true

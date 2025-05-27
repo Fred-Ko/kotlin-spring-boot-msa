@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://restaurant.com/schemas/user-event.json",
+  "title": "UserEvent",
+  "description": "User domain events",
+  "type": "object",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "phoneNumber": { "type": ["string", "null"] },
+        "userType": { "type": "string" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "username", "email", "name", "userType", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.Created"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "name": { "type": "string" },
+        "phoneNumber": { "type": ["string", "null"] },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "name", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.ProfileUpdated"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.PasswordChanged"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "addressId": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "addressId", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.AddressAdded"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "addressId": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        },
+        "name": { "type": "string" },
+        "streetAddress": { "type": "string" },
+        "detailAddress": { "type": ["string", "null"] },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "country": { "type": "string" },
+        "zipCode": { "type": "string" },
+        "isDefault": { "type": "boolean" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "addressId", "name", "streetAddress", "city", "state", "country", "zipCode", "isDefault", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.AddressUpdated"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "addressId": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "addressId", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.AddressDeleted"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.Withdrawn"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.Deactivated"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.Activated"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string", "format": "uuid" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "aggregateId": { "type": "string" },
+        "aggregateType": { "type": "string", "const": "User" },
+        "id": { 
+          "type": "object",
+          "properties": {
+            "value": { "type": "string", "format": "uuid" }
+          }
+        }
+      },
+      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
+      "additionalProperties": false,
+      "title": "UserEvent.Deleted"
+    }
+  ]
+}

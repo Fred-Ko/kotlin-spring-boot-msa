@@ -3,6 +3,7 @@ package com.restaurant.outbox.application.handler
 import com.restaurant.outbox.application.dto.OutboxMessageRepository
 import com.restaurant.outbox.application.dto.OutboxMessageStatus
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -12,6 +13,11 @@ import org.springframework.stereotype.Component
  * Rule 80: 독립 모듈의 Application 레이어에 위치
  */
 @Component
+@ConditionalOnProperty(
+    name = ["outbox.polling.enabled"],
+    havingValue = "true",
+    matchIfMissing = false,
+)
 class OutboxMetricsHandler(
     private val outboxMessageRepository: OutboxMessageRepository,
 ) {

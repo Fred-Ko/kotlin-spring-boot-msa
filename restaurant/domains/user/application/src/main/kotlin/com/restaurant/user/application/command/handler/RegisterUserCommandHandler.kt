@@ -7,6 +7,7 @@ import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.Name
 import com.restaurant.user.domain.vo.Password
+import com.restaurant.user.domain.vo.PhoneNumber
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.domain.vo.UserType
 import com.restaurant.user.domain.vo.Username
@@ -25,6 +26,7 @@ class RegisterUserCommandHandler(
         val email = Email.of(command.email)
         val name = Name.of(command.name)
         val password = Password.of(passwordEncoder.encode(command.password))
+        val phoneNumberVo = command.phoneNumber?.let { PhoneNumber.of(it) }
         val user =
             User.create(
                 id = UserId.generate(),
@@ -32,7 +34,7 @@ class RegisterUserCommandHandler(
                 password = password,
                 email = email,
                 name = name,
-                phoneNumber = null,
+                phoneNumber = phoneNumberVo,
                 userType = UserType.CUSTOMER,
             )
         userRepository.save(user)

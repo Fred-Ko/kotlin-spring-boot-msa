@@ -2,6 +2,7 @@ package com.restaurant.outbox.application.handler
 
 import com.restaurant.outbox.application.usecase.ProcessOutboxEventsUseCase
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -11,6 +12,11 @@ import org.springframework.stereotype.Component
  * Rule 87: 동시성 제어를 위한 데이터베이스 수준 잠금 사용
  */
 @Component
+@ConditionalOnProperty(
+    name = ["outbox.polling.enabled"],
+    havingValue = "true",
+    matchIfMissing = false,
+)
 class OutboxPoller(
     private val processOutboxEventsUseCase: ProcessOutboxEventsUseCase,
 ) {

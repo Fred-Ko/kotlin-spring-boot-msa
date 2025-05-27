@@ -3,32 +3,6 @@ spring:
     name: user-service
   profiles:
     active: dev
-  cloud:
-    function:
-      definition: functionRouter
-      scan:
-        enabled: false
-    stream:
-      default-binder: kafka
-      kafka:
-        binder:
-          brokers: localhost:9092
-          auto-create-topics: true
-          auto-add-partitions: true
-      bindings:
-        outboxPoller-in-0:
-          destination: outbox-events
-          group: user-service-group
-          consumer:
-            use-native-encoding: true
-            configuration:
-              value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        outboxOutput-out-0:
-          destination: dynamicTopicPlaceholder
-          content-type: application/*+avro
-          producer:
-            key-serializer: org.apache.kafka.common.serialization.StringSerializer
-            value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
   flyway:
     enabled: false
   datasource:
@@ -54,16 +28,21 @@ spring:
       fail-fast: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer
+      properties:
+        auto.register.schemas: true
+        use.latest.version: true
+        latest.compatibility.strict: false
     properties:
       "[schema.registry.url]": http://localhost:8081
     consumer:
       group-id: user-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
       properties:
+        json.value.type: com.restaurant.user.domain.event.UserEvent
         spring.json.trusted.packages: "*"
-        spring.json.value.default.type: java.util.Map
+        latest.compatibility.strict: false
 
 server:
   port: 8090

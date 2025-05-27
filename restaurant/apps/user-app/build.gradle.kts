@@ -85,6 +85,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("io.confluent:kafka-avro-serializer:7.5.0")
+    implementation("io.confluent:kafka-json-schema-serializer:7.5.0")
     implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0")
 
     // SpringDoc OpenAPI

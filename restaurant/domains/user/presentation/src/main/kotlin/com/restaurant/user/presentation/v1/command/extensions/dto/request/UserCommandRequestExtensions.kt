@@ -23,6 +23,7 @@ fun RegisterUserRequestV1.toCommand(): RegisterUserCommand =
         password = this.password,
         name = this.name,
         username = this.username,
+        phoneNumber = this.phoneNumber,
     )
 
 fun LoginRequestV1.toCommand(): LoginCommand =
@@ -35,7 +36,7 @@ fun UpdateProfileRequestV1.toCommand(userId: UserId): UpdateProfileCommand =
     UpdateProfileCommand(
         userId = userId.value.toString(),
         name = this.name,
-        phoneNumber = null,
+        phoneNumber = this.phoneNumber,
     )
 
 fun ChangePasswordRequestV1.toCommand(userId: UserId): ChangePasswordCommand =

@@ -1,0 +1,15 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:com:example:jsonkafkademo:Project",
+  "properties" : {
+    "name" : {
+      "type" : "string"
+    },
+    "language" : {
+      "type" : "string"
+    },
+    "description" : {
+      "type" : "string"
+    }
+  }
+}

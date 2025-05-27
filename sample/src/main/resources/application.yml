@@ -1,0 +1,20 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    properties:
+      schema.registry.url: http://localhost:8081
+      auto.register.schemas: false
+    producer:
+      value-serializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer
+    consumer:
+      group-id: project-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        use.latest.version: true
+        auto.register.schemas: false
+        json.value.type: com.example.jsonkafkademo.Project
+  main:
+    allow-bean-definition-overriding: true
