@@ -1,30 +1,36 @@
-/**
- * build.gradle.kts for the root project.
- *
- * Configures plugins, dependency management, and global build settings.
- *
- * @author junoko
- */
-
 plugins {
-    // Only versions are declared here for subprojects
-    kotlin("jvm") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.plugin.spring") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.plugin.jpa") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.plugin.allopen") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0" apply false
-    id("org.springframework.boot") version "3.5.0" apply false
-    id("io.spring.dependency-management") version "1.1.7" apply false
+    kotlin("jvm") version "1.9.24" apply false
+    kotlin("plugin.spring") version "1.9.24" apply false
+    kotlin("plugin.serialization") version "1.9.24" apply false
+    id("org.springframework.boot") version "3.2.5" apply false
+    id("io.spring.dependency-management") version "1.1.4" apply false
+    id("com.github.imflog.kafka-schema-registry-gradle-plugin") version "2.0.0" apply false
 }
 
-// Force Kotlin versions to 2.1.0 for all configurations
+allprojects {
+    group = "com.example"
+    version = "1.0.0"
+
+    repositories {
+        mavenCentral()
+        maven { url = uri("https://packages.confluent.io/maven/") }
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
 subprojects {
-    configurations.all {
-        resolutionStrategy {
-            force("org.jetbrains.kotlin:kotlin-reflect:2.1.0")
-            force("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
-            force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.0")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
+    apply(plugin = "org.springframework.boot")
+    apply(plugin = "io.spring.dependency-management")
+    
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-Xjsr305=strict")
+            jvmTarget = "17"
         }
     }
+    
 }

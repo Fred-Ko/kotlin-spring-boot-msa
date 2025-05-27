@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
-@Entity
+@Entity(name = "AppUser")
 @Table(name = "app_user")
 data class User(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

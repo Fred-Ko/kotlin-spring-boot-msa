@@ -4,7 +4,15 @@ import com.restaurant.common.domain.aggregate.AggregateRoot
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.event.UserEvent
 import com.restaurant.user.domain.exception.UserDomainException
-import com.restaurant.user.domain.vo.*
+import com.restaurant.user.domain.vo.AddressId
+import com.restaurant.user.domain.vo.Email
+import com.restaurant.user.domain.vo.Name
+import com.restaurant.user.domain.vo.Password
+import com.restaurant.user.domain.vo.PhoneNumber
+import com.restaurant.user.domain.vo.UserId
+import com.restaurant.user.domain.vo.UserStatus
+import com.restaurant.user.domain.vo.UserType
+import com.restaurant.user.domain.vo.Username
 import java.time.Instant
 import com.fasterxml.jackson.annotation.JsonIgnore
 

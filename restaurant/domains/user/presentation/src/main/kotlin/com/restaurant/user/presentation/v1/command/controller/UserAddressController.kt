@@ -4,10 +4,13 @@ import com.restaurant.common.presentation.dto.response.CommandResultResponse
 import com.restaurant.user.application.command.usecase.RegisterAddressUseCase
 import com.restaurant.user.application.command.usecase.UpdateAddressUseCase
 import com.restaurant.user.application.command.usecase.DeleteAddressUseCase
-import com.restaurant.user.application.command.dto.*
+import com.restaurant.user.application.command.dto.RegisterAddressCommand
+import com.restaurant.user.application.command.dto.UpdateAddressCommand
+import com.restaurant.user.application.command.dto.DeleteAddressCommand
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
-import com.restaurant.user.presentation.v1.command.dto.request.*
+import com.restaurant.user.presentation.v1.command.dto.request.RegisterAddressRequestV1
+import com.restaurant.user.presentation.v1.command.dto.request.UpdateAddressRequestV1
 import com.restaurant.user.presentation.v1.command.extensions.dto.request.toCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
@@ -21,7 +24,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.util.UUID
 

@@ -34,6 +34,39 @@ spring:
         max.block.ms: 60000
         max.in.flight.requests.per.connection: 1
         allow.auto.create.topics: true
+  cloud:
+    stream:
+      function:
+        definition: outboxMessageProducer # 필요시 함수형 빈 이름
+      bindings:
+        # StreamBridge.send("outboxOutput-out-0", ...) 호출 시 사용될 바인딩
+        outboxOutput-out-0: # 이 이름은 StreamBridge에서 사용하는 바인딩 명칭과 일치해야 함
+          destination: dynamicDestination # 실제 토픽은 메시지 헤더나 라우팅 함수로 결정 가능, 또는 고정 토픽 사용
+          content-type: application/octet-stream # ByteArray 페이로드를 위함. Avro 컨텐츠 타입은 메시지 헤더에 명시
+          producer:
+            useNativeEncoding: true # KafkaProducer가 직접 직렬화하도록 함 (ByteArraySerializer)
+      kafka:
+        binder:
+          brokers: ${KAFKA_BROKERS:localhost:9092} # 환경 변수 또는 기본값 사용
+          producer-properties:
+            key.serializer: org.apache.kafka.common.serialization.StringSerializer
+            value.serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+            # Rule VII.1.3.1.4 및 KafkaOutboxProducerConfig의 안정성/성능 설정 참고하여 추가
+            enable.idempotence: true
+            acks: all
+            retries: 3
+            max.in.flight.requests.per.connection: 1
+            batch.size: 16384
+            linger.ms: 5
+            buffer.memory: 33554432
+            compression.type: lz4
+            delivery.timeout.ms: 120000
+            request.timeout.ms: 30000
+            max.block.ms: 60000
+        # Schema Registry는 Outbox 모듈이 직접 사용하지 않음 (ByteArray 전송)
+        # 만약 Spring Cloud Stream의 스키마 레지스트리 통합 기능을 메시지 헤더의 contentType을 통해 사용한다면 관련 설정 추가
+        # schema-registry-client:
+        #   endpoint: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
   flyway:
     enabled: true
     baseline-on-migrate: true

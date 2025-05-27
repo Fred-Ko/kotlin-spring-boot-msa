@@ -98,6 +98,7 @@ class DomainEventToOutboxMessageConverter {
         headers["eventType"] = domainEvent::class.simpleName ?: "UnknownEvent"
         headers["eventId"] = domainEvent.eventId.toString()
         headers["occurredAt"] = domainEvent.occurredAt.toString()
+        headers["contentType"] = "application/*+avro"
 
         return OutboxMessage(
             payload = payload,

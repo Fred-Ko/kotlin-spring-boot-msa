@@ -20,8 +20,8 @@ allOpen {
 
 dependencies {
     // Common 모듈 의존성 추가
-    implementation(project(":domains:common:domain"))
-    
+    // implementation(project(":domains:common:domain")) 
+    implementation("org.springframework.cloud:spring-cloud-starter-stream-kafka:4.1.2")
     implementation("org.springframework.boot:spring-boot-starter:3.5.0")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.0")
     implementation("org.springframework.kafka:spring-kafka:4.0.0-M2")

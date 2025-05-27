@@ -4,8 +4,7 @@ import com.restaurant.outbox.application.dto.OutboxMessage
 import com.restaurant.outbox.infrastructure.exception.OutboxException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.kafka.core.KafkaTemplate
-import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.cloud.stream.function.StreamBridge
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
@@ -18,8 +17,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class OutboxMessageSender(
-    @Qualifier("outboxKafkaTemplate")
-    private val kafkaTemplate: KafkaTemplate<String, ByteArray>,
+    private val streamBridge: StreamBridge,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -34,13 +32,20 @@ class OutboxMessageSender(
     fun processAndSendMessage(messageDto: OutboxMessage) {
         try {
             val kafkaMessage = createKafkaMessage(messageDto)
-            val sendResult = kafkaTemplate.send(kafkaMessage).get()
+
+            // StreamBridge를 사용하여 메시지 전송. 바인딩 이름은 application.yml에 정의된 이름과 일치해야 함.
+            // Rule 88, VII.1.3.1.4 (Spring Cloud Stream StreamBridge 사용 권장)
+            val success = streamBridge.send("outboxOutput-out-0", kafkaMessage)
+
+            if (!success) {
+                throw OutboxException.KafkaSendFailedException("Failed to send message via StreamBridge for OutboxMessage ID ${messageDto.id}")
+            }
 
             logger.info(
                 "Successfully sent message to Kafka. Topic: {}, Partition: {}, Offset: {}, MessageId: {}, AggregateId: {}",
                 messageDto.topic,
-                sendResult.recordMetadata.partition(),
-                sendResult.recordMetadata.offset(),
+                "N/A", // StreamBridge는 직접 파티션/오프셋 정보를 반환하지 않음
+                "N/A", // StreamBridge는 직접 파티션/오프셋 정보를 반환하지 않음
                 messageDto.id,
                 messageDto.aggregateId
             )
@@ -71,8 +76,13 @@ class OutboxMessageSender(
     private fun createKafkaMessage(messageDto: OutboxMessage): Message<ByteArray> {
         return MessageBuilder
             .withPayload(messageDto.payload) // Rule 88: Avro 바이너리 페이로드 사용
-            .setHeader(KafkaHeaders.TOPIC, messageDto.topic)
-            .setHeader(KafkaHeaders.KEY, messageDto.aggregateId) // Rule 88: Aggregate ID를 메시지 키로 사용
+            // StreamBridge는 send 메서드의 첫 번째 인자로 바인딩 이름을 사용하므로, TOPIC 헤더는 필요 없음
+            // 만약 동적 토픽 라우팅이 필요하다면, 'spring.cloud.stream.kafka.bindings.<binding-name>.destination'을 설정하고
+            // 메시지 헤더에 'spring.cloud.stream.sendto.destination'을 추가하여 동적으로 토픽을 지정할 수 있음.
+            // 여기서는 application.yml에서 destination을 'dynamicDestination'으로 설정하고,
+            // 실제 토픽은 메시지 헤더에 'spring.cloud.stream.sendto.destination'으로 명시
+            .setHeader("spring.cloud.stream.sendto.destination", messageDto.topic)
+            .setHeader("key", messageDto.aggregateId) // Rule 88: Aggregate ID를 메시지 키로 사용
             .also { builder ->
                 // Rule 88: Outbox Event Entity에 저장된 헤더 정보 포함
                 messageDto.headers.forEach { (key, value) ->

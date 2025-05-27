@@ -3,10 +3,32 @@ spring:
     name: user-service
   profiles:
     active: dev
-  # Config Server 연결 제거 (시작 지연 원인일 수 있음)
-  # config:
-  #   import: optional:configserver:http://localhost:8888
-  # Flyway 비활성화
+  cloud:
+    function:
+      definition: functionRouter
+      scan:
+        enabled: false
+    stream:
+      default-binder: kafka
+      kafka:
+        binder:
+          brokers: localhost:9092
+          auto-create-topics: true
+          auto-add-partitions: true
+      bindings:
+        outboxPoller-in-0:
+          destination: outbox-events
+          group: user-service-group
+          consumer:
+            use-native-encoding: true
+            configuration:
+              value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        outboxOutput-out-0:
+          destination: dynamicTopicPlaceholder
+          content-type: application/*+avro
+          producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
   flyway:
     enabled: false
   datasource:
@@ -26,29 +48,22 @@ spring:
       enabled: true
       path: /h2-console
   kafka:
-    bootstrap-servers: localhost:9092 # Kafka cluster - Rule VII.2.18
+    bootstrap-servers: localhost:9092
     admin:
       auto-create: true
       fail-fast: true
     producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer # Rule VII.1.3.1.4, Rule VII.2.19
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer # Rule VII.1.3.1.4, Rule VII.2.17
-      properties:
-        schema.registry.url: http://localhost:8081 # Use localhost and mapped port for host execution
-        allow.auto.create.topics: true
-        # Add other producer properties as needed, e.g., acks, retries, batch.size
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      "[schema.registry.url]": http://localhost:8081
     consumer:
-      group-id: user-app-group # Specify a meaningful consumer group ID
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer # Rule VII.2.17
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer # Rule VII.1.3.2.3, Rule VII.2.17
+      group-id: user-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        schema.registry.url: http://localhost:8081 # Use localhost and mapped port for host execution
-        specific.avro.reader: false # Rule VII.1.3.2.3
-        # Add other consumer properties as needed, e.g., auto.offset.reset, enable.auto.commit
-    # Add listener container factory properties if needed for explicit configuration
-    # listener:
-    #   ack-mode: RECORD
-    #   concurrency: 3
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: java.util.Map
 
 server:
   port: 8090

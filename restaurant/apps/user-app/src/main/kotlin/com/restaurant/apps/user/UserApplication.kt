@@ -18,10 +18,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication(
-    exclude = [
-        SecurityAutoConfiguration::class,
-        UserDetailsServiceAutoConfiguration::class,
-        ManagementWebSecurityAutoConfiguration::class,
+    excludeName = [
+        "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration",
+        "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration",
+        "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration",
+        "org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration\$PlainFunctionScanConfiguration",
     ],
 )
 // Scan components in config, user.presentation, user.application, user.infra, outbox

@@ -1,0 +1,48 @@
+{
+  "type" : "record",
+  "name" : "OrderEvent",
+  "namespace" : "com.example.events",
+  "fields" : [ {
+    "name" : "eventType",
+    "type" : {
+      "type" : "enum",
+      "name" : "OrderEventType",
+      "symbols" : [ "ORDER_CREATED", "ORDER_UPDATED", "ORDER_COMPLETED", "ORDER_CANCELLED" ]
+    }
+  }, {
+    "name" : "id",
+    "type" : "string"
+  }, {
+    "name" : "items",
+    "type" : {
+      "type" : "array",
+      "items" : {
+        "type" : "record",
+        "name" : "OrderItem",
+        "fields" : [ {
+          "name" : "price",
+          "type" : "double"
+        }, {
+          "name" : "productId",
+          "type" : "string"
+        }, {
+          "name" : "quantity",
+          "type" : "int"
+        } ]
+      },
+      "java-class" : "java.util.List"
+    }
+  }, {
+    "name" : "orderId",
+    "type" : "string"
+  }, {
+    "name" : "timestamp",
+    "type" : "long"
+  }, {
+    "name" : "totalAmount",
+    "type" : "double"
+  }, {
+    "name" : "userId",
+    "type" : "string"
+  } ]
+}

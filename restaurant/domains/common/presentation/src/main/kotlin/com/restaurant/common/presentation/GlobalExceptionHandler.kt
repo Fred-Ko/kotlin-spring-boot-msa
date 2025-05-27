@@ -113,13 +113,30 @@ class GlobalExceptionHandler {
     @ExceptionHandler(OutboxException::class)
     fun handleOutboxException(ex: OutboxException, request: HttpServletRequest): ProblemDetail {
         log.error(ex) { "Outbox exception occurred, errorCode=${ex.errorCode.code}" }
-        val problemDetail = ProblemDetail.forStatus(determineHttpStatusFromErrorCode(ex.errorCode))
+        // OutboxErrorCodes를 기반으로 HttpStatus 직접 결정
+        val httpStatus = determineHttpStatusFromOutboxErrorCode(ex.errorCode) 
+        val problemDetail = ProblemDetail.forStatus(httpStatus)
         problemDetail.title = ex.errorCode.message
         problemDetail.detail = ex.message ?: ""
         problemDetail.setProperty("errorCode", ex.errorCode.code)
         setCommonProblemProperties(problemDetail, request)
         return problemDetail
     }
+
+    // 새로운 private 함수 추가 (OutboxErrorCodes 전용 HttpStatus 결정 로직)
+    private fun determineHttpStatusFromOutboxErrorCode(errorCode: OutboxErrorCodes): HttpStatus =
+        when (errorCode) {
+            OutboxErrorCodes.MESSAGE_NOT_FOUND -> HttpStatus.NOT_FOUND
+            OutboxErrorCodes.KAFKA_SEND_FAILED, 
+            OutboxErrorCodes.MESSAGE_PROCESSING_FAILED,
+            OutboxErrorCodes.DATABASE_ERROR,
+            OutboxErrorCodes.SERIALIZATION_ERROR,
+            OutboxErrorCodes.DATABASE_OPERATION_FAILED,
+            OutboxErrorCodes.UNEXPECTED_INFRA_ERROR
+                -> HttpStatus.INTERNAL_SERVER_ERROR
+            OutboxErrorCodes.MAX_RETRIES_EXCEEDED -> HttpStatus.SERVICE_UNAVAILABLE
+            OutboxErrorCodes.INVALID_MESSAGE_STATUS -> HttpStatus.BAD_REQUEST
+        }
 
     @ExceptionHandler(Exception::class)
     fun handleAllExceptions(ex: Exception, request: HttpServletRequest): ProblemDetail {
@@ -158,11 +175,7 @@ class GlobalExceptionHandler {
                 UserApplicationErrorCode.BAD_REQUEST, UserApplicationErrorCode.INVALID_INPUT -> HttpStatus.BAD_REQUEST
                 else -> HttpStatus.INTERNAL_SERVER_ERROR
             }
-            is OutboxErrorCodes -> when (errorCode) {
-                OutboxErrorCodes.MESSAGE_NOT_FOUND -> HttpStatus.NOT_FOUND
-                OutboxErrorCodes.KAFKA_SEND_FAILED, OutboxErrorCodes.MESSAGE_PROCESSING_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR
-                else -> HttpStatus.INTERNAL_SERVER_ERROR
-            }
+            // OutboxErrorCodes는 별도의 determineHttpStatusFromOutboxErrorCode 함수에서 처리
             else -> HttpStatus.INTERNAL_SERVER_ERROR
         }
 

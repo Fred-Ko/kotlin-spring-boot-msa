@@ -19,7 +19,7 @@ dependencyManagement {
 dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:4.0.0-beta-2")
     implementation("org.springframework.security:spring-security-crypto:6.5.0")
-    api(project(":domains:common:domain"))
+    implementation(project(":domains:common:domain"))
     implementation(project(":domains:user:domain"))
     implementation(project(":domains:common:application"))
     implementation(project(":independent:outbox"))
