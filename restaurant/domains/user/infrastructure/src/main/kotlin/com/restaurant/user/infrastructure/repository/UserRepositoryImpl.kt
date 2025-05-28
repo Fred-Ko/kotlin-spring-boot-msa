@@ -2,6 +2,7 @@ package com.restaurant.user.infrastructure.repository
 
 import com.restaurant.outbox.application.dto.OutboxMessageRepository
 import com.restaurant.user.domain.aggregate.User
+import com.restaurant.user.domain.event.UserEvent
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
 import com.restaurant.user.domain.vo.UserId
@@ -38,10 +39,14 @@ class UserRepositoryImpl(
         // 도메인 이벤트 처리
         val domainEvents = user.getDomainEvents()
         if (domainEvents.isNotEmpty()) {
-            val outboxMessages = domainEvents.map { domainEventToOutboxMessageConverter.convert(it) }
+            val outboxMessages = domainEvents.map { 
+                domainEventToOutboxMessageConverter.convert(it as UserEvent)
+            }
+
             if (outboxMessages.isNotEmpty()) {
                 outboxMessageRepository.saveAll(outboxMessages)
             }
+
             user.clearDomainEvents()
         }
 

@@ -85,7 +85,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("io.confluent:kafka-avro-serializer:7.5.0")
-    implementation("io.confluent:kafka-json-schema-serializer:7.5.0")
+    // implementation("io.confluent:kafka-json-schema-serializer:7.5.0")
     implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0")
 
     // SpringDoc OpenAPI
@@ -100,6 +100,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
     // Swagger Annotations
     implementation("io.swagger.core.v3:swagger-annotations-jakarta:2.2.31")

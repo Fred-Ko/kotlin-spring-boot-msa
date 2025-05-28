@@ -30,6 +30,12 @@ dependencies {
     implementation("io.confluent:kafka-json-schema-serializer:7.5.1")
     implementation("io.confluent:kafka-schema-registry-client:7.5.1")
     
+    // kotlinx.serialization for UserEvent (de)serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+
+    // UserEvent 정의를 참조하기 위한 의존성 (제거)
+    // implementation(project(":domains:user:domain"))
+    
     // Database migration
     implementation("org.flywaydb:flyway-core:11.8.2")
     

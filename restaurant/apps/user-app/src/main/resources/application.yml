@@ -16,10 +16,12 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
   h2:
     console:
       enabled: true
+
+      password: test
       path: /h2-console
   kafka:
     bootstrap-servers: localhost:9092
@@ -28,21 +30,14 @@ spring:
       fail-fast: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
-        auto.register.schemas: true
-        use.latest.version: true
-        latest.compatibility.strict: false
-    properties:
-      "[schema.registry.url]": http://localhost:8081
+        acks: all
     consumer:
       group-id: user-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer
-      properties:
-        json.value.type: com.restaurant.user.domain.event.UserEvent
-        spring.json.trusted.packages: "*"
-        latest.compatibility.strict: false
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
 
 server:
   port: 8090
@@ -76,9 +71,9 @@ outbox:
 logging:
   level:
     com.restaurant: INFO
-    org.hibernate.SQL: DEBUG
-    org.springdoc: DEBUG
-    io.swagger: DEBUG
+    org.hibernate.SQL: INFO
+    org.springdoc: INFO
+    io.swagger: INFO
 # --- Staging/Production Profile (별도 파일 또는 외부 설정 관리) ---
 # 민감 정보(DB 비밀번호, API 키 등)는 환경 변수 또는 Secret Manager 사용
 # 예시:

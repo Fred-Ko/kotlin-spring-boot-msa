@@ -24,8 +24,8 @@ class OutboxMessageSender(
 
     /**
      * Outbox 메시지를 처리하고 Kafka로 전송합니다.
-     * Rule 88: JSON 페이로드를 KafkaTemplate을 통해 메시지 브로커로 전송
-     * Rule VII.1.3.4: KafkaJsonSchemaSerializer를 통한 JSON 직렬화 및 Schema Registry 활용
+     * Rule 88: 객체를 KafkaTemplate을 통해 메시지 브로커로 전송
+     * Rule VII.1.3.4: KafkaJsonSchemaSerializer를 통한 JSON 직렬화 및 Schema Registry 활용 (이제 StringSerializer 사용)
      * 
      * @param messageDto 전송할 Outbox 메시지
      * @throws OutboxException.KafkaSendFailedException Kafka 전송 실패 시
@@ -84,19 +84,39 @@ class OutboxMessageSender(
      * OutboxMessage를 Kafka ProducerRecord로 변환합니다.
      * Rule 88: Outbox Event Entity에 저장된 정보를 메시지 헤더에 포함
      * Rule VII.2.6: 토픽명 및 헤더 정보 설정
-     * Rule VII.1.3.4: JSON 페이로드 및 Schema Registry 헤더 처리
+     * Rule VII.1.3.4: 객체 페이로드 및 Schema Registry 헤더 처리
      * 
      * @param messageDto 변환할 Outbox 메시지
      * @return Kafka 전송용 ProducerRecord
      */
     private fun createProducerRecord(messageDto: OutboxMessage): ProducerRecord<String, String> {
-        // JSON 페이로드를 String으로 변환 (ByteArray -> String)
-        val jsonPayload = String(messageDto.payload)
+        // OutboxMessage.payload는 이미 kotlinx.serialization으로 직렬화된 JSON 문자열.
+        // 이를 그대로 Kafka에 전송 (StringSerializer 사용).
+        val payloadAsString: String = when (val p = messageDto.payload) {
+            is String -> p
+            is ByteArray -> {
+                // ByteArray의 경우, UTF-8 문자열로 변환. (CI/CD에서 스키마 검증 시 이 변환을 고려해야 함)
+                logger.warn(
+                    "ByteArray payload received. Converting to UTF-8 string. OutboxMessage ID: {}",
+                    messageDto.id
+                )
+                p.toString(Charsets.UTF_8)
+            }
+            else -> {
+                logger.error(
+                    "Unsupported payload type: {}. Expected String or ByteArray. OutboxMessage ID: {}",
+                    p::class.simpleName, messageDto.id
+                )
+                throw OutboxException.KafkaSendFailedException(
+                    message = "Unsupported payload type for OutboxMessage ID ${messageDto.id}: ${p::class.simpleName}"
+                )
+            }
+        }
 
         val record = ProducerRecord<String, String>(
             messageDto.topic,
             messageDto.aggregateId, // Rule 88: Aggregate ID를 메시지 키로 사용
-            jsonPayload
+            payloadAsString // JSON 문자열 직접 전송
         )
 
         // Rule 88: Outbox Event Entity에 저장된 헤더 정보 포함

@@ -1,33 +1,20 @@
 package com.restaurant.user.infrastructure.mapper
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.jsontype.DefaultBaseTypeLimitingValidator
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.restaurant.common.domain.event.DomainEvent
+// import com.fasterxml.jackson.databind.ObjectMapper // ObjectMapper import 제거
 import com.restaurant.outbox.application.dto.OutboxMessage
 import com.restaurant.user.domain.event.UserEvent
+import kotlinx.serialization.encodeToString // kotlinx.serialization import 추가
+import kotlinx.serialization.json.Json // kotlinx.serialization import 추가
 import org.springframework.stereotype.Component
 
 @Component
-class DomainEventToOutboxMessageConverter {
-    private val objectMapper: ObjectMapper =
-        ObjectMapper()
-            .registerModules(KotlinModule.Builder().build(), JavaTimeModule())
-            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            .apply {
-                // Jackson 다형성 타입 처리를 위한 설정
-                activateDefaultTyping(
-                    DefaultBaseTypeLimitingValidator(),
-                    ObjectMapper.DefaultTyping.NON_FINAL,
-                )
-            }
+class DomainEventToOutboxMessageConverter(
+    private val kotlinJson: Json, // 주입받은 Json Bean 사용
+) {
 
-    fun convert(domainEvent: DomainEvent): OutboxMessage {
-        // DomainEvent를 JSON으로 직렬화
-        val payload = objectMapper.writeValueAsBytes(domainEvent)
-
+    fun convert(domainEvent: UserEvent): OutboxMessage {
+        // UserEvent 객체를 JSON 문자열로 직렬화 (주입받은 kotlinJson 사용)
+        val payloadAsJsonString = kotlinJson.encodeToString(domainEvent)
         val topic = determineTopic(domainEvent)
 
         val headers = mutableMapOf<String, String>()
@@ -36,11 +23,11 @@ class DomainEventToOutboxMessageConverter {
         headers["eventType"] = determineEventType(domainEvent)
         headers["eventId"] = domainEvent.eventId.toString()
         headers["occurredAt"] = domainEvent.occurredAt.toString()
-        headers["contentType"] = "application/json"
-        headers["schemaVersion"] = "v1"
+        headers["contentType"] = "application/json" // KafkaJsonSchemaSerializer가 처리하므로 유지
+        headers["schemaVersion"] = "v1" // 필요시 스키마 버전 명시
 
         return OutboxMessage(
-            payload = payload,
+            payload = payloadAsJsonString, // JSON 문자열로 직렬화된 payload 전달
             topic = topic,
             headers = headers,
             aggregateType = domainEvent.aggregateType,
@@ -49,7 +36,20 @@ class DomainEventToOutboxMessageConverter {
         )
     }
 
-    private fun determineTopic(event: DomainEvent): String {
+    // convertToSchemaCompatibleJson 메서드 제거 또는 주석 처리
+    /*
+    private fun convertToSchemaCompatibleJson(event: UserEvent): String {
+        ...
+    }
+    */
+
+    // determineEventTypeForSchema 메서드 제거 또는 주석 처리
+    /*
+    private fun determineEventTypeForSchema(event: UserEvent): String =
+        ...
+    */
+
+    private fun determineTopic(event: UserEvent): String {
         val environment = System.getenv("APP_ENV") ?: "dev"
         var domain = "unknown"
         var entityName = "unknown"
@@ -61,11 +61,13 @@ class DomainEventToOutboxMessageConverter {
                 domain = "user"
                 entityName = "user"
             }
+            // is OtherDomainEvent -> { ... }
+            else -> throw IllegalArgumentException("Unsupported event type: ${event::class.simpleName}")
         }
         return "$environment.$domain.$eventTypeCategory.$entityName.$version"
     }
 
-    private fun determineEventType(event: DomainEvent): String =
+    private fun determineEventType(event: UserEvent): String =
         when (event) {
             is UserEvent.Created -> "UserEvent.Created"
             is UserEvent.ProfileUpdated -> "UserEvent.ProfileUpdated"

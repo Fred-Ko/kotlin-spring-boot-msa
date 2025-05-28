@@ -25,9 +25,3 @@ plugins {
     id("com.github.imflog.kafka-schema-registry-gradle-plugin") version "2.3.2" apply false
 }
 
-subprojects {
-    repositories {
-        mavenCentral()
-        maven("https://packages.confluent.io/maven/")
-    }
-}

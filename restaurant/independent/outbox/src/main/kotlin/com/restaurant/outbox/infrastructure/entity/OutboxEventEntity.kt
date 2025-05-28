@@ -29,8 +29,8 @@ class OutboxEventEntity(
     @Column(nullable = false)
     val topic: String,
     @Lob
-    @Column(nullable = false)
-    val payload: ByteArray,
+    @Column(nullable = false, columnDefinition = "text")
+    val payload: String,
     @Convert(converter = StringMapConverter::class)
     @Column(nullable = false, columnDefinition = "text")
     val headers: Map<String, String>,
@@ -60,7 +60,7 @@ class OutboxEventEntity(
         if (aggregateType != other.aggregateType) return false
         if (aggregateId != other.aggregateId) return false
         if (topic != other.topic) return false
-        if (!payload.contentEquals(other.payload)) return false
+        if (payload != other.payload) return false
         if (headers != other.headers) return false
         if (status != other.status) return false
         if (createdAt != other.createdAt) return false
@@ -78,7 +78,7 @@ class OutboxEventEntity(
         result = 31 * result + aggregateType.hashCode()
         result = 31 * result + aggregateId.hashCode()
         result = 31 * result + topic.hashCode()
-        result = 31 * result + payload.contentHashCode()
+        result = 31 * result + payload.hashCode()
         result = 31 * result + headers.hashCode()
         result = 31 * result + status.hashCode()
         result = 31 * result + createdAt.hashCode()

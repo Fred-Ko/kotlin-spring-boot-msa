@@ -1,222 +1,141 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://restaurant.com/schemas/user-event.json",
-  "title": "UserEvent",
-  "description": "User domain events",
-  "type": "object",
-  "oneOf": [
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "username": { "type": "string" },
-        "email": { "type": "string" },
-        "name": { "type": "string" },
-        "phoneNumber": { "type": ["string", "null"] },
-        "userType": { "type": "string" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "username", "email", "name", "userType", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.Created"
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://example.com/schemas/user_event.json",
+  "title" : "UserEvent",
+  "description" : "User domain events schema supporting all UserEvent types with kotlinx.serialization compatibility",
+  "type" : "object",
+  "properties" : {
+    "type" : {
+      "type" : "string",
+      "description" : "Event type discriminator for kotlinx.serialization",
+      "enum" : [ "Created", "Deleted", "PasswordChanged", "ProfileUpdated", "AddressAdded", "AddressUpdated", "AddressDeleted", "Withdrawn", "Deactivated", "Activated" ]
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "name": { "type": "string" },
-        "phoneNumber": { "type": ["string", "null"] },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "name", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.ProfileUpdated"
+    "id" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "User ID (UUID format)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.PasswordChanged"
+    "eventId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Event ID (UUID format)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "addressId": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "addressId", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.AddressAdded"
+    "occurredAt" : {
+      "type" : "string",
+      "format" : "date-time",
+      "description" : "ISO-8601 timestamp when the event occurred"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "addressId": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        },
-        "name": { "type": "string" },
-        "streetAddress": { "type": "string" },
-        "detailAddress": { "type": ["string", "null"] },
-        "city": { "type": "string" },
-        "state": { "type": "string" },
-        "country": { "type": "string" },
-        "zipCode": { "type": "string" },
-        "isDefault": { "type": "boolean" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "addressId", "name", "streetAddress", "city", "state", "country", "zipCode", "isDefault", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.AddressUpdated"
+    "username" : {
+      "type" : "string",
+      "description" : "Username (for Created events)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "addressId": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "addressId", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.AddressDeleted"
+    "email" : {
+      "type" : "string",
+      "format" : "email",
+      "description" : "Email address (for Created events)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.Withdrawn"
+    "name" : {
+      "type" : "string",
+      "description" : "User name (for Created, ProfileUpdated, AddressUpdated events)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.Deactivated"
+    "phoneNumber" : {
+      "type" : [ "string", "null" ],
+      "description" : "Phone number (optional, for Created and ProfileUpdated events)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.Activated"
+    "userType" : {
+      "type" : "string",
+      "description" : "User type (for Created events)"
     },
-    {
-      "type": "object",
-      "properties": {
-        "eventId": { "type": "string", "format": "uuid" },
-        "occurredAt": { "type": "string", "format": "date-time" },
-        "aggregateId": { "type": "string" },
-        "aggregateType": { "type": "string", "const": "User" },
-        "id": { 
-          "type": "object",
-          "properties": {
-            "value": { "type": "string", "format": "uuid" }
-          }
-        }
-      },
-      "required": ["eventId", "occurredAt", "aggregateId", "aggregateType", "id"],
-      "additionalProperties": false,
-      "title": "UserEvent.Deleted"
+    "addressId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Address ID (UUID format, for address-related events)"
+    },
+    "streetAddress" : {
+      "type" : "string",
+      "description" : "Street address (for AddressUpdated events)"
+    },
+    "detailAddress" : {
+      "type" : [ "string", "null" ],
+      "description" : "Detail address (optional, for AddressUpdated events)"
+    },
+    "city" : {
+      "type" : "string",
+      "description" : "City (for AddressUpdated events)"
+    },
+    "state" : {
+      "type" : "string",
+      "description" : "State (for AddressUpdated events)"
+    },
+    "country" : {
+      "type" : "string",
+      "description" : "Country (for AddressUpdated events)"
+    },
+    "zipCode" : {
+      "type" : "string",
+      "description" : "ZIP code (for AddressUpdated events)"
+    },
+    "isDefault" : {
+      "type" : "boolean",
+      "description" : "Whether this is the default address (for AddressUpdated events)"
     }
-  ]
+  },
+  "required" : [ "type", "id", "eventId", "occurredAt" ],
+  "allOf" : [ {
+    "if" : {
+      "properties" : {
+        "type" : {
+          "const" : "Created"
+        }
+      }
+    },
+    "then" : {
+      "required" : [ "username", "email", "name", "userType" ]
+    }
+  }, {
+    "if" : {
+      "properties" : {
+        "type" : {
+          "const" : "ProfileUpdated"
+        }
+      }
+    },
+    "then" : {
+      "required" : [ "name" ]
+    }
+  }, {
+    "if" : {
+      "properties" : {
+        "type" : {
+          "const" : "AddressAdded"
+        }
+      }
+    },
+    "then" : {
+      "required" : [ "addressId" ]
+    }
+  }, {
+    "if" : {
+      "properties" : {
+        "type" : {
+          "const" : "AddressUpdated"
+        }
+      }
+    },
+    "then" : {
+      "required" : [ "addressId", "name", "streetAddress", "city", "state", "country", "zipCode", "isDefault" ]
+    }
+  }, {
+    "if" : {
+      "properties" : {
+        "type" : {
+          "const" : "AddressDeleted"
+        }
+      }
+    },
+    "then" : {
+      "required" : [ "addressId" ]
+    }
+  } ],
+  "additionalProperties" : false
 }

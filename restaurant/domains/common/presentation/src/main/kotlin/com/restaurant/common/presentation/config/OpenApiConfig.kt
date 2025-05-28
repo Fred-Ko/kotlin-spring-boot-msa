@@ -56,7 +56,7 @@ class OpenApiConfig {
             ).servers(
                 listOf(
                     Server()
-                        .url("http://localhost:8888")
+                        .url("http://localhost:8090")
                         .description("개발 서버 (Local)"),
                     Server()
                         .url("https://dev-api.restaurant.com")
