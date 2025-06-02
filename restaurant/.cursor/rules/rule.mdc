@@ -1,7 +1,7 @@
 ---
-description: 
-globs: 
-alwaysApply: false
+description:
+globs:
+alwaysApply: true
 ---
 ## 프로젝트 기술 문서 규칙
 

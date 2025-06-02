@@ -179,9 +179,6 @@ data class User private constructor(
             return this
         }
 
-        // Validate new password strength/format
-        newPassword.validate()
-
         val updatedUser =
             copy(
                 password = newPassword,

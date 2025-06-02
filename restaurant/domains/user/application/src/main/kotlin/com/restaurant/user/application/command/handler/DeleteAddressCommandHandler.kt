@@ -1,7 +1,7 @@
 package com.restaurant.user.application.command.handler
 
+import com.restaurant.user.application.command.IDeleteAddressCommandHandler
 import com.restaurant.user.application.command.dto.DeleteAddressCommand
-import com.restaurant.user.application.command.usecase.DeleteAddressUseCase
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class DeleteAddressCommandHandler(
     private val userRepository: UserRepository,
-) : DeleteAddressUseCase {
+) : IDeleteAddressCommandHandler {
     @Transactional
     override fun deleteAddress(command: DeleteAddressCommand) {
         try {

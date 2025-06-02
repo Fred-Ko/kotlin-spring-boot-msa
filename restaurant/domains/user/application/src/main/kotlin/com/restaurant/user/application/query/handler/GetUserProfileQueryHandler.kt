@@ -3,17 +3,17 @@ package com.restaurant.user.application.query.handler
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
 import com.restaurant.user.application.query.dto.UserProfileDto
-import com.restaurant.user.application.query.usecase.GetUserProfileQuery
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.UserId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import com.restaurant.user.application.query.GetUserProfileQueryHandler as GetUserProfileQueryHandlerInterface
 
 @Service
 class GetUserProfileQueryHandler(
     private val userRepository: UserRepository,
-) : GetUserProfileQuery {
+) : GetUserProfileQueryHandlerInterface {
     @Transactional(readOnly = true)
     override fun getUserProfile(query: GetUserProfileByIdQuery): UserProfileDto {
         try {

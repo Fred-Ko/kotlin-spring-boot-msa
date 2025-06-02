@@ -1,7 +1,7 @@
 package com.restaurant.user.application.command.handler
 
+import com.restaurant.user.application.command.IChangePasswordCommandHandler
 import com.restaurant.user.application.command.dto.ChangePasswordCommand
-import com.restaurant.user.application.command.usecase.ChangePasswordUseCase
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class ChangePasswordCommandHandler(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-) : ChangePasswordUseCase {
+) : IChangePasswordCommandHandler {
     @Transactional
     override fun changePassword(command: ChangePasswordCommand) {
         try {

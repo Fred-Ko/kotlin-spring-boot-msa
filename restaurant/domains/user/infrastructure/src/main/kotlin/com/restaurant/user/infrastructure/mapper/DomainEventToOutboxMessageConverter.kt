@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component
 class DomainEventToOutboxMessageConverter(
     private val kotlinJson: Json, // 주입받은 Json Bean 사용
 ) {
-
     fun convert(domainEvent: UserEvent): OutboxMessage {
         // UserEvent 객체를 JSON 문자열로 직렬화 (주입받은 kotlinJson 사용)
         val payloadAsJsonString = kotlinJson.encodeToString(domainEvent)
@@ -36,34 +35,13 @@ class DomainEventToOutboxMessageConverter(
         )
     }
 
-    // convertToSchemaCompatibleJson 메서드 제거 또는 주석 처리
-    /*
-    private fun convertToSchemaCompatibleJson(event: UserEvent): String {
-        ...
-    }
-    */
-
-    // determineEventTypeForSchema 메서드 제거 또는 주석 처리
-    /*
-    private fun determineEventTypeForSchema(event: UserEvent): String =
-        ...
-    */
-
     private fun determineTopic(event: UserEvent): String {
         val environment = System.getenv("APP_ENV") ?: "dev"
-        var domain = "unknown"
-        var entityName = "unknown"
+        val domain = "user"
+        val entityName = "user"
         val eventTypeCategory = "domain-event"
         val version = "v1"
 
-        when (event) {
-            is UserEvent -> {
-                domain = "user"
-                entityName = "user"
-            }
-            // is OtherDomainEvent -> { ... }
-            else -> throw IllegalArgumentException("Unsupported event type: ${event::class.simpleName}")
-        }
         return "$environment.$domain.$eventTypeCategory.$entityName.$version"
     }
 

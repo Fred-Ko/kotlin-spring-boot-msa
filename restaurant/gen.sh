@@ -71,14 +71,6 @@ echo -e "\n\n==============================================================" >>$
 echo -e " Gradle Build Completed: $(date '+%Y-%m-%d %H:%M:%S') " >>$OUTPUT_FILE
 echo -e "==============================================================\n" >>$OUTPUT_FILE
 
-# Run ktlintFormat
-./gradlew ktlintFormat 2>&1 | tee -a $OUTPUT_FILE
-
-# Add another section separator
-echo -e "\n\n==============================================================" >>$OUTPUT_FILE
-echo -e " ktlintFormat Completed: $(date '+%Y-%m-%d %H:%M:%S') " >>$OUTPUT_FILE
-echo -e "==============================================================\n" >>$OUTPUT_FILE
-
 echo -e "\n==============================================================" >>$OUTPUT_FILE
 echo -e "\n# Project Structure\n" >>$OUTPUT_FILE
 tree domains independent apps gradle \

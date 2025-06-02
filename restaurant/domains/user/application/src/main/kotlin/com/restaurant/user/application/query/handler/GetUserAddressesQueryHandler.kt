@@ -7,12 +7,12 @@ import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.UserId
 import org.springframework.stereotype.Service
-import com.restaurant.user.application.query.usecase.GetUserAddressesQuery as GetUserAddressesUseCase
+import com.restaurant.user.application.query.GetUserAddressesQueryHandler as GetUserAddressesQueryHandlerInterface
 
 @Service
 class GetUserAddressesQueryHandler(
     private val userRepository: UserRepository,
-) : GetUserAddressesUseCase {
+) : GetUserAddressesQueryHandlerInterface {
     override fun getUserAddresses(query: GetUserAddressesQuery): List<AddressDto> {
         try {
             val userId = UserId.ofString(query.userId)

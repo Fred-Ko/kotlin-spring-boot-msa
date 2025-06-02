@@ -58,7 +58,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    
+
     // Spring Cloud Stream with Function
     implementation("org.springframework.cloud:spring-cloud-stream")
     implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
@@ -76,14 +76,9 @@ dependencies {
     // Resilience4j
     implementation("io.github.resilience4j:resilience4j-kotlin")
     implementation("io.github.resilience4j:resilience4j-spring-boot3")
-    implementation("io.github.microutils:kotlin-logging-jvm:4.0.0-beta-2")
 
     // UUID Generator
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
-
-    // Spring Cloud Stream with Kafka - Using Spring Cloud Stream Kafka Binder
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
-    implementation("org.springframework.kafka:spring-kafka")
     implementation("io.confluent:kafka-avro-serializer:7.5.0")
     // implementation("io.confluent:kafka-json-schema-serializer:7.5.0")
     implementation("com.github.avro-kotlin.avro4k:avro4k-core:2.3.0")

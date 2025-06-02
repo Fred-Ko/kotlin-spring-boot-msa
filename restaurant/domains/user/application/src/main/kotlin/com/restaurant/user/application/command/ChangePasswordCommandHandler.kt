@@ -1,7 +1,7 @@
-package com.restaurant.user.application.command.usecase
+package com.restaurant.user.application.command
 
 import com.restaurant.user.application.command.dto.ChangePasswordCommand
 
-interface ChangePasswordUseCase {
+interface IChangePasswordCommandHandler {
     fun changePassword(command: ChangePasswordCommand)
 }

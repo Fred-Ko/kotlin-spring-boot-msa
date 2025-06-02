@@ -13,9 +13,6 @@ value class Password private constructor(
         if (value.isBlank()) {
             throw UserDomainException.Validation.InvalidPasswordFormat("Encoded password cannot be blank.")
         }
-    }
-
-    fun validate() {
         if (value.length < 8) {
             throw UserDomainException.Validation.InvalidPasswordFormat("Password must be at least 8 characters long.")
         }
@@ -38,7 +35,7 @@ value class Password private constructor(
     companion object {
         /**
          * Creates a Password VO from a pre-encoded password string.
-         * Basic validation is done in the init block.
+         * All validation is performed during object creation.
          */
         fun of(encodedPassword: String): Password = Password(encodedPassword)
     }

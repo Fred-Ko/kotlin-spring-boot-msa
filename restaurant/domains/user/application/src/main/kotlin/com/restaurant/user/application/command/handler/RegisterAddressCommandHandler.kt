@@ -1,7 +1,7 @@
 package com.restaurant.user.application.command.handler
 
+import com.restaurant.user.application.command.IRegisterAddressCommandHandler
 import com.restaurant.user.application.command.dto.RegisterAddressCommand
-import com.restaurant.user.application.command.usecase.RegisterAddressUseCase
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.exception.UserDomainException
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class RegisterAddressCommandHandler(
     private val userRepository: UserRepository,
-) : RegisterAddressUseCase {
+) : IRegisterAddressCommandHandler {
     @Transactional
     override fun registerAddress(command: RegisterAddressCommand): AddressId {
         try {

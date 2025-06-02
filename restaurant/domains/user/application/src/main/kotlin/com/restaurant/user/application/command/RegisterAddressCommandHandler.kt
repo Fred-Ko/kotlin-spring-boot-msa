@@ -1,11 +1,11 @@
-package com.restaurant.user.application.command.usecase
+package com.restaurant.user.application.command
 
 import com.restaurant.user.application.command.dto.RegisterAddressCommand
 import com.restaurant.user.domain.vo.AddressId
 
 /**
- * 주소 등록 유스케이스 인터페이스 (Rule App-Struct)
+ * 주소 등록 커맨드 핸들러 인터페이스
  */
-interface RegisterAddressUseCase {
+interface IRegisterAddressCommandHandler {
     fun registerAddress(command: RegisterAddressCommand): AddressId
 }

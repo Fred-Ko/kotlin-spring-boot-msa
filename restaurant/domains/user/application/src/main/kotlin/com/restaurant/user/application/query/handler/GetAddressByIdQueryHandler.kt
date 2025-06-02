@@ -8,12 +8,12 @@ import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import org.springframework.stereotype.Service
-import com.restaurant.user.application.query.usecase.GetAddressByIdQuery as GetAddressByIdUseCase
+import com.restaurant.user.application.query.GetAddressByIdQueryHandler as GetAddressByIdQueryHandlerInterface
 
 @Service
 class GetAddressByIdQueryHandler(
     private val userRepository: UserRepository,
-) : GetAddressByIdUseCase {
+) : GetAddressByIdQueryHandlerInterface {
     override fun getAddressById(query: GetAddressByIdQuery): AddressDto {
         try {
             val userId = UserId.ofString(query.userId)
