@@ -1,7 +1,7 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.command.ILoginCommandHandler
 import com.restaurant.user.application.command.dto.LoginCommand
+import com.restaurant.user.application.command.usecase.LoginUseCase
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.application.query.dto.LoginResult
 import com.restaurant.user.domain.exception.UserDomainException
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class LoginCommandHandler(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-) : ILoginCommandHandler {
+) : LoginUseCase {
     @Transactional(readOnly = true)
     override fun login(command: LoginCommand): LoginResult {
         try {

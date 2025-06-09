@@ -1,11 +1,11 @@
-package com.restaurant.user.application.query
+package com.restaurant.user.application.query.usecase
 
 import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
 import com.restaurant.user.application.query.dto.UserProfileDto
 
 /**
- * 사용자 프로필 조회 쿼리 핸들러 인터페이스
+ * 사용자 프로필 조회 유스케이스 인터페이스
  */
-interface GetUserProfileQueryHandler {
+interface GetUserProfileUseCase {
     fun getUserProfile(query: GetUserProfileByIdQuery): UserProfileDto
 }

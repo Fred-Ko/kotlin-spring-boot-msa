@@ -1,7 +1,7 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.command.IUpdateProfileCommandHandler
 import com.restaurant.user.application.command.dto.UpdateProfileCommand
+import com.restaurant.user.application.command.usecase.UpdateProfileUseCase
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class UpdateProfileCommandHandler(
     private val userRepository: UserRepository,
-) : IUpdateProfileCommandHandler {
+) : UpdateProfileUseCase {
     @Transactional
     override fun updateProfile(command: UpdateProfileCommand) {
         try {

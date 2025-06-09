@@ -1,10 +1,10 @@
 package com.restaurant.user.presentation.v1.command.controller
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.command.IDeleteAddressCommandHandler
-import com.restaurant.user.application.command.IRegisterAddressCommandHandler
-import com.restaurant.user.application.command.IUpdateAddressCommandHandler
 import com.restaurant.user.application.command.dto.DeleteAddressCommand
+import com.restaurant.user.application.command.usecase.DeleteAddressUseCase
+import com.restaurant.user.application.command.usecase.RegisterAddressUseCase
+import com.restaurant.user.application.command.usecase.UpdateAddressUseCase
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.command.dto.request.RegisterAddressRequestV1
@@ -36,11 +36,11 @@ private val log = KotlinLogging.logger {}
 
 @Tag(name = "User Address Commands", description = "사용자 주소 관리 API (생성/수정/삭제)")
 @RestController
-@RequestMapping("/api/v1/users/{userId}/addresses")
+@RequestMapping("/api/v1/users")
 class UserAddressController(
-    private val registerAddressCommandHandler: IRegisterAddressCommandHandler,
-    private val updateAddressCommandHandler: IUpdateAddressCommandHandler,
-    private val deleteAddressCommandHandler: IDeleteAddressCommandHandler,
+    private val registerAddressCommandHandler: RegisterAddressUseCase,
+    private val updateAddressCommandHandler: UpdateAddressUseCase,
+    private val deleteAddressCommandHandler: DeleteAddressUseCase,
 ) {
     @PostMapping
     @Operation(

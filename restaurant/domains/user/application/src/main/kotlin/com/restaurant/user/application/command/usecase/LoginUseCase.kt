@@ -1,11 +1,11 @@
-package com.restaurant.user.application.command
+package com.restaurant.user.application.command.usecase
 
 import com.restaurant.user.application.command.dto.LoginCommand
 import com.restaurant.user.application.query.dto.LoginResult
 
 /**
- * 로그인 커맨드 핸들러 인터페이스
+ * 로그인 유스케이스 인터페이스
  */
-interface ILoginCommandHandler {
+interface LoginUseCase {
     fun login(command: LoginCommand): LoginResult
 }

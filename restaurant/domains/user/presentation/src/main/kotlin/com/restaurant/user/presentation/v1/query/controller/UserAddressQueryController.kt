@@ -1,9 +1,9 @@
 package com.restaurant.user.presentation.v1.query.controller
 
-import com.restaurant.user.application.query.GetAddressByIdQueryHandler
-import com.restaurant.user.application.query.GetUserAddressesQueryHandler
 import com.restaurant.user.application.query.dto.GetAddressByIdQuery
 import com.restaurant.user.application.query.dto.GetUserAddressesQuery
+import com.restaurant.user.application.query.usecase.GetAddressByIdUseCase
+import com.restaurant.user.application.query.usecase.GetUserAddressesUseCase
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.query.dto.response.AddressDetailResponseV1
@@ -31,13 +31,13 @@ import java.util.UUID
 private val log = KotlinLogging.logger {}
 
 @RestController
-@RequestMapping("/api/v1/users/{userId}/addresses")
+@RequestMapping("/api/v1/users")
 @Tag(name = "User Address Queries", description = "사용자 주소 조회 API")
 class UserAddressQueryController(
-    private val getUserAddressesQueryHandler: GetUserAddressesQueryHandler,
-    private val getAddressByIdQueryHandler: GetAddressByIdQueryHandler,
+    private val getUserAddressesQueryHandler: GetUserAddressesUseCase,
+    private val getAddressByIdQueryHandler: GetAddressByIdUseCase,
 ) {
-    @GetMapping
+    @GetMapping("/{userId}/addresses")
     @Operation(
         summary = "사용자 주소 목록 조회",
         description = "특정 사용자의 모든 주소를 조회합니다.",
@@ -90,7 +90,7 @@ class UserAddressQueryController(
         return ResponseEntity.ok(responseList)
     }
 
-    @GetMapping("/{addressId}")
+    @GetMapping("/{userId}/addresses/{addressId}")
     @Operation(
         summary = "특정 주소 상세 조회",
         description = "사용자의 특정 주소 상세 정보를 조회합니다.",

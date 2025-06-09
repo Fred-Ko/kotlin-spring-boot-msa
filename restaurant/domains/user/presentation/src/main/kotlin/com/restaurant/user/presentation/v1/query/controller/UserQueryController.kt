@@ -1,7 +1,7 @@
 package com.restaurant.user.presentation.v1.query.controller
 
-import com.restaurant.user.application.query.GetUserProfileQueryHandler
 import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
+import com.restaurant.user.application.query.usecase.GetUserProfileUseCase
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.query.dto.response.UserProfileResponseV1
 import com.restaurant.user.presentation.v1.query.extensions.dto.response.toResponseV1
@@ -28,7 +28,7 @@ private val log = KotlinLogging.logger {}
 @RequestMapping("/api/v1/users")
 @Tag(name = "User Queries", description = "사용자 정보 조회 API")
 class UserQueryController(
-    private val getUserProfileQueryHandler: GetUserProfileQueryHandler,
+    private val getUserProfileQueryHandler: GetUserProfileUseCase,
 ) {
     @GetMapping("/{userId}/profile")
     @Operation(

@@ -3,17 +3,17 @@ package com.restaurant.user.application.query.handler
 import com.restaurant.user.application.exception.UserApplicationException
 import com.restaurant.user.application.query.dto.AddressDto
 import com.restaurant.user.application.query.dto.GetAddressByIdQuery
+import com.restaurant.user.application.query.usecase.GetAddressByIdUseCase
 import com.restaurant.user.domain.exception.UserDomainException
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import org.springframework.stereotype.Service
-import com.restaurant.user.application.query.GetAddressByIdQueryHandler as GetAddressByIdQueryHandlerInterface
 
 @Service
 class GetAddressByIdQueryHandler(
     private val userRepository: UserRepository,
-) : GetAddressByIdQueryHandlerInterface {
+) : GetAddressByIdUseCase {
     override fun getAddressById(query: GetAddressByIdQuery): AddressDto {
         try {
             val userId = UserId.ofString(query.userId)

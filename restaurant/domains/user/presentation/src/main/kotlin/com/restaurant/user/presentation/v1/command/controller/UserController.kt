@@ -1,11 +1,11 @@
 package com.restaurant.user.presentation.v1.command.controller
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.command.IChangePasswordCommandHandler
-import com.restaurant.user.application.command.IDeleteUserCommandHandler
-import com.restaurant.user.application.command.ILoginCommandHandler
-import com.restaurant.user.application.command.IRegisterUserCommandHandler
-import com.restaurant.user.application.command.IUpdateProfileCommandHandler
+import com.restaurant.user.application.command.usecase.ChangePasswordUseCase
+import com.restaurant.user.application.command.usecase.DeleteUserUseCase
+import com.restaurant.user.application.command.usecase.LoginUseCase
+import com.restaurant.user.application.command.usecase.RegisterUserUseCase
+import com.restaurant.user.application.command.usecase.UpdateProfileUseCase
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.command.dto.request.ChangePasswordRequestV1
 import com.restaurant.user.presentation.v1.command.dto.request.DeleteUserRequestV1
@@ -43,11 +43,11 @@ private val log = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/v1/users")
 class UserController(
-    private val registerUserCommandHandler: IRegisterUserCommandHandler,
-    private val loginCommandHandler: ILoginCommandHandler,
-    private val updateProfileCommandHandler: IUpdateProfileCommandHandler,
-    private val changePasswordCommandHandler: IChangePasswordCommandHandler,
-    private val deleteUserCommandHandler: IDeleteUserCommandHandler,
+    private val registerUserCommandHandler: RegisterUserUseCase,
+    private val loginCommandHandler: LoginUseCase,
+    private val updateProfileCommandHandler: UpdateProfileUseCase,
+    private val changePasswordCommandHandler: ChangePasswordUseCase,
+    private val deleteUserCommandHandler: DeleteUserUseCase,
 ) {
     @PostMapping("/register")
     @Operation(

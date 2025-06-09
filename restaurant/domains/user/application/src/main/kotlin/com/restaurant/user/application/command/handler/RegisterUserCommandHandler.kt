@@ -1,7 +1,7 @@
 package com.restaurant.user.application.command.handler
 
-import com.restaurant.user.application.command.IRegisterUserCommandHandler
 import com.restaurant.user.application.command.dto.RegisterUserCommand
+import com.restaurant.user.application.command.usecase.RegisterUserUseCase
 import com.restaurant.user.domain.aggregate.User
 import com.restaurant.user.domain.repository.UserRepository
 import com.restaurant.user.domain.vo.Email
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 class RegisterUserCommandHandler(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-) : IRegisterUserCommandHandler {
+) : RegisterUserUseCase {
     @Transactional
     override fun register(command: RegisterUserCommand): UserId {
         val username = Username.of(command.username)
