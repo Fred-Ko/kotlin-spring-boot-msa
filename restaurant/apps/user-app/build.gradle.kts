@@ -7,8 +7,6 @@ plugins {
     id("io.spring.dependency-management")
 }
 
-extra["springCloudVersion"] = "2023.0.1" // Spring Cloud 2023.0.1 is compatible with Spring Boot 3.2.x
-
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -37,12 +35,6 @@ configurations.all {
     // Previously excluded but needed for StreamBridge
 }
 
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
-}
-
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
@@ -59,11 +51,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-    // Spring Cloud Stream with Function
-    implementation("org.springframework.cloud:spring-cloud-stream")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka-streams")
-    implementation("org.springframework.cloud:spring-cloud-function-context")
+    // Kafka
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -74,8 +62,8 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
 
     // Resilience4j
-    implementation("io.github.resilience4j:resilience4j-kotlin")
-    implementation("io.github.resilience4j:resilience4j-spring-boot3")
+    implementation("io.github.resilience4j:resilience4j-kotlin:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
 
     // UUID Generator
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")

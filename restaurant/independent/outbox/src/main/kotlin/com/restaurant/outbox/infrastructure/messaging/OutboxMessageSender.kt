@@ -9,6 +9,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
+import org.springframework.beans.factory.annotation.Qualifier
 
 /**
  * Outbox 메시지 전송 컴포넌트
@@ -18,7 +19,7 @@ import java.util.concurrent.CompletableFuture
  */
 @Component
 class OutboxMessageSender(
-    private val kafkaTemplate: KafkaTemplate<String, String>,
+    @Qualifier("outboxKafkaTemplate") private val kafkaTemplate: KafkaTemplate<String, String>,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 

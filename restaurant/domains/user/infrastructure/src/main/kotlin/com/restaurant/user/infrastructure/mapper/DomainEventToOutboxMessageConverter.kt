@@ -39,7 +39,7 @@ class DomainEventToOutboxMessageConverter(
         val environment = System.getenv("APP_ENV") ?: "dev"
         val domain = "user"
         val entityName = "user"
-        val eventTypeCategory = "domain-event"
+        val eventTypeCategory = "events"
         val version = "v1"
 
         return "$environment.$domain.$eventTypeCategory.$entityName.$version"
