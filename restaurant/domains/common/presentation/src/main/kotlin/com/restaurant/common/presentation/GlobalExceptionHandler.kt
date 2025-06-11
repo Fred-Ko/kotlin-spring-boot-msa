@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.net.URI
 import java.time.Instant
 
@@ -23,6 +24,33 @@ private val log = KotlinLogging.logger {}
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFoundException(
+        ex: NoResourceFoundException,
+        request: HttpServletRequest,
+    ): ProblemDetail {
+        if (request.requestURI.contains("favicon.ico") ||
+            request.requestURI.contains(".css") ||
+            request.requestURI.contains(".js") ||
+            request.requestURI.contains(".png") ||
+            request.requestURI.contains(".jpg") ||
+            request.requestURI.contains(".gif")
+        ) {
+            log.debug { "Static resource not found: ${request.requestURI}" }
+        } else {
+            val errorCode = CommonSystemErrorCode.RESOURCE_NOT_FOUND
+            log.warn { "Resource not found, errorCode=${errorCode.code}, uri=${request.requestURI}" }
+        }
+
+        val errorCode = CommonSystemErrorCode.RESOURCE_NOT_FOUND
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND)
+        problemDetail.title = "Resource Not Found"
+        problemDetail.detail = "The requested resource '${request.requestURI}' was not found."
+        problemDetail.setProperty("errorCode", errorCode.code)
+        setCommonProblemProperties(problemDetail, request)
+        return problemDetail
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleMethodArgumentNotValidException(
         ex: MethodArgumentNotValidException,
@@ -134,7 +162,6 @@ class GlobalExceptionHandler {
         request: HttpServletRequest,
     ): ProblemDetail {
         log.error(ex) { "Outbox exception occurred, errorCode=${ex.errorCode.code}" }
-        // OutboxErrorCodes를 기반으로 HttpStatus 직접 결정
         val httpStatus = determineHttpStatusFromOutboxErrorCode(ex.errorCode)
         val problemDetail = ProblemDetail.forStatus(httpStatus)
         problemDetail.title = ex.errorCode.message
@@ -144,7 +171,6 @@ class GlobalExceptionHandler {
         return problemDetail
     }
 
-    // 새로운 private 함수 추가 (OutboxErrorCodes 전용 HttpStatus 결정 로직)
     private fun determineHttpStatusFromOutboxErrorCode(errorCode: OutboxErrorCodes): HttpStatus =
         when (errorCode) {
             OutboxErrorCodes.MESSAGE_NOT_FOUND -> HttpStatus.NOT_FOUND
@@ -188,7 +214,6 @@ class GlobalExceptionHandler {
                     else -> HttpStatus.INTERNAL_SERVER_ERROR
                 }
 
-            // OutboxErrorCodes는 별도의 determineHttpStatusFromOutboxErrorCode 함수에서 처리
             else -> HttpStatus.INTERNAL_SERVER_ERROR
         }
 

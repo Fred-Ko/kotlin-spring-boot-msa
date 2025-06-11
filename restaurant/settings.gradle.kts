@@ -10,12 +10,9 @@ import org.gradle.api.initialization.resolve.RepositoriesMode
 
 rootProject.name = "restaurant"
 
-pluginManagement {
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
+include(
+    "domains:account:presentation"
+)
 
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
@@ -41,8 +38,15 @@ include(":domains:user:application")
 include(":domains:user:infrastructure")
 include(":domains:user:presentation")
 
+// Account modules
+include(":domains:account:domain")
+include(":domains:account:application")
+include(":domains:account:infrastructure")
+include(":domains:account:presentation")
+
 // Independent modules
 include(":independent:outbox")
 
 // Application modules
 include(":apps:user-app")
+include(":apps:account-app")
