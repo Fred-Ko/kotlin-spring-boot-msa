@@ -36,8 +36,6 @@ class UpdateAddressCommandHandler(
                 )
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid ID format.", iae)
         } catch (e: Exception) {

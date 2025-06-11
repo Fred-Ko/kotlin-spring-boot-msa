@@ -3,7 +3,6 @@ plugins {
     kotlin("jvm") version "2.1.0"
     kotlin("plugin.spring") version "2.1.0"
     id("io.spring.dependency-management")
-    id("org.springframework.boot") version "3.5.0"
 }
 
 java {
@@ -54,7 +53,4 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 tasks.jar {
     enabled = true
-}
-tasks.bootJar {
-    enabled = false
 }

@@ -37,8 +37,6 @@ class LoginCommandHandler(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
             )
-        } catch (de: UserDomainException.User.InvalidCredentials) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid email or password format.", iae)
         } catch (e: Exception) {

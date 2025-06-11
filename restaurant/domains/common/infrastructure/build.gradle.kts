@@ -5,12 +5,7 @@ plugins {
     kotlin("plugin.jpa") version "2.1.0" // For JPA Entities
     kotlin("plugin.allopen") version "2.1.0" // For JPA Entities
     kotlin("plugin.serialization") version "2.1.0"
-    id("org.springframework.boot")
     id("io.spring.dependency-management")
-}
-
-tasks.named("bootJar") {
-    enabled = false
 }
 
 java {

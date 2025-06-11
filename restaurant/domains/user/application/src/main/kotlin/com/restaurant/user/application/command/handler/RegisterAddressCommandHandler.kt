@@ -38,8 +38,6 @@ class RegisterAddressCommandHandler(
             userRepository.save(updatedUser)
 
             return updatedUser.addresses.first { it.addressId == address.addressId }.addressId
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid user ID format.", iae)
         } catch (e: Exception) {

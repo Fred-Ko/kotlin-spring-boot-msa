@@ -28,8 +28,6 @@ class ChangePasswordCommandHandler(
             val updatedUser = user.changePassword(currentPassword, newPassword)
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid password data format: ${iae.message}", iae)
         } catch (e: Exception) {

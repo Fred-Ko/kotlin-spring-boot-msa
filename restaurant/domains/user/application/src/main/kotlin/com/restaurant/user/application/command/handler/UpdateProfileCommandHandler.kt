@@ -27,8 +27,6 @@ class UpdateProfileCommandHandler(
             val updatedUser = user.updateProfile(name, phoneNumber)
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid input format.", iae)
         } catch (e: Exception) {

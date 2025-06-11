@@ -28,6 +28,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 @ComponentScan(
     basePackages = [
         "com.restaurant.common.presentation",
+        "com.restaurant.common.infrastructure.config",
         "com.restaurant.user.presentation",
         "com.restaurant.user.application",
         "com.restaurant.user.infrastructure",

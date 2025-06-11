@@ -10,7 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
 
 @Configuration
-class KafkaProducerConfig {
+open class KafkaProducerConfig {
     @Value("\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
 
@@ -18,7 +18,7 @@ class KafkaProducerConfig {
     private lateinit var producerAcks: String
 
     @Bean
-    fun stringProducerFactory(): ProducerFactory<String, String> {
+    open fun stringProducerFactory(): ProducerFactory<String, String> {
         val configProps: MutableMap<String, Any> = HashMap()
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
@@ -28,5 +28,5 @@ class KafkaProducerConfig {
     }
 
     @Bean
-    fun stringKafkaTemplate(): KafkaTemplate<String, String> = KafkaTemplate(stringProducerFactory())
+    open fun stringKafkaTemplate(): KafkaTemplate<String, String> = KafkaTemplate(stringProducerFactory())
 }

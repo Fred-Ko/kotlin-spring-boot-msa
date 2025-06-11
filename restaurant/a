@@ -326,7 +326,7 @@
 
 ##### 2.2.9. AggregateRoot 이벤트 관리
 
-18. **AggregateRoot 이벤트 관리**: `AggregateRoot` 베이스 클래스는 발생한 `DomainEvent` 객체들을 저장하기 위한 컬렉션(예: `private val domainEvents: MutableList<DomainEvent> = mutableListOf()`)을 내부에 가져야 하며, 이벤트를 추가하는 `addDomainEvent(event: DomainEvent)`, 읽기 전용 목록을 노출하는 `fun getDomainEvents(): List<DomainEvent>`, 이벤트 목록을 초기화하는 `fun clearDomainEvents()` 메서드를 제공해야 한다. **`addDomainEvent(event: DomainEvent)` 메서드는 `internal` 가시성을 가져야 하며, Aggregate의 상태 변경 메서드나 `create` 팩토리 함수 내에서만 호출되어야 한다.** Immutable Aggregate의 상태 변경 메서드는 변경된 Aggregate의 *새로운 인스턴스*를 반환한다. 이 새로운 인스턴스는 해당 변경으로 인해 발생한 이벤트를 자신의 내부 이벤트 목록에 포함해야 한다. `create` 팩토리 함수도 초기 상태 변경에 대한 `DomainEvent`를 생성하여 `addDomainEvent()`를 호출한다. Repository 구현체는 애그리거트 저장 전 최종 Aggregate 인스턴스의 `getDomainEvents()`로 이벤트를 수집하고 Rule 85에 따라 Outbox 저장을 위한 변환 및 저장을 위임한다. 저장 성공 후 `clearDomainEvents()`를 호출한다.
+18. **AggregateRoot 이벤트 관리**: `AggregateRoot` 베이스 클래스는 발생한 `DomainEvent` 객체들을 저장하기 위한 컬렉션(예: `private val domainEvents: MutableList<DomainEvent> = mutableListOf()`)을 내부에 가져야 하며, 이벤트를 추가하는 `addDomainEvent(event: DomainEvent)`, 읽기 전용 목록을 노출하는 `fun getDomainEvents(): List<DomainEvent>`, 이벤트 목록을 초기화하는 `fun clearDomainEvents()` 메서드를 제공해야 한다. **`addDomainEvent(event: DomainEvent)` 메서드는 `protected` 가시성을 가져야 하며, Aggregate의 상태 변경 메서드나 `create` 팩토리 함수 내에서만 호출되어야 한다.** Immutable Aggregate의 상태 변경 메서드는 변경된 Aggregate의 *새로운 인스턴스*를 반환한다. 이 새로운 인스턴스는 해당 변경으로 인해 발생한 이벤트를 자신의 내부 이벤트 목록에 포함해야 한다. `create` 팩토리 함수도 초기 상태 변경에 대한 `DomainEvent`를 생성하여 `addDomainEvent()`를 호출한다. Repository 구현체는 애그리거트 저장 전 최종 Aggregate 인스턴스의 `getDomainEvents()`로 이벤트를 수집하고 Rule 85에 따라 Outbox 저장을 위한 변환 및 저장을 위임한다. 저장 성공 후 `clearDomainEvents()`를 호출한다.
     *   Aggregate 내 상태 변경 메서드 (Immutable) 예시:
         *   `fun changeName(newName: String): User` 와 같은 메서드는 `this.copy(...)`를 사용하여 새로운 인스턴스를 생성한다.
         *   상태 변경에 따른 `DomainEvent` (예: `UserEvent.NameChanged`)를 생성하여 새로운 인스턴스의 `addDomainEvent()`를 호출한다.
@@ -724,45 +724,82 @@
 > Task :domains:common:application:compileKotlin
 > Task :domains:common:application:compileJava NO-SOURCE
 > Task :domains:common:application:classes UP-TO-DATE
-> Task :domains:common:application:jar
-> Task :domains:common:infrastructure:compileKotlin
-> Task :domains:common:infrastructure:compileJava NO-SOURCE
-> Task :domains:common:infrastructure:classes UP-TO-DATE
-> Task :domains:common:infrastructure:jar
 > Task :independent:outbox:compileKotlin
 > Task :independent:outbox:compileJava NO-SOURCE
 > Task :independent:outbox:classes
 > Task :independent:outbox:jar
+> Task :domains:common:application:jar
 > Task :independent:outbox:assemble
 > Task :independent:outbox:build
+> Task :domains:common:infrastructure:compileKotlin
+> Task :domains:common:infrastructure:compileJava NO-SOURCE
+> Task :domains:common:infrastructure:classes UP-TO-DATE
+> Task :domains:common:infrastructure:jar
+> Task :domains:common:presentation:compileKotlin
+> Task :domains:common:presentation:compileJava NO-SOURCE
+> Task :domains:common:presentation:classes UP-TO-DATE
+> Task :domains:common:presentation:jar
 > Task :domains:user:domain:compileKotlin
 > Task :domains:user:domain:compileJava NO-SOURCE
 > Task :domains:user:domain:classes UP-TO-DATE
 > Task :domains:user:domain:jar
 > Task :domains:user:domain:assemble
 > Task :domains:user:domain:build
-> Task :domains:common:presentation:compileKotlin
-> Task :domains:common:presentation:compileJava NO-SOURCE
-> Task :domains:common:presentation:classes UP-TO-DATE
-> Task :domains:common:presentation:jar
 > Task :domains:user:application:compileKotlin
 > Task :domains:user:application:compileJava NO-SOURCE
 > Task :domains:user:application:classes UP-TO-DATE
 > Task :domains:user:application:jar
 > Task :domains:user:application:assemble
 > Task :domains:user:application:build
+> Task :domains:user:presentation:compileKotlin
+> Task :domains:user:presentation:compileJava NO-SOURCE
+> Task :domains:user:presentation:classes UP-TO-DATE
 > Task :domains:user:infrastructure:compileKotlin
+> Task :domains:user:presentation:jar
 > Task :domains:user:infrastructure:compileJava NO-SOURCE
-> Task :domains:user:infrastructure:generateJsonSchema UP-TO-DATE
+
+> Task :domains:user:infrastructure:generateJsonSchema
+Generating individual JSON schemas for events in package: com.restaurant.user.domain.event
+Output directory: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas
+Compiled classes directory: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/build/classes/kotlin/main
+Domain classes directory: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/domain/build/classes/kotlin/main (exists: true)
+Common domain classes directory: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/common/domain/build/classes/kotlin/main (exists: true)
+Runtime classpath size: 153
+Total valid classpaths: 156
+Loading UserEvent class...
+Successfully loaded UserEvent class: com.restaurant.user.domain.event.UserEvent
+Testing kotlinx.serialization compatibility for UserEvent...
+Found 10 sealed subclasses in UserEvent
+  - Activated
+  - AddressAdded
+  - AddressDeleted
+  - AddressUpdated
+  - Created
+  - Deactivated
+  - Deleted
+  - PasswordChanged
+  - ProfileUpdated
+  - Withdrawn
+kotlinx.serialization compatibility test passed for UserEvent
+Generating individual JSON schemas for UserEvent...
+Generating individual kotlinx.serialization-based schemas for UserEvent...
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_created.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_deleted.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_password_changed.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_profile_updated.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_address_added.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_address_updated.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_address_deleted.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_withdrawn.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_deactivated.json
+Generated individual schema: /home/junoko/Code/kotlin-spring-boot-msa/restaurant/domains/user/infrastructure/src/main/resources/schemas/user_event_activated.json
+Successfully generated individual schemas for UserEvent
+
 > Task :domains:user:infrastructure:processResources
 > Task :domains:user:infrastructure:classes
 > Task :domains:user:infrastructure:jar
 > Task :domains:user:infrastructure:assemble
 > Task :domains:user:infrastructure:build
-> Task :domains:user:presentation:compileKotlin
-> Task :domains:user:presentation:compileJava NO-SOURCE
-> Task :domains:user:presentation:classes UP-TO-DATE
-> Task :domains:user:presentation:jar
 > Task :domains:user:presentation:assemble
 > Task :domains:user:presentation:build
 > Task :apps:user-app:compileKotlin
@@ -774,12 +811,20 @@
 > Task :apps:user-app:assemble
 > Task :apps:user-app:build
 
-BUILD SUCCESSFUL in 12s
-29 actionable tasks: 25 executed, 4 up-to-date
+[Incubating] Problems report is available at: file:///home/junoko/Code/kotlin-spring-boot-msa/restaurant/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 2s
+29 actionable tasks: 26 executed, 3 up-to-date
 
 
 ==============================================================
- Gradle Build Completed: 2025-06-11 21:01:56 
+ Gradle Build Completed: 2025-06-12 02:37:54 
 ==============================================================
 
 
@@ -798,14 +843,9 @@ domains
 │   │                   └── restaurant
 │   │                       └── common
 │   │                           └── application
-│   │                               ├── dto
-│   │                               │   ├── Command.kt
-│   │                               │   └── Query.kt
-│   │                               ├── exception
-│   │                               │   └── ApplicationException.kt
-│   │                               └── usecase
-│   │                                   ├── CommandUseCase.kt
-│   │                                   └── QueryUseCase.kt
+│   │                               ├── error
+│   │                               └── exception
+│   │                                   └── ApplicationException.kt
 │   ├── domain
 │   │   ├── build.gradle.kts
 │   │   └── src
@@ -828,13 +868,24 @@ domains
 │   │   ├── build.gradle.kts
 │   │   └── src
 │   │       └── main
-│   │           └── kotlin
-│   │               └── com
-│   │                   └── restaurant
-│   │                       └── common
-│   │                           └── infrastructure
-│   │                               └── entity
-│   │                                   └── BaseEntity.kt
+│   │           ├── kotlin
+│   │           │   └── com
+│   │           │       └── restaurant
+│   │           │           └── common
+│   │           │               └── infrastructure
+│   │           │                   ├── config
+│   │           │                   │   └── PasswordEncoderConfig.kt
+│   │           │                   ├── entity
+│   │           │                   │   └── BaseEntity.kt
+│   │           │                   ├── error
+│   │           │                   ├── exception
+│   │           │                   ├── extensions
+│   │           │                   ├── mapper
+│   │           │                   ├── messaging
+│   │           │                   │   ├── config
+│   │           │                   │   └── serialization
+│   │           │                   └── validation
+│   │           └── resources
 │   └── presentation
 │       ├── build.gradle.kts
 │       └── src
@@ -844,13 +895,11 @@ domains
 │                       └── restaurant
 │                           └── common
 │                               └── presentation
-│                                   ├── config
-│                                   │   ├── OpenApiConfig.kt
-│                                   │   └── PasswordEncoderConfig.kt
+│                                   ├── GlobalExceptionHandler.kt
 │                                   ├── dto
 │                                   │   └── response
 │                                   │       └── CommandResultResponse.kt
-│                                   └── GlobalExceptionHandler.kt
+│                                   └── filter
 └── user
     ├── application
     │   ├── build.gradle.kts
@@ -939,9 +988,9 @@ domains
     │                                   ├── Password.kt
     │                                   ├── PhoneNumber.kt
     │                                   ├── UserId.kt
-    │                                   ├── Username.kt
     │                                   ├── UserStatus.kt
-    │                                   └── UserType.kt
+    │                                   ├── UserType.kt
+    │                                   └── Username.kt
     ├── infrastructure
     │   ├── build.gradle.kts
     │   └── src
@@ -995,7 +1044,6 @@ domains
                                             │   ├── UserAddressQueryController.kt
                                             │   └── UserQueryController.kt
                                             ├── dto
-                                            │   ├── request
                                             │   └── response
                                             │       ├── AddressDetailResponseV1.kt
                                             │       ├── AddressResponseV1.kt
@@ -1003,7 +1051,6 @@ domains
                                             │       └── UserProfileResponseV1.kt
                                             └── extensions
                                                 └── dto
-                                                    ├── request
                                                     └── response
                                                         ├── UserAddressQueryResponseExtensions.kt
                                                         └── UserQueryResponseExtensions.kt
@@ -1029,6 +1076,7 @@ independent
             │               │       └── ProcessOutboxEventsUseCase.kt
             │               └── infrastructure
             │                   ├── config
+            │                   │   ├── KafkaProducerConfig.kt
             │                   │   └── OutboxKafkaConfig.kt
             │                   ├── converter
             │                   │   └── StringMapConverter.kt
@@ -1059,15 +1107,14 @@ apps
             │       └── restaurant
             │           └── apps
             │               └── user
-            │                   ├── config
-            │                   │   ├── KafkaConfig.kt
-            │                   │   └── SerializationConfig.kt
-            │                   └── UserApplication.kt
+            │                   ├── UserApplication.kt
+            │                   └── config
+            │                       └── SerializationConfig.kt
             └── resources
 gradle
 └── wrapper
 
-154 directories, 125 files
+161 directories, 120 files
 ==============================================================
 
 
@@ -1076,7 +1123,7 @@ gradle
 ====================================================================
  File: apps/user-app/build.gradle.kts
  Path: apps/user-app/build.gradle.kts
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -1206,79 +1253,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 
 ====================================================================
- File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/KafkaConfig.kt
- Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/KafkaConfig.kt
- Timestamp: 2025-06-11 12:01:56
-====================================================================
-package com.restaurant.apps.user.config
-
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.common.serialization.StringSerializer
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.kafka.core.DefaultKafkaProducerFactory
-import org.springframework.kafka.core.KafkaTemplate
-import org.springframework.kafka.core.ProducerFactory
-
-@Configuration
-class KafkaConfig {
-    @Value("\${spring.kafka.bootstrap-servers}")
-    private lateinit var bootstrapServers: String
-
-    @Value("\${spring.kafka.producer.properties.acks:all}")
-    private lateinit var producerAcks: String
-
-    @Bean
-    fun stringProducerFactory(): ProducerFactory<String, String> {
-        val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
-        configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-        configProps[ProducerConfig.ACKS_CONFIG] = producerAcks
-        return DefaultKafkaProducerFactory(configProps)
-    }
-
-    @Bean
-    fun stringKafkaTemplate(): KafkaTemplate<String, String> = KafkaTemplate(stringProducerFactory())
-}
-
-====================================================================
-
-
-====================================================================
- File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/SerializationConfig.kt
- Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/SerializationConfig.kt
- Timestamp: 2025-06-11 12:01:56
-====================================================================
-package com.restaurant.apps.user.config
-
-import kotlinx.serialization.json.Json
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-class SerializationConfig {
-    @Bean
-    fun kotlinJson(): Json =
-        Json {
-            // 필요한 경우 kotlinx.serialization.json.Json 설정을 추가합니다.
-            // 예: ignoreUnknownKeys = true, prettyPrint = false 등
-            // 현재 UserEvent.kt의 kotlinx.serialization 어노테이션과 호환되도록 기본 설정을 사용합니다.
-            // UserEvent의 @SerialName 등이 스키마와 일치하는지 중요합니다.
-            isLenient = true // JSON 포맷이 조금 유연해야 할 경우
-            ignoreUnknownKeys = true // 스키마에 없는 키가 있어도 무시
-            // explicitNulls = false // null 값을 명시적으로 보내지 않을 경우 (스키마 호환성 확인 필요)
-        }
-}
-
-====================================================================
-
-
-====================================================================
  File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/UserApplication.kt
  Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/UserApplication.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 /**
  * UserApplication entry point for the user service.
@@ -1310,6 +1287,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 @ComponentScan(
     basePackages = [
         "com.restaurant.common.presentation",
+        "com.restaurant.common.infrastructure.config",
         "com.restaurant.user.presentation",
         "com.restaurant.user.application",
         "com.restaurant.user.infrastructure",
@@ -1341,9 +1319,38 @@ fun main(args: Array<String>) {
 
 
 ====================================================================
+ File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/SerializationConfig.kt
+ Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/SerializationConfig.kt
+ Timestamp: 2025-06-11 17:37:54
+====================================================================
+package com.restaurant.apps.user.config
+
+import kotlinx.serialization.json.Json
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+
+@Configuration
+class SerializationConfig {
+    @Bean
+    fun kotlinJson(): Json =
+        Json {
+            // 필요한 경우 kotlinx.serialization.json.Json 설정을 추가합니다.
+            // 예: ignoreUnknownKeys = true, prettyPrint = false 등
+            // 현재 UserEvent.kt의 kotlinx.serialization 어노테이션과 호환되도록 기본 설정을 사용합니다.
+            // UserEvent의 @SerialName 등이 스키마와 일치하는지 중요합니다.
+            isLenient = true // JSON 포맷이 조금 유연해야 할 경우
+            ignoreUnknownKeys = true // 스키마에 없는 키가 있어도 무시
+            // explicitNulls = false // null 값을 명시적으로 보내지 않을 경우 (스키마 호환성 확인 필요)
+        }
+}
+
+====================================================================
+
+
+====================================================================
  File: build.gradle.kts
  Path: build.gradle.kts
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 /**
  * build.gradle.kts for the root project.
@@ -1379,14 +1386,13 @@ plugins {
 ====================================================================
  File: domains/common/application/build.gradle.kts
  Path: domains/common/application/build.gradle.kts
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     `java-library`
     kotlin("jvm") version "2.1.0"
     kotlin("plugin.spring") version "2.1.0"
     id("io.spring.dependency-management")
-    id("org.springframework.boot") version "3.5.0"
 }
 
 java {
@@ -1438,33 +1444,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 tasks.jar {
     enabled = true
 }
-tasks.bootJar {
-    enabled = false
-}
-
-====================================================================
-
-
-====================================================================
- File: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Command.kt
- Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Command.kt
- Timestamp: 2025-06-11 12:01:56
-====================================================================
-package com.restaurant.common.application.dto
-
-interface Command
-
-====================================================================
-
-
-====================================================================
- File: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Query.kt
- Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Query.kt
- Timestamp: 2025-06-11 12:01:56
-====================================================================
-package com.restaurant.common.application.dto
-
-interface Query
 
 ====================================================================
 
@@ -1472,7 +1451,7 @@ interface Query
 ====================================================================
  File: domains/common/application/src/main/kotlin/com/restaurant/common/application/exception/ApplicationException.kt
  Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/exception/ApplicationException.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.application.exception
 
@@ -1497,41 +1476,9 @@ abstract class ApplicationException(
 
 
 ====================================================================
- File: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/CommandUseCase.kt
- Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/CommandUseCase.kt
- Timestamp: 2025-06-11 12:01:56
-====================================================================
-package com.restaurant.common.application.usecase
-
-import com.restaurant.common.application.dto.Command
-
-interface CommandUseCase<COMMAND : Command, RESULT> {
-    fun execute(command: COMMAND): RESULT
-}
-
-====================================================================
-
-
-====================================================================
- File: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/QueryUseCase.kt
- Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/QueryUseCase.kt
- Timestamp: 2025-06-11 12:01:56
-====================================================================
-package com.restaurant.common.application.usecase
-
-import com.restaurant.common.application.dto.Query
-
-interface QueryUseCase<QUERY : Query, RESULT> {
-    fun execute(query: QUERY): RESULT
-}
-
-====================================================================
-
-
-====================================================================
  File: domains/common/domain/build.gradle.kts
  Path: domains/common/domain/build.gradle.kts
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     id("java-library")
@@ -1540,7 +1487,6 @@ plugins {
     kotlin("plugin.allopen") version "2.1.0"
     kotlin("plugin.serialization") version "2.1.0"
     id("io.spring.dependency-management")
-    id("org.springframework.boot") version "3.5.0"
 }
 
 java {
@@ -1583,9 +1529,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 tasks.jar {
     enabled = true
 }
-tasks.bootJar {
-    enabled = false
-}
 
 ====================================================================
 
@@ -1593,7 +1536,7 @@ tasks.bootJar {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.domain.aggregate
 
@@ -1634,7 +1577,7 @@ abstract class AggregateRoot {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.domain.error
 
@@ -1663,7 +1606,7 @@ enum class CommonSystemErrorCode(
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.domain.error
 
@@ -1691,7 +1634,7 @@ interface ErrorCode {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.domain.event
 
@@ -1715,7 +1658,7 @@ interface DomainEvent {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.domain.exception
 
@@ -1738,7 +1681,7 @@ abstract class DomainException(
 ====================================================================
  File: domains/common/infrastructure/build.gradle.kts
  Path: domains/common/infrastructure/build.gradle.kts
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     `java-library`
@@ -1747,12 +1690,7 @@ plugins {
     kotlin("plugin.jpa") version "2.1.0" // For JPA Entities
     kotlin("plugin.allopen") version "2.1.0" // For JPA Entities
     kotlin("plugin.serialization") version "2.1.0"
-    id("org.springframework.boot")
     id("io.spring.dependency-management")
-}
-
-tasks.named("bootJar") {
-    enabled = false
 }
 
 java {
@@ -1775,16 +1713,17 @@ dependencyManagement {
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
-    
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.0") // JPA 어노테이션 사용 목적
-    implementation("org.springframework.kafka:spring-kafka:4.0.0-M2")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa") // JPA 어노테이션 사용 목적
+    implementation("org.springframework.boot:spring-boot-starter-security") // PasswordEncoder 사용 목적
+    implementation("org.springframework.kafka:spring-kafka")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-    
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.0")
-    testImplementation("org.springframework.kafka:spring-kafka-test:4.0.0-M2")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
     testImplementation("io.mockk:mockk:1.14.2")
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.0-M3")
     testImplementation("org.assertj:assertj-core:4.0.0-M1")
@@ -1804,9 +1743,30 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 
 ====================================================================
+ File: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/config/PasswordEncoderConfig.kt
+ Path: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/config/PasswordEncoderConfig.kt
+ Timestamp: 2025-06-11 17:37:54
+====================================================================
+package com.restaurant.common.infrastructure.config
+
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+
+@Configuration
+open class PasswordEncoderConfig {
+    @Bean
+    open fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+}
+
+====================================================================
+
+
+====================================================================
  File: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/entity/BaseEntity.kt
  Path: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/entity/BaseEntity.kt
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.infrastructure.entity
 
@@ -1848,7 +1808,7 @@ abstract class BaseEntity {
 ====================================================================
  File: domains/common/presentation/build.gradle.kts
  Path: domains/common/presentation/build.gradle.kts
- Timestamp: 2025-06-11 12:01:56
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     `java-library`
@@ -1904,156 +1864,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 
 ====================================================================
- File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/OpenApiConfig.kt
- Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/OpenApiConfig.kt
- Timestamp: 2025-06-11 12:01:57
-====================================================================
-package com.restaurant.common.presentation.config
-
-import io.swagger.v3.oas.models.Components
-import io.swagger.v3.oas.models.OpenAPI
-import io.swagger.v3.oas.models.info.Contact
-import io.swagger.v3.oas.models.info.Info
-import io.swagger.v3.oas.models.info.License
-import io.swagger.v3.oas.models.security.SecurityRequirement
-import io.swagger.v3.oas.models.security.SecurityScheme
-import io.swagger.v3.oas.models.servers.Server
-import io.swagger.v3.oas.models.tags.Tag
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-
-@Configuration
-class OpenApiConfig {
-    @Bean
-    fun openAPI(): OpenAPI =
-        OpenAPI()
-            .info(
-                Info()
-                    .title("Restaurant User Service API")
-                    .description(
-                        """
-                        ## 사용자 관리 서비스 API
-                        
-                        이 API는 레스토랑 플랫폼의 사용자 관리 기능을 제공합니다.
-                        
-                        ### 주요 기능
-                        - 사용자 회원가입 및 로그인
-                        - 사용자 프로필 관리
-                        - 사용자 주소 관리
-                        - 비밀번호 변경 및 계정 삭제
-                        
-                        ### 인증 방식
-                        JWT Bearer Token을 사용합니다. 로그인 후 받은 accessToken을 Authorization 헤더에 포함시켜 주세요.
-                        
-                        ### 오류 응답
-                        모든 오류 응답은 RFC 9457 ProblemDetail 형식을 따릅니다.
-                        
-                        ### API 버전 관리
-                        - v1: 현재 안정 버전
-                        - CQRS 패턴 적용: Command(생성/수정/삭제)와 Query(조회) 분리
-                        """.trimIndent(),
-                    ).version("1.0.0")
-                    .contact(
-                        Contact()
-                            .name("Restaurant Development Team")
-                            .email("dev@restaurant.com")
-                            .url("https://restaurant.com"),
-                    ).license(
-                        License()
-                            .name("MIT License")
-                            .url("https://opensource.org/licenses/MIT"),
-                    ),
-            ).servers(
-                listOf(
-                    Server()
-                        .url("http://localhost:8090")
-                        .description("개발 서버 (Local)"),
-                    Server()
-                        .url("https://dev-api.restaurant.com")
-                        .description("개발 환경 (Development)"),
-                    Server()
-                        .url("https://staging-api.restaurant.com")
-                        .description("스테이징 환경 (Staging)"),
-                    Server()
-                        .url("https://api.restaurant.com")
-                        .description("운영 환경 (Production)"),
-                ),
-            ).components(
-                Components()
-                    .addSecuritySchemes(
-                        "bearerAuth",
-                        SecurityScheme()
-                            .type(SecurityScheme.Type.HTTP)
-                            .scheme("bearer")
-                            .bearerFormat("JWT")
-                            .description("JWT Bearer Token 인증"),
-                    ),
-            ).security(
-                listOf(
-                    SecurityRequirement().addList("bearerAuth"),
-                ),
-            ).tags(
-                listOf(
-                    Tag().name("Health Check").description("애플리케이션 상태 확인 API"),
-                    Tag().name("Simple").description("간단한 테스트 API"),
-                    Tag().name("User Commands").description("사용자 계정 관리 API (생성/수정/삭제)"),
-                    Tag().name("User Queries").description("사용자 정보 조회 API"),
-                    Tag().name("User Address Commands").description("사용자 주소 관리 API (생성/수정/삭제)"),
-                    Tag().name("User Address Queries").description("사용자 주소 조회 API"),
-                ),
-            )
-}
-
-====================================================================
-
-
-====================================================================
- File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/PasswordEncoderConfig.kt
- Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/PasswordEncoderConfig.kt
- Timestamp: 2025-06-11 12:01:57
-====================================================================
-package com.restaurant.common.presentation.config
-
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
-
-@Configuration
-class PasswordEncoderConfig {
-    @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
-}
-
-====================================================================
-
-
-====================================================================
- File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
- Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
- Timestamp: 2025-06-11 12:01:57
-====================================================================
-package com.restaurant.common.presentation.dto.response
-
-import io.swagger.v3.oas.annotations.media.Schema
-
-@Schema(description = "Command 요청 결과 응답")
-data class CommandResultResponse(
-    @Schema(description = "처리 상태", example = "SUCCESS")
-    val status: String,
-    @Schema(description = "결과 메시지", example = "요청이 성공적으로 처리되었습니다.")
-    val message: String,
-    @Schema(description = "생성/수정된 리소스의 ID (선택적)", example = "a1b2c3d4-e5f6-7890-1234-567890abcdef", nullable = true)
-    val resourceId: String? = null // 필요에 따라 추가
-)
-
-====================================================================
-
-
-====================================================================
  File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/GlobalExceptionHandler.kt
  Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/GlobalExceptionHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.common.presentation
 
@@ -2263,9 +2076,31 @@ class GlobalExceptionHandler {
 
 
 ====================================================================
+ File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
+ Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
+ Timestamp: 2025-06-11 17:37:54
+====================================================================
+package com.restaurant.common.presentation.dto.response
+
+import io.swagger.v3.oas.annotations.media.Schema
+
+@Schema(description = "Command 요청 결과 응답")
+data class CommandResultResponse(
+    @Schema(description = "처리 상태", example = "SUCCESS")
+    val status: String,
+    @Schema(description = "결과 메시지", example = "요청이 성공적으로 처리되었습니다.")
+    val message: String,
+    @Schema(description = "생성/수정된 리소스의 ID (선택적)", example = "a1b2c3d4-e5f6-7890-1234-567890abcdef", nullable = true)
+    val resourceId: String? = null // 필요에 따라 추가
+)
+
+====================================================================
+
+
+====================================================================
  File: domains/user/application/build.gradle.kts
  Path: domains/user/application/build.gradle.kts
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     `java-library`
@@ -2339,7 +2174,7 @@ tasks.withType<Jar> {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/ChangePasswordCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/ChangePasswordCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2355,7 +2190,7 @@ data class ChangePasswordCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteAddressCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteAddressCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2370,7 +2205,7 @@ data class DeleteAddressCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteUserCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteUserCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2389,7 +2224,7 @@ data class DeleteUserCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/LoginCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/LoginCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2404,7 +2239,7 @@ data class LoginCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterAddressCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterAddressCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2426,7 +2261,7 @@ data class RegisterAddressCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterUserCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterUserCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2459,7 +2294,7 @@ data class RegisterUserCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateAddressCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateAddressCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2482,7 +2317,7 @@ data class UpdateAddressCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateProfileCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateProfileCommand.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -2498,7 +2333,7 @@ data class UpdateProfileCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/ChangePasswordCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/ChangePasswordCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2530,8 +2365,6 @@ class ChangePasswordCommandHandler(
             val updatedUser = user.changePassword(currentPassword, newPassword)
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid password data format: ${iae.message}", iae)
         } catch (e: Exception) {
@@ -2549,7 +2382,7 @@ class ChangePasswordCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteAddressCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteAddressCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2577,8 +2410,6 @@ class DeleteAddressCommandHandler(
             val updatedUser = user.deleteAddress(addressIdVo)
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid ID format.", iae)
         } catch (e: Exception) {
@@ -2593,7 +2424,7 @@ class DeleteAddressCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteUserCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteUserCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2619,8 +2450,6 @@ class DeleteUserCommandHandler(
             val updatedUser = user.withdraw()
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid ID format.", iae)
         } catch (e: Exception) {
@@ -2635,7 +2464,7 @@ class DeleteUserCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/LoginCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/LoginCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2676,8 +2505,6 @@ class LoginCommandHandler(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
             )
-        } catch (de: UserDomainException.User.InvalidCredentials) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid email or password format.", iae)
         } catch (e: Exception) {
@@ -2692,7 +2519,7 @@ class LoginCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterAddressCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterAddressCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2734,8 +2561,6 @@ class RegisterAddressCommandHandler(
             userRepository.save(updatedUser)
 
             return updatedUser.addresses.first { it.addressId == address.addressId }.addressId
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid user ID format.", iae)
         } catch (e: Exception) {
@@ -2750,7 +2575,7 @@ class RegisterAddressCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterUserCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterUserCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2802,7 +2627,7 @@ class RegisterUserCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateAddressCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateAddressCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2842,8 +2667,6 @@ class UpdateAddressCommandHandler(
                 )
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid ID format.", iae)
         } catch (e: Exception) {
@@ -2858,7 +2681,7 @@ class UpdateAddressCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateProfileCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateProfileCommandHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2889,8 +2712,6 @@ class UpdateProfileCommandHandler(
             val updatedUser = user.updateProfile(name, phoneNumber)
 
             userRepository.save(updatedUser)
-        } catch (de: UserDomainException) {
-            throw de
         } catch (iae: IllegalArgumentException) {
             throw UserApplicationException.BadRequest("Invalid input format.", iae)
         } catch (e: Exception) {
@@ -2905,7 +2726,7 @@ class UpdateProfileCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/ChangePasswordUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/ChangePasswordUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2921,7 +2742,7 @@ interface ChangePasswordUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteAddressUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteAddressUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2940,7 +2761,7 @@ interface DeleteAddressUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteUserUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteUserUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2959,7 +2780,7 @@ interface DeleteUserUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/LoginUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/LoginUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2979,7 +2800,7 @@ interface LoginUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterAddressUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterAddressUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2999,7 +2820,7 @@ interface RegisterAddressUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterUserUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterUserUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -3019,7 +2840,7 @@ interface RegisterUserUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateAddressUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateAddressUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -3038,7 +2859,7 @@ interface UpdateAddressUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateProfileUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateProfileUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -3057,7 +2878,7 @@ interface UpdateProfileUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/error/UserApplicationErrorCode.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/error/UserApplicationErrorCode.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.error
 
@@ -3087,7 +2908,7 @@ enum class UserApplicationErrorCode(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/exception/UserApplicationException.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/exception/UserApplicationException.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.exception
 
@@ -3170,7 +2991,7 @@ sealed class UserApplicationException(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/AddressDto.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/AddressDto.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -3197,7 +3018,7 @@ data class AddressDto(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetAddressByIdQuery.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetAddressByIdQuery.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -3212,7 +3033,7 @@ data class GetAddressByIdQuery(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserAddressesQuery.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserAddressesQuery.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -3226,7 +3047,7 @@ data class GetUserAddressesQuery(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserProfileByIdQuery.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserProfileByIdQuery.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -3240,7 +3061,7 @@ data class GetUserProfileByIdQuery(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/LoginResult.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/LoginResult.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -3260,7 +3081,7 @@ data class LoginResult(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/UserProfileDto.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/UserProfileDto.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -3298,7 +3119,7 @@ data class UserProfileDto(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetAddressByIdQueryHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetAddressByIdQueryHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.handler
 
@@ -3361,7 +3182,7 @@ class GetAddressByIdQueryHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserAddressesQueryHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserAddressesQueryHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.handler
 
@@ -3420,7 +3241,7 @@ class GetUserAddressesQueryHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserProfileQueryHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserProfileQueryHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.handler
 
@@ -3486,7 +3307,7 @@ class GetUserProfileQueryHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAddressByIdUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAddressByIdUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
@@ -3506,7 +3327,7 @@ interface GetAddressByIdUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAllAddressesUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAllAddressesUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
@@ -3526,7 +3347,7 @@ interface GetAllAddressesUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetProfileByIdUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetProfileByIdUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
@@ -3546,7 +3367,7 @@ interface GetProfileByIdUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserAddressesUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserAddressesUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
@@ -3566,7 +3387,7 @@ interface GetUserAddressesUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserProfileUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserProfileUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
@@ -3586,7 +3407,7 @@ interface GetUserProfileUseCase {
 ====================================================================
  File: domains/user/domain/build.gradle.kts
  Path: domains/user/domain/build.gradle.kts
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 plugins {
     id("java-library")
@@ -3652,7 +3473,7 @@ sourceSets {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/User.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/User.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.domain.aggregate
 
@@ -4103,7 +3924,7 @@ data class User private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/entity/Address.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/entity/Address.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.domain.entity
 
@@ -4289,7 +4110,7 @@ data class Address constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/error/UserDomainErrorCodes.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/error/UserDomainErrorCodes.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.domain.error
 
@@ -4334,7 +4155,7 @@ enum class UserDomainErrorCodes(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/event/UserEvent.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/event/UserEvent.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:54
 ====================================================================
 package com.restaurant.user.domain.event
 
@@ -4576,7 +4397,7 @@ sealed class UserEvent : DomainEvent {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/exception/UserDomainException.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/exception/UserDomainException.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.exception
 
@@ -4789,7 +4610,7 @@ sealed class UserDomainException(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/repository/UserRepository.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/repository/UserRepository.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.repository
 
@@ -4819,7 +4640,7 @@ interface UserRepository {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/AddressId.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/AddressId.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -4881,7 +4702,7 @@ object AddressIdSerializer : KSerializer<AddressId> {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Email.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Email.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4928,7 +4749,7 @@ value class Email private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Name.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Name.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -4938,12 +4759,6 @@ import java.io.Serializable
 value class Name private constructor(
     val value: String,
 ) : Serializable {
-    init {
-        if (value.isBlank()) {
-            throw UserDomainException.Validation.InvalidNameFormat("Invalid name format: $value")
-        }
-    }
-
     companion object {
         private const val MIN_LENGTH = 2
         private const val MAX_LENGTH = 50
@@ -4965,7 +4780,7 @@ value class Name private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Password.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Password.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4981,21 +4796,6 @@ value class Password private constructor(
     init {
         if (value.isBlank()) {
             throw UserDomainException.Validation.InvalidPasswordFormat("Encoded password cannot be blank.")
-        }
-        if (value.length < 8) {
-            throw UserDomainException.Validation.InvalidPasswordFormat("Password must be at least 8 characters long.")
-        }
-        if (!value.contains(Regex("[A-Z]"))) {
-            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one uppercase letter.")
-        }
-        if (!value.contains(Regex("[a-z]"))) {
-            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one lowercase letter.")
-        }
-        if (!value.contains(Regex("[0-9]"))) {
-            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one digit.")
-        }
-        if (!value.contains(Regex("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?~`]"))) {
-            throw UserDomainException.Validation.InvalidPasswordFormat("Password must contain at least one special character.")
         }
     }
 
@@ -5016,7 +4816,7 @@ value class Password private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/PhoneNumber.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/PhoneNumber.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -5026,12 +4826,6 @@ import java.io.Serializable
 value class PhoneNumber private constructor(
     val value: String,
 ) : Serializable {
-    init {
-        if (!value.matches(PHONE_NUMBER_REGEX)) {
-            throw UserDomainException.Validation.InvalidPhoneNumberFormat(value)
-        }
-    }
-
     companion object {
         private val PHONE_NUMBER_REGEX = Regex("^010-?\\d{4}-?\\d{4}$")
 
@@ -5054,7 +4848,7 @@ value class PhoneNumber private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserId.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserId.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -5128,40 +4922,9 @@ object UserIdSerializer : KSerializer<UserId> {
 
 
 ====================================================================
- File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
- Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
- Timestamp: 2025-06-11 12:01:57
-====================================================================
-package com.restaurant.user.domain.vo
-
-import com.restaurant.user.domain.exception.UserDomainException
-import java.io.Serializable
-
-@JvmInline
-value class Username(
-    val value: String,
-) : Serializable {
-    init {
-
-        if (value.isBlank() || value.length < 3 || value.length > 20) {
-            throw UserDomainException.Validation.InvalidUsernameFormat(value)
-        }
-    }
-
-    companion object {
-        fun of(value: String): Username = Username(value)
-    }
-
-    override fun toString(): String = value
-}
-
-====================================================================
-
-
-====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserStatus.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserStatus.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -5180,7 +4943,7 @@ enum class UserStatus {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserType.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserType.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -5196,9 +4959,40 @@ enum class UserType {
 
 
 ====================================================================
+ File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
+ Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
+ Timestamp: 2025-06-11 17:37:55
+====================================================================
+package com.restaurant.user.domain.vo
+
+import com.restaurant.user.domain.exception.UserDomainException
+import java.io.Serializable
+
+@JvmInline
+value class Username private constructor(
+    val value: String,
+) : Serializable {
+    // init block can be empty or removed if no other logic is needed
+
+    companion object {
+        fun of(value: String): Username {
+            if (value.isBlank() || value.length < 3 || value.length > 20) {
+                throw UserDomainException.Validation.InvalidUsernameFormat("사용자 이름은 3자 이상 20자 이하여야 하며, 공백일 수 없습니다: '$value'")
+            }
+            return Username(value)
+        }
+    }
+
+    override fun toString(): String = value
+}
+
+====================================================================
+
+
+====================================================================
  File: domains/user/infrastructure/build.gradle.kts
  Path: domains/user/infrastructure/build.gradle.kts
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 import java.net.URLClassLoader
 
@@ -5345,7 +5139,7 @@ tasks.named("processResources") {
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/AddressEntity.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/AddressEntity.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.entity
 
@@ -5402,7 +5196,7 @@ class AddressEntity(
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/UserEntity.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/UserEntity.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.entity
 
@@ -5490,7 +5284,7 @@ class UserEntity(
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/AddressEntityMapper.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/AddressEntityMapper.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.mapper
 
@@ -5540,7 +5334,7 @@ fun Address.toEntity(): AddressEntity =
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/DomainEventToOutboxMessageConverter.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/DomainEventToOutboxMessageConverter.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.mapper
 
@@ -5635,7 +5429,7 @@ class DomainEventToOutboxMessageConverter(
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/UserEntityMapper.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/UserEntityMapper.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.mapper
 
@@ -5706,7 +5500,7 @@ fun User.toEntity(): UserEntity {
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/SpringDataJpaUserRepository.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/SpringDataJpaUserRepository.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.repository
 
@@ -5732,7 +5526,7 @@ interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long> {
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/UserRepositoryImpl.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/UserRepositoryImpl.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.infrastructure.repository
 
@@ -5800,7 +5594,7 @@ class UserRepositoryImpl(
 ====================================================================
  File: domains/user/presentation/build.gradle.kts
  Path: domains/user/presentation/build.gradle.kts
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 plugins {
     `java-library`
@@ -5847,7 +5641,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserAddressController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserAddressController.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.controller
 
@@ -6067,7 +5861,7 @@ class UserAddressController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserController.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.controller
 
@@ -6372,7 +6166,7 @@ class UserController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/ChangePasswordRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/ChangePasswordRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -6398,7 +6192,7 @@ data class ChangePasswordRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/DeleteUserRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/DeleteUserRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -6420,7 +6214,7 @@ data class DeleteUserRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/LoginRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/LoginRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -6445,7 +6239,7 @@ data class LoginRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterAddressRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterAddressRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -6486,7 +6280,7 @@ data class RegisterAddressRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterUserRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterUserRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 /**
  * 사용자 등록 요청 DTO
@@ -6531,7 +6325,7 @@ data class RegisterUserRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateAddressRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateAddressRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -6572,7 +6366,7 @@ data class UpdateAddressRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateProfileRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateProfileRequestV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -6596,7 +6390,7 @@ data class UpdateProfileRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/extensions/dto/request/UserCommandRequestExtensions.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/extensions/dto/request/UserCommandRequestExtensions.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.command.extensions.dto.request
 
@@ -6688,7 +6482,7 @@ fun UpdateAddressRequestV1.toCommand(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserAddressQueryController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserAddressQueryController.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.controller
 
@@ -6843,7 +6637,7 @@ class UserAddressQueryController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserQueryController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserQueryController.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.controller
 
@@ -6932,7 +6726,7 @@ class UserQueryController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressDetailResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressDetailResponseV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -6976,7 +6770,7 @@ data class AddressDetailResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressResponseV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -7010,7 +6804,7 @@ data class AddressResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/LoginResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/LoginResponseV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -7034,7 +6828,7 @@ data class LoginResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/UserProfileResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/UserProfileResponseV1.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -7072,7 +6866,7 @@ data class UserProfileResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserAddressQueryResponseExtensions.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserAddressQueryResponseExtensions.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.extensions.dto.response
 
@@ -7115,7 +6909,7 @@ fun AddressDto.toResponseV1(): AddressResponseV1 =
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserQueryResponseExtensions.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserQueryResponseExtensions.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.user.presentation.v1.query.extensions.dto.response
 
@@ -7157,7 +6951,7 @@ fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 =
 ====================================================================
  File: independent/outbox/build.gradle.kts
  Path: independent/outbox/build.gradle.kts
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 plugins {
     id("java-library")
@@ -7240,7 +7034,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessage.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessage.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.dto
 
@@ -7308,7 +7102,7 @@ data class OutboxMessage(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageRepository.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageRepository.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.dto
 
@@ -7434,7 +7228,7 @@ interface OutboxMessageRepository {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageStatus.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageStatus.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.dto
 
@@ -7477,7 +7271,7 @@ enum class OutboxMessageStatus {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxMetricsHandler.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxMetricsHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.handler
 
@@ -7568,7 +7362,7 @@ class OutboxMetricsHandler(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxPoller.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxPoller.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.handler
 
@@ -7635,7 +7429,7 @@ class OutboxPoller(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/ProcessOutboxEventsUseCaseHandler.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/ProcessOutboxEventsUseCaseHandler.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.handler
 
@@ -7769,7 +7563,7 @@ open class ProcessOutboxEventsUseCaseHandler(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/usecase/ProcessOutboxEventsUseCase.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/usecase/ProcessOutboxEventsUseCase.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.application.usecase
 
@@ -7809,9 +7603,50 @@ interface ProcessOutboxEventsUseCase {
 
 
 ====================================================================
+ File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/config/KafkaProducerConfig.kt
+ Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/config/KafkaProducerConfig.kt
+ Timestamp: 2025-06-11 17:37:55
+====================================================================
+package com.restaurant.outbox.infrastructure.config
+
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.common.serialization.StringSerializer
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.core.DefaultKafkaProducerFactory
+import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.core.ProducerFactory
+
+@Configuration
+open class KafkaProducerConfig {
+    @Value("\${spring.kafka.bootstrap-servers}")
+    private lateinit var bootstrapServers: String
+
+    @Value("\${spring.kafka.producer.properties.acks:all}")
+    private lateinit var producerAcks: String
+
+    @Bean
+    open fun stringProducerFactory(): ProducerFactory<String, String> {
+        val configProps: MutableMap<String, Any> = HashMap()
+        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
+        configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        configProps[ProducerConfig.ACKS_CONFIG] = producerAcks
+        return DefaultKafkaProducerFactory(configProps)
+    }
+
+    @Bean
+    open fun stringKafkaTemplate(): KafkaTemplate<String, String> = KafkaTemplate(stringProducerFactory())
+}
+
+====================================================================
+
+
+====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/config/OutboxKafkaConfig.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/config/OutboxKafkaConfig.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.config
 
@@ -7876,7 +7711,7 @@ open class OutboxKafkaConfig {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/converter/StringMapConverter.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/converter/StringMapConverter.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.converter
 
@@ -7922,7 +7757,7 @@ class StringMapConverter : AttributeConverter<Map<String, String>, String> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/entity/OutboxEventEntity.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/entity/OutboxEventEntity.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.entity
 
@@ -8023,7 +7858,7 @@ class OutboxEventEntity(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/error/OutboxErrorCodes.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/error/OutboxErrorCodes.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.error
 
@@ -8048,7 +7883,7 @@ enum class OutboxErrorCodes(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/exception/OutboxException.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/exception/OutboxException.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.exception
 
@@ -8143,7 +7978,7 @@ sealed class OutboxException(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/extensions/OutboxEventEntityExtensions.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/extensions/OutboxEventEntityExtensions.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.extensions
 
@@ -8216,7 +8051,7 @@ fun OutboxMessage.updateFromDomain(existingEntity: OutboxEventEntity): OutboxEve
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/messaging/OutboxMessageSender.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/messaging/OutboxMessageSender.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.messaging
 
@@ -8361,7 +8196,7 @@ class OutboxMessageSender(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxEventRepository.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxEventRepository.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.repository
 
@@ -8425,7 +8260,7 @@ interface JpaOutboxEventRepository : JpaRepository<OutboxEventEntity, Long> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxMessageRepository.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxMessageRepository.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.repository
 
@@ -8507,7 +8342,7 @@ interface JpaOutboxMessageRepository : JpaRepository<OutboxEventEntity, Long> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/OutboxMessageRepositoryImpl.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/OutboxMessageRepositoryImpl.kt
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 package com.restaurant.outbox.infrastructure.repository
 
@@ -8760,7 +8595,7 @@ open class OutboxMessageRepositoryImpl(
 ====================================================================
  File: settings.gradle.kts
  Path: settings.gradle.kts
- Timestamp: 2025-06-11 12:01:57
+ Timestamp: 2025-06-11 17:37:55
 ====================================================================
 import org.gradle.api.initialization.resolve.RepositoriesMode
 
@@ -8814,5 +8649,5 @@ include(":apps:user-app")
 ====================================================================
 
 ==============================================================
- File Collection Completed: 2025-06-11 21:01:57 
+ File Collection Completed: 2025-06-12 02:37:55 
 ==============================================================
