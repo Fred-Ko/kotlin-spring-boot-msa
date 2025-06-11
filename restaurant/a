@@ -1,25 +1,646 @@
-Starting a Gradle Daemon, 1 incompatible Daemon could not be reused, use --status for details
-> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :buildSrc:compileKotlin UP-TO-DATE
-> Task :buildSrc:compileJava NO-SOURCE
-> Task :buildSrc:compileGroovy NO-SOURCE
-> Task :buildSrc:pluginDescriptors UP-TO-DATE
-> Task :buildSrc:processResources NO-SOURCE
-> Task :buildSrc:classes UP-TO-DATE
-> Task :buildSrc:jar UP-TO-DATE
-> Task :apps:user-app:clean
-> Task :independent:outbox:clean
-> Task :domains:common:application:clean
-> Task :domains:common:domain:clean
-> Task :domains:common:infrastructure:clean
-> Task :domains:common:presentation:clean
-> Task :domains:user:application:clean
-> Task :domains:user:domain:clean
-> Task :domains:user:infrastructure:clean
-> Task :domains:user:presentation:clean
+## 프로젝트 기술 문서 규칙
 
-BUILD SUCCESSFUL in 6s
-13 actionable tasks: 10 executed, 3 up-to-date
+### I. 일반 원칙 및 프로젝트 구조
+
+#### 1.1. 기본 원칙
+
+1.  **모든 규칙의 필수 준수**: 프로젝트 기술 문서에 명시된 모든 규칙과 패턴은 선택 사항이 아닌 필수이며, 모든 구성원은 예외 없이 이를 준수해야 한다. 규칙 위반 시 즉시 코드 리뷰에서 반려된다. **단, 극히 예외적인 상황에서 규칙 준수가 프로젝트 목표 달성에 심각한 방해가 된다고 판단될 경우, 아키텍처 위원회(또는 지정된 검토 그룹)의 공식적인 승인을 통해 제한적으로 예외를 허용할 수 있다.**
+
+#### 1.2. 모듈화 원칙
+
+2.  **레이어별 모듈 분리**: 프로젝트는 반드시 Presentation, Application, Domain, Infrastructure 레이어로 모듈을 분리해야 하며, 각 레이어는 별도의 Gradle 모듈로 관리된다. **`domains/` 디렉토리 아래의 모든 모듈 (`domains/common` 포함)은 이 4계층 아키텍처 구조를 따라야 합니다. 각 레이어는 해당 모듈 내에서 규칙 141에 정의된 명확한 패키지 및 디렉토리 구조를 가져야 합니다.** Infrastructure 레이어는 책임(예: 영속성, 메시징)에 따라 하위 모듈로 분리되지 않고, 단일 `infrastructure` Gradle 모듈로 관리된다.
+3.  **도메인별 모듈화**: 각 비즈니스 도메인은 `domains/` 최상위 폴더 아래 독립적인 폴더로 구성해야 한다 (예: `domains/user`, `domains/order`). 도메인 간 직접적인 의존성은 명시적으로 금지된다.
+4.  **공통 모듈 및 독립 모듈 관리**: 공통 유틸리티, 공유 추상 클래스, 인터페이스 (`DomainEvent`, `AggregateRoot` 등), 공통 예외 및 ErrorCode 등 시스템 전반에 걸쳐 사용되는 **기반** 개념은 `domains/common` 모듈에 포함되며, 특정 도메인 로직을 포함하지 않아야 한다. **이 `domains/common` 모듈은 다른 특정 도메인 모듈(예: `domains/user`)이나 `independent/` 하위 모듈에 의존해서는 안 됩니다.** `domains/common` 모듈 내의 코드들은 Rule 141에 따라 해당 코드가 속하는 아키텍처 레이어(Domain, Application, Presentation, Infrastructure 및 그 하위 모듈)에 따른 패키지 및 디렉토리 구조 내에 위치해야 합니다. 예를 들어, 공통 AggregateRoot는 `domains/common/domain/aggregate/` 패키지에, 공통 GlobalExceptionHandler는 `domains/common/presentation/` 패키지 아래에 위치해야 합니다. `independent/` 폴더 아래에 위치하는 독립 모듈(예: `independent/outbox`)은 특정 기술적 기능이나 크로스 커팅 관심사를 담당하며, 이 독립 모듈은 **프로젝트 내의 어떤 특정 도메인 모듈 또는 `domains/common` 모듈에도 의존하지 않습니다 (규칙 9 참조).** **독립 모듈들은 자체적으로 완전하고(self-contained) 다른 프로젝트에 최소한의 수정으로 이식 및 재사용 가능하도록 설계되어야 합니다.** **다른 도메인 모듈(예: `domains/user`)은 필요에 따라 `domains/common` 모듈의 공통 요소와 `independent/` 모듈의 Application Layer Use Case 인터페이스를 의존하여 사용할 수 있습니다.** 공통 모듈 의존은 최소화하여 "공통 모듈 지옥"을 방지한다. `independent/` 모듈은 Rule 141의 패키지/디렉토리 구조 규칙을 따르지 않으며, 자체적인 구조 규칙(Rule 80 참조)을 정의하고 사용합니다.
+
+#### 1.3. 모듈 간 의존성
+
+9.  **모듈 간 의존성 명확화**: 모듈 간 의존성은 단방향으로 제한된다.
+    *   **계층 간 의존성**: Domain 레이어는 다른 레이어를 의존하지 않는다. Application 레이어는 Domain을 의존하며 Infrastructure의 구체적인 구현체 대신 Domain 레이어의 Repository 인터페이스를 의존한다. Infrastructure는 Domain만 의존 가능하며, **Infrastructure 내 컴포넌트(예: 영속성 구현체)는 동일 도메인의 다른 Infrastructure 컴포넌트(예: 메시징 관련 변환기)에 정의된 요소를 의존할 수 있다.**
+    *   **`domains/common` 모듈의 의존성**: `domains/common` 모듈은 시스템 전반의 기반 개념을 제공하며, **다른 특정 도메인 모듈(예: `domains/user`, `domains/order`)이나 `independent/` 하위 모듈에 의존하지 않습니다.**
+    *   **개별 도메인 모듈 (`domains/{domain-name}`)의 의존성**: 각 개별 도메인 모듈(예: `domains/user`, `domains/order`)은 필요에 따라 `domains/common` 모듈의 공통 요소와 독립 모듈(`independent/` 하위 모듈)의 **Application Layer Use Case 인터페이스**를 의존하여 사용할 수 있습니다. **도메인 간 직접적인 의존성은 명시적으로 금지됩니다 (규칙 3 참조).**
+    *   **독립 모듈 (`independent/`)의 의존성**: 독립 모듈(예: `independent/outbox` - Rule 80 참조)은 자체적인 레이어 구조를 가질 수 있으며, **프로젝트 내의 다른 어떤 모듈(다른 특정 도메인 모듈, `domains/common` 모듈, 심지어 다른 `independent` 모듈 포함)에도 의존하지 않도록 설계되어** 완전한 독립성과 이식성을 보장해야 합니다. 다른 모듈들은 이 독립 모듈의 **Application Layer Use Case 인터페이스**만을 의존합니다.
+    *   **기타 의존성 관리**: 모듈 간 `@ComponentScan`은 제한적으로 사용되며, 특히 Application 모듈의 테스트 설정 외에는 지양한다. 의존성 주입은 Spring `@Bean` 또는 `@Component`를 통해 명시적으로 관리한다.
+122. **공통 모듈 의존성**: **특정 도메인 모듈(예: `domains/user`)이 `domains/common` 모듈을 사용하고자 할 때는** `dependencies { implementation project(":domains:common") }` 와 같이 의존성을 추가한다. **`domains/common` 모듈 자체는 다른 특정 도메인 모듈이나 `independent/` 모듈에 의존하지 않습니다 (규칙 9 참조).** **독립 모듈(`independent/` 하위 모듈)은 `domains/common` 모듈에 의존하지 않는다 (규칙 4, 9, 80 참조).**
+
+#### 1.4. 확장 함수 (Extensions)
+
+5.  **Extensions 폴더 구조 및 사용 원칙**: 각 레이어(Presentation, Application, Infrastructure)는 해당 레이어 관련 확장 함수를 모아두기 위한 `extensions` 폴더를 포함할 수 있다. 확장 함수는 해당 클래스가 정의된 모듈이나, 관련 기능이 집중된 레이어의 `extensions` 폴더에 위치시켜 코드의 논리적 흐름과 물리적 위치 간의 일관성을 고려한다. **Presentation 레이어의 경우, CQRS 패턴을 명확히 구분하기 위해 Command/Query 관련 DTO 변환 확장 함수는 Rule 141에 정의된 Presentation 레이어 경로(`domains/{domain}/presentation/...`) 내의 버전별 폴더(`v1/`, `v2/` 등) 바로 아래의 `command/` 또는 `query/` 폴더 내에 위치하는 `extensions/` 폴더에 정의해야 한다.** **`vX/command/extensions/` 폴더 하위에는 `dto/request/` 폴더를, `vX/query/extensions/` 폴더 하위에는 `dto/request/` 및 `dto/response/` 폴더를 필수로 가져야 한다.** 이 구조는 Rule 141.5에 정의된 Presentation 레이어 내 필수적인 하위 구조입니다.
+6.  **Extensions 기능별 폴더**: Rule 5에 정의된 각 `extensions` 하위 폴더(예: `vX/command/extensions/dto/request/`)는 해당 기능의 확장 함수만 포함하며, 다른 유형의 코드를 포함해서는 안 된다.
+7.  **Extensions 파일명 규칙**: 확장 함수 파일명은 `도메인명+기능명+Extensions.kt` 형식을 따른다 (예: `UserMappingExtensions.kt`, `OrderValidationExtensions.kt`). **Presentation 레이어의 DTO 변환 확장 함수 파일명은 Rule 5 및 7에 따라 해당 구조를 반영하여 `UserCommandRequestExtensions.kt`, `UserProfileQueryResponseExtensions.kt` 등으로 명명해야 하며, 파일명은 해당 폴더 구조(command/query)의 의미를 포함하도록 명확하게 작성한다.**
+8.  **확장 함수 위치**: 확장 함수는 가능한 해당 클래스가 정의된 모듈이나, 해당 기능을 확장하는 레이어의 `extensions` 폴더에 위치시킨다. 특정 레이어에 강제로 제한하기보다 코드의 가독성과 응집성을 우선하여 결정한다. **단, Rule 5에 명시된 Presentation 레이어의 DTO 변환 확장 함수는 해당 규칙에 명시된 구조와 위치를 필수로 준수해야 한다.**
+
+#### 1.5. 필수 패키지 및 디렉토리 구조 규칙 (도메인 모듈)
+
+**141. 필수 패키지 및 디렉토리 구조 규칙 (도메인 모듈)**
+
+*   **141.1 (적용 범위 및 절대적 지위):** 이 규칙은 `domains/` 디렉토리 아래에 위치하는 모든 모듈 (`domains/common` 포함)에 **필수적으로 적용**되며, 해당 모듈 내 모든 소스 코드, 리소스 파일, 테스트 코드는 이 규칙에 정의된 레이어 및 패키지 구조를 **예외 없이 따라야 합니다.** 본 문서의 다른 규칙에서 특정 요소의 위치를 언급할 때, 해당 위치는 **별도의 명시적인 구조가 정의되지 않는 한** 항상 이 규칙 141에 정의된 레이어 구조 내의 하위 경로를 의미합니다. `independent/` 디렉토리 아래의 모듈에는 이 규칙이 적용되지 않으며 (Rule 80 참조), 해당 모듈은 자체적인 구조 규칙을 정의합니다.
+*   **141.2 (최상위 패키지):** 각 도메인 모듈의 최상위 Kotlin/Java 소스 패키지는 `com.restaurant.{domain-name}` 형식을 따라야 합니다 (예: `com.restaurant.user`, `com.restaurant.common`).
+*   **141.3 (레이어 패키지):** Rule 141.1에 따라, 각 아키텍처 레이어(Presentation, Application, Domain, Infrastructure)에 속하는 모든 코드는 반드시 해당 레이어 이름을 딴 하위 패키지 내에 위치해야 합니다. 형식은 `com.restaurant.{domain-name}.{layer-name}` 입니다 (예: `com.restaurant.user.domain`, `com.restaurant.common.presentation`, `com.restaurant.user.infrastructure`).
+*   **141.4 (물리적 경로 일치):** 위 141.3에서 정의된 패키지 구조는 `src/main/kotlin/` (또는 `src/main/java/`) 아래의 물리적 디렉토리 구조와 **정확히 일치**해야 합니다. 예를 들어, `com.restaurant.user.domain` 패키지의 코드는 반드시 `domains/user/domain/src/main/kotlin/com/restaurant/user/domain/` 디렉토리 아래에 위치해야 합니다.
+*   **141.5 (레이어 내 표준 하위 패키지):** 각 레이어 패키지 내에서는 코드의 종류에 따라 다음과 같은 표준 하위 패키지 사용을 **필수로 준수**해야 합니다. (디렉토리 구조 예시 참조)
+    *   `domain` (`domains/{domain}/domain/` - Rule 141 준수): `aggregate`, `entity` (Domain Entity), `vo`, `event` (Rule 33, 34, VII.1 참조), `repository` (Interface), `error` (Rule 67 준수), `exception` (Rule 68 준수)
+    *   `application` (`domains/{domain}/application/` - Rule 141 준수):
+        *   `command/`: Command 관련 로직 그룹핑.
+            *   `usecase/`: Command Use Case 인터페이스.
+            *   `handler/`: Command Use Case 구현체.
+            *   `dto/`: Command 입력 DTO.
+        *   `query/`: Query 관련 로직 그룹핑.
+            *   `usecase/`: Query Use Case 인터페이스.
+            *   `handler/`: Query Use Case 구현체.
+            *   `dto/`: Query 입력 DTO 및 결과 DTO.
+    *   `presentation` (`domains/{domain}/presentation/` - Rule 141 준수): **Rule 57에 따라 버전별 폴더 (`v1/`, `v2/` 등)가 필수로 존재해야 하며, 이 버전별 폴더 바로 아래에 CQRS 역할을 명확히 구분하는 필수적인 `command/` 및 `query/` 하위 폴더를 포함합니다.**
+        *   `vX/`:
+            *   `command/`: `controller` (Command Controllers), `dto` (`request`), `extensions` (`dto/request` - Rule 5 준수)
+            *   `query/`: `controller` (Query Controllers), `dto` (`request`, `response`), `extensions` (`dto/request`, `dto/response` - Rule 5 준수)
+            *   `config`: (버전별 공통 설정)
+            *   `filter`: (버전별 필터)
+    *   `infrastructure` (`domains/{domain}/infrastructure/` - Rule 141 준수): `entity` (JPA Entity), `repository` (Implementation), `mapper` (또는 `extensions` - Rule 24, Rule 85, VII.1 참조), `config`, `error`, `exception`
+*   **141.6 (패키지명 일관성):** 모든 패키지 명명은 소문자를 사용하고, 여러 단어 조합 시에는 일반적으로 붙여씁니다 (예: `userdomain` 대신 `user.domain`).
+
+**디렉터리 구조**
+
+```
+/
+├── buildSrc/ # Gradle 빌드 로직 및 태스크 정의 (rule VII.1.3.2 참조)
+│   └── src/
+│       └── main/
+│           └── kotlin/
+│               └── GenerateJsonSchemaTask.kt # Kotlinx.serialization 기반 이벤트 클래스용 JSON 스키마 생성 태스크
+├── independent/ # 독립 모듈 그룹핑 폴더 (다른 프로젝트 재사용성/이식성 고려) (rule 4, 79, 80, 141.1 미적용)
+│ └── outbox/ # Outbox 독립 모듈 - NO dependencies on domains/* or common/* or other independent/* (rule 9, 80, 122, 141.1 미적용) # Package: com.restaurant.outbox (예시)
+│ ├── src/
+│ │ ├── main/
+│ │ │ ├── kotlin/
+│ │ │ │ └── com/
+│ │ │ │ └── restaurant/
+│ │ │ │ └── outbox/
+│ │ │ │ ├── application/ # Application 레이어 (rule 80)
+│ │ │ │ │ ├── usecase/ # Outbox Use Case 인터페이스 (권장)
+│ │ │ │ │ │ └── ProcessOutboxEventsUseCase.kt
+│ │ │ │ │ ├── handler/ # Outbox Use Case 구현체 (권장)
+│ │ │ │ │ │ └── ProcessOutboxEventsUseCaseHandler.kt
+│ │ │ │ │ ├── dto/ # Outbox 관련 DTO (권장)
+│ │ │ │ │ │ └── OutboxMessage.kt # Outbox 메시지 구조 정의 (payload: String (kotlinx.serialization JSON) - rule 81, VII.1)
+│ │ │ │ │ │ └── OutboxMessageStatus.kt
+│ │ │ │ │ └── # 기타 Outbox Application 로직 (예: OutboxPoller.kt - rule 86)
+│ │ │ │ └── infrastructure/ # Infrastructure 레이어 (rule 80)
+│ │ │ │ ├── entity/ # Outbox 이벤트 엔티티 (rule 83)
+│ │ │ │ │ └── OutboxEventEntity.kt # Stores kotlinx.serialization JSON payload (String), topic, headers etc.
+│ │ │ │ ├── repository/ # Outbox 메시지 저장 Repository 구현체 (rule 82)
+│ │ │ │ │ ├── JpaOutboxMessageRepository.kt # Implements OutboxMessageRepository (defined in application/dto)
+│ │ │ │ │ └── converter/ # JPA Converter (rule 83)
+│ │ │ │ │ └── StringMapConverter.kt
+│ │ │ │ ├── messaging/ # 메시지 브로커 전송 컴포넌트 (rule 88, VII.1, VII.2.6)
+│ │ │ │ │ ├── OutboxMessageSender.kt # KafkaTemplate<String, String>을 사용하여 Kafka로 메시지 전송 (kotlinx.serialization JSON 페이로드 사용, Rule VII.1)
+│ │ │ │ │ └── config/
+│ │ │ │ │ └── KafkaProducerConfig.kt # Outbox KafkaTemplate 관련 설정 (application.yml에 설정, StringSerializer 사용)
+│ │ │ │ ├── error/ # Outbox 자체 에러 코드 (rule 67, 80, 90)
+│ │ │ │ │ └── OutboxErrorCodes.kt # Enum for Outbox errors
+│ │ │ │ ├── exception/ # Outbox 자체 예외 (rule 68, 80, 90)
+│ │ │ │ │ └── OutboxException.kt # Base exception for Outbox failures
+│ │ │ │ └── resources/ # Outbox 관련 리소스
+│ │ │ │ │ └── # (JSON 스키마 파일은 각 도메인 모듈에서 관리 - rule VII.1)
+│ │ │ │ └── test/
+│ └── build.gradle.kts # Depends only on standard libraries/frameworks (JPA, spring-kafka, kotlinx-serialization etc.)
+├── domains/ # 도메인별 모듈 그룹 (rule 3, 141 필수 적용)
+│ ├── common/ # 공통 모듈 (rule 4, 122, 141 필수 적용) # Package: com.restaurant.common (예시) (rule 141.2)
+│ │ ├── src/ # NO dependencies on specific domains (e.g., user) or independent/* (rule 4, 9, 122)
+│ │ │ ├── main/
+│ │ │ │ ├── kotlin/ # Package: com.restaurant.common (예시)
+│ │ │ │ │ └── com/
+│ │ │ │ │ └── restaurant/
+│ │ │ │ │ └── common/
+│ │ │ │ │ ├── domain/ # Domain 레이어 (rule 141.3)
+│ │ │ │ │ │ ├── aggregate/ # (rule 141.5)
+│ │ │ │ │ │ │ └── AggregateRoot.kt # (rule 17, 18)
+│ │ │ │ │ │ ├── event/ # (rule 141.5)
+│ │ │ │ │ │ │ └── DomainEvent.kt # (rule 32, kotlinx.serialization @Serializable 대상)
+│ │ │ │ │ │ ├── error/ # (rule 141.5)
+│ │ │ │ │ │ │ ├── ErrorCode.kt # (rule 67)
+│ │ │ │ │ │ │ └── CommonSystemErrorCode.kt # (rule 67)
+│ │ │ │ │ │ └── exception/ # (rule 141.5)
+│ │ │ │ │ │ └── DomainException.kt # Common Base Domain Exception (rule 68, 73)
+│ │ │ │ │ ├── application/ # Application 레이어 (rule 141.3)
+│ │ │ │ │ │ ├── exception/ # (rule 141.5)
+│ │ │ │ │ │ │ └── ApplicationException.kt # Common Base Application Exception (rule 68, 73)
+│ │ │ │ │ │ └── # 기타 공통 Application 요소 (예: 공통 Use Case 인터페이스)
+│ │ │ │ │ ├── presentation/ # Presentation 레이어 (rule 141.3)
+│ │ │ │ │ │ ├── GlobalExceptionHandler.kt # (rule 51, 52, 73, 141.5)
+│ │ │ │ │ │ ├── config/ # (rule 141.5)
+│ │ │ │ │ │ │ └── SecurityConfig.kt
+│ │ │ │ │ │ └── dto/ # (rule 141.5)
+│ │ │ │ │ │ └── response/
+│ │ │ │ │ │ └── CommandResultResponse.kt # (rule 35)
+│ │ │ │ │ └── infrastructure/ # Infrastructure 레이어 (rule 141.3)
+│ │ │ │ │ │ ├── entity/ # (rule 141.5)
+│ │ │ │ │ │ │ └── BaseEntity.kt
+│ │ │ │ │ │ └── # 기타 공통 인프라 컴포넌트
+│ │ │ │ │ └── test/
+│ │ │ │ └── resources/ # Common Module Resources (rule 141.4)
+│ │ │ │ │ └── # (JSON 스키마 파일은 각 도메인 모듈에서 관리 - rule VII.1)
+│ │ └── build.gradle.kts
+│ ├── user/ # 예시 도메인 (rule 3, 141 필수 적용) # Package: com.restaurant.user (예시) (rule 141.2)
+│ │ ├── apps/ # 애플리케이션 실행 모듈 (일반적으로 도메인 레이어 구조와 분리)
+│ │ │ ├── src/
+│ │ │ │ ├── main/
+│ │ │ │ │ ├── kotlin/ # Package: com.restaurant.apps.user (예시)
+│ │ │ │ │ │ └── com/
+│ │ │ │ │ │ └── restaurant/
+│ │ │ │ │ │ └── apps/
+│ │ │ │ │ │ └── user/
+│ │ │ │ │ │ └── UserApplication.kt # Spring Boot Application 진입점
+│ │ │ │ │ ├── resources/
+│ │ │ │ │ │ └── application.yml # 애플리케이션별 설정
+│ │ │ │ │ └── test/
+│ │ ├── domain/ # Domain 레이어 모듈 (rule 2, 10, 141 필수 적용) # Package: com.restaurant.user.domain (예시) (rule 141.3)
+│ │ │ ├── src/ # Can depend on domains/common (rule 4, 9)
+│ │ │ │ ├── main/
+│ │ │ │ │ ├── kotlin/ # Package: com.restaurant.user.domain (예시)
+│ │ │ │ │ │ └── com/
+│ │ │ │ │ │ └── restaurant/
+│ │ │ │ │ │ └── user/
+│ │ │ │ │ │ └── domain/ # (rule 141.4)
+│ │ │ │ │ │ ├── aggregate/ # (rule 141.5)
+│ │ │ │ │ │ │ ├── User.kt # AggregateRoot 상속, Immutable, id: UserId 필드 포함
+│ │ │ │ │ │ │ ├── UserStatus.kt
+│ │ │ │ │ │ │ └── UserType.kt
+│ │ │ │ │ │ ├── entity/ # Domain Entity (rule 11, 141.5)
+│ │ │ │ │ │ │ └── Address.kt # AddressId 포함
+│ │ │ │ │ │ ├── vo/ # Value Object (rule 11, 141.5)
+│ │ │ │ │ │ │ ├── AddressId.kt
+│ │ │ │ │ │ │ ├── Email.kt # validation throws DomainException (rule 14, 61)
+│ │ │ │ │ │ │ ├── Name.kt
+│ │ │ │ │ │ │ ├── Password.kt # validation throws DomainException, toString 마스킹 (rule 14, 15, 61)
+│ │ │ │ │ │ │ ├── PhoneNumber.kt
+│ │ │ │ │ │ │ ├── UserId.kt # UUID 기반 ID VO (rule 10)
+│ │ │ │ │ │ │ └── Username.kt
+│ │ │ │ │ │ ├── event/ # Domain Event (rule 33, 34, VII.1, 141.5)
+│ │ │ │ │ │ │ └── UserEvent.kt # Aggregate별 sealed class 이벤트 그룹 (kotlinx.serialization @Serializable, JSON 직렬화 대상 - rule 33, 34, VII.1)
+│ │ │ │ │ │ ├── repository/ # Repository Interface (rule 137, 141.5)
+│ │ │ │ │ │ │ └── UserRepository.kt
+│ │ │ │ │ │ ├── error/ # Domain Error Code (rule 67, 141.5)
+│ │ │ │ │ │ │ └── UserDomainErrorCodes.kt # Implements ErrorCode
+│ │ │ │ │ │ └── exception/ # Domain Exception (rule 68, 141.5)
+│ │ │ │ └── test/
+│ │ ├── application/ # Application 레이어 모듈 (rule 2, 141 필수 적용) # Package: com.restaurant.user.application (예시) (rule 141.3)
+│ │ │ ├── src/ # Can depend on domains/common and independent/*/application (rule 4, 9)
+│ │ │ │ ├── main/
+│ │ │ │ │ ├── kotlin/ # Package: com.restaurant.user.application (예시)
+│ │ │ │ │ │ └── com/
+│ │ │ │ │ │ └── restaurant/
+│ │ │ │ │ │ └── user/
+│ │ │ │ │ │ └── application/ # (rule 141.4)
+│ │ │ │ │ │ ├── command/ # Command Use Cases (rule 141.5)
+│ │ │ │ │ │ │ ├── usecase/ # Command Use Case Interfaces
+│ │ │ │ │ │ │ │ └── CreateUserUseCase.kt
+│ │ │ │ │ │ │ ├── handler/ # Command Use Case Implementations (Handlers)
+│ │ │ │ │ │ │ │ └── CreateUserUseCaseHandler.kt
+│ │ │ │ │ │ │ └── dto/ # Command Input DTOs
+│ │ │ │ │ │ │ │ └── CreateUserCommand.kt
+│ │ │ │ │ │ ├── query/ # Query Use Cases (rule 141.5)
+│ │ │ │ │ │ │ ├── usecase/ # Query Use Case Interfaces
+│ │ │ │ │ │ │ │ └── GetUserProfileByIdUseCase.kt
+│ │ │ │ │ │ │ ├── handler/ # Query Use Case Implementations (Handlers)
+│ │ │ │ │ │ │ │ └── GetUserProfileByIdUseCaseHandler.kt
+│ │ │ │ │ │ │ └── dto/ # Query Input/Result DTOs
+│ │ │ │ │ │ │ │ ├── GetUserProfileByIdQuery.kt
+│ │ │ │ │ │ │ │ ├── LoginResult.kt
+│ │ │ │ │ │ │ │ └── UserProfileDto.kt
+│ │ │ │ │ │ ├── error/ # Application Error Code (rule 67, 141.5)
+│ │ │ │ │ │ │ └── UserApplicationErrorCode.kt # Implements ErrorCode
+│ │ │ │ │ │ └── exception/ # Application Exception (rule 68, 141.5)
+│ │ │ │ │ │ └── UserApplicationException.kt # Sealed class, Has 'errorCode: ErrorCode'
+│ │ │ │ │ └── resources/ # Application Resources (rule 141.4)
+│ │ │ │ │ └── test/
+│ │ ├── infrastructure/ # Infrastructure 레이어 모듈 (rule 2, 141 필수 적용) # Package: com.restaurant.user.infrastructure (예시) (rule 141.3)
+│ │ │ ├── src/ # Can depend on domains/common and independent/outbox (rule 4, 9, 84)
+│ │ │ │ ├── main/
+│ │ │ │ │ ├── kotlin/ # Package: com.restaurant.user.infrastructure (예시)
+│ │ │ │ │ │ └── com/
+│ │ │ │ │ │ └── restaurant/
+│ │ │ │ │ │ └── user/
+│ │ │ │ │ │ └── infrastructure/ # (rule 141.4)
+│ │ │ │ │ │ ├── entity/ # JPA Entity (rule 19, 141.5)
+│ │ │ │ │ │ │ ├── UserEntity.kt
+│ │ │ │ │ │ │ └── AddressEntity.kt
+│ │ │ │ │ │ ├── repository/ # Repository Implementation (rule 138, 139, 140, 141.5)
+│ │ │ │ │ │ │ ├── SpringDataJpaUserRepository.kt
+│ │ │ │ │ │ │ └── UserRepositoryImpl.kt # Implements UserRepository, depends on OutboxMessageRepository & DomainEventToOutboxMessageConverter
+│ │ │ │ │ │ ├── mapper/ # Entity Conversion & Event Conversion (rule 24, 85, 141.5, VII.1)
+│ │ │ │ │ │ │ ├── UserEntityMapper.kt # (rule 25)
+│ │ │ │ │ │ │ └── DomainEventToOutboxMessageConverter.kt # (rule 85, DomainEvent data class -> kotlinx.serialization JSON String payload for OutboxMessage - VII.1)
+│ │ │ │ │ │ ├── config/ # Infrastructure Configuration (rule 141.5)
+│ │ │ │ │ │ │ ├── JpaConfig.kt
+│ │ │ │ │ │ │ └── KafkaConsumerConfig.kt # Kafka Listener 관련 설정 (@EnableKafka, ConsumerFactory 등 - Rule VII.2.24, StringDeserializer 또는 KafkaJsonSchemaDeserializer 사용)
+│ │ │ │ │ │ └── messaging/ # 메시지 소비 관련 컴포넌트 (예: @KafkaListener) (rule VII.1.3.5, VII.2.24)
+│ │ │ │ │ │ │ └── UserEventConsumer.kt # 예시: @KafkaListener(topics = "...", groupId = "...")
+│ │ │ │ │ └── resources/ # Infrastructure Resources (rule 141.4) (예: DB 마이그레이션 스크립트)
+│ │ │ │ │ │ └── schemas/ # JSON 스키마 파일 저장 위치 (rule VII.1.3.2)
+│ │ │ │ │ │ └── user_event.json # 예시: UserEvent에 대한 JSON 스키마 (GenerateJsonSchemaTask.kt에 의해 생성)
+│ │ │ │ │ └── test/
+│ │ │ │ └── build.gradle.kts # Infrastructure module build script (kafka-schema-registry-gradle-plugin 설정 포함 - Rule VII.1.3.3)
+│ │ ├── presentation/ # Presentation 레이어 모듈 (rule 2, 141 필수 적용) # Package: com.restaurant.user.presentation (예시) (rule 141.3)
+│ │ │ ├── src/ # Can depend on domains/common and domains/user/application (rule 4, 9)
+│ │ │ │ ├── main/
+│ │ │ │ │ ├── kotlin/ # Package: com.restaurant.user.presentation (예시)
+│ │ │ │ │ │ └── com/
+│ │ │ │ │ │ └── restaurant/
+│ │ │ │ │ │ └── user/
+│ │ │ │ │ │ └── presentation/ # (rule 141.4)
+│ │ │ │ │ │ ├── v1/ # API Version (rule 57, 141.5)
+│ │ │ │ │ │ │ ├── command/ # Command related (rule 141.5)
+│ │ │ │ │ │ │ │ ├── controller/ # Command Controllers (rule 141.5) - e.g. UserController for POST, PUT, DELETE
+│ │ │ │ │ │ │ │ │ └── UserController.kt
+│ │ │ │ │ │ │ │ ├── dto/ # Command Request DTOs (rule 44, 46, 141.5)
+│ │ │ │ │ │ │ │ │ └── request/
+│ │ │ │ │ │ │ │ │ └── CreateUserRequestV1.kt
+│ │ │ │ │ │ │ │ └── extensions/ # Command DTO Conversion Extensions (rule 5, 6, 7, 8, 58, 59, 141.5)
+│ │ │ │ │ │ │ │ │ └── dto/
+│ │ │ │ │ │ │ │ │ └── request/ # Presentation Request -> Application Command DTO conversion
+│ │ │ │ │ │ │ │ │ └── UserCommandRequestExtensions.kt # (rule 7, 59)
+│ │ │ │ │ │ │ └── query/ # Query related (rule 141.5)
+│ │ │ │ │ │ │ │ ├── controller/ # Query Controllers (rule 141.5) - e.g. UserQueryController for GET
+│ │ │ │ │ │ │ │ │ └── UserQueryController.kt
+│ │ │ │ │ │ │ │ ├── dto/ # Query Request/Response DTOs (rule 44, 46, 141.5)
+│ │ │ │ │ │ │ │ │ ├── request/ # Query Request DTOs/Parameters
+│ │ │ │ │ │ │ │ │ │ └── GetUserProfileByIdRequestV1.kt # Example for complex query params
+│ │ │ │ │ │ │ │ │ └── response/ # Query Response DTOs
+│ │ │ │ │ │ │ │ │ └── UserProfileResponseV1.kt
+│ │ │ │ │ │ │ │ └── extensions/ # Query DTO Conversion Extensions (rule 5, 6, 7, 8, 58, 59, 141.5)
+│ │ │ │ │ │ │ │ │ └── dto/
+│ │ │ │ │ │ │ │ │ ├── request/ # Presentation Request -> Application Query DTO conversion (Optional if params are simple)
+│ │ │ │ │ │ │ │ │ │ └── UserQueryRequestExtensions.kt
+│ │ │ │ │ │ │ │ │ └── response/ # Application Query Result -> Presentation Response DTO conversion
+│ │ │ │ │ │ │ │ │ └── UserQueryResponseExtensions.kt # (rule 7, 59)
+│ │ │ │ │ │ ├── config/ # Version-specific Presentation config (e.g., Swagger specific to v1) (rule 141.5)
+│ │ │ │ │ │ │ └── v1SwaggerConfig.kt
+│ │ │ │ │ │ └── filter/ # Version-specific Presentation filters (rule 141.5)
+│ │ │ │ │ │ └── V1AuthFilter.kt
+│ │ │ │ │ └── resources/ # Presentation Resources (rule 141.4)
+│ │ │ │ │ └── test/
+│ │ └── build.gradle.kts # User 모듈의 각 하위 모듈(domain, application, infrastructure, presentation)이 common 및 independent(usecase/dto)에 대한 의존성을 가질 수 있음
+# 다른 도메인 모듈들 (order 등) 도 user 도메인과 유사한 구조 (rule 3, 141 필수 적용)
+└── build.gradle.kts
+```
+
+### II. 도메인 계층 개발 원칙
+
+#### 2.1. 도메인 레이어 독립성 및 순수성
+
+10. **도메인 레이어 독립성**: Domain 레이어 (`domains/{domain}/domain/` - Rule 141 준수)는 Presentation, Application, Infrastructure, 독립 모듈(`independent/`) 레이어를 절대 참조해서는 안 됩니다. 또한, Spring, JPA, Kafka 클라이언트, **HTTP 관련 API (`HttpStatus` 등)** 등 특정 **기술 구현 프레임워크 또는 프로토콜**에 대한 직접적인 의존성(로직, 어노테이션 포함)을 가져서는 안 됩니다. 하지만, 도메인 모델링 자체를 본질적으로 지원하는 **필수적인 표준 라이브러리 또는 유틸리티 라이브러리**(예: `kotlin-stdlib`, `java.time` API, 표준 Validation API - `jakarta.validation-api`, Guava 등 검증된 유틸리티)의 사용은 **최소한의 범위 내에서 신중하게 허용**될 수 있습니다. **`DomainEvent` `data class`는 Kotlinx Serialization 라이브러리 (`@Serializable` 어노테이션 사용)를 통해 JSON으로 직렬화될 수 있으며, 이는 특정 메시징 기술에 대한 직접적인 의존성을 유발하지 않으므로 Domain 레이어 내 사용이 허용됩니다 (Rule 33, Rule VII.1 참조).** 이러한 라이브러리 사용 결정은 코드 리뷰를 통해 그 필요성과 도메인 순수성 침해 여부를 엄격히 검토해야 합니다. `domains/common` 모듈의 공통 도메인 요소(`AggregateRoot`, `DomainEvent` 인터페이스 등 - `domains/common/domain/` - Rule 141 준수)에 대한 의존성은 허용됩니다. Domain 모델의 고유 식별자는 UUID와 같은 기술 독립적인 타입의 Value Object로 캡슐화하여 사용해야 한다 (예: `UserId`, `OrderId`). 데이터베이스 자동 생성 식별자(예: Long)는 Infrastructure 레이어에서만 관리되며, Domain 모델에 노출되지 않는다.
+
+#### 2.2. Aggregate, Entity, Value Object (VO)
+
+##### 2.2.1. 정의, 위치 및 순수성
+
+11. **Aggregate, Entity, VO 위치 및 순수성**: Aggregate, Domain Entity, Value Object (VO)는 반드시 해당 도메인 모듈의 Domain 레이어 (`domains/{domain}/domain/` - Rule 141 준수)에 정의하며, **특정 기술 구현 프레임워크**(JPA, Spring 등)의 로직이나 어노테이션에 의존하지 않고 순수하게 유지한다. **단, `DomainEvent` `data class`의 경우 JSON 직렬화를 위한 Kotlinx Serialization 라이브러리와의 호환성은 Rule 10에 따라 허용된다 (Rule 33, Rule VII.1 참조).** **이때, Domain Entity (Aggregate Root 포함)와 Value Object를 구분하는 핵심 기준은 '고유 식별자(identity)'의 유무이다. Domain Entity는 고유한 식별자를 가지며 자체적인 생명주기(lifecycle)를 통해 추적 및 변경 관리되는 반면, Value Object는 기술적인 식별자를 갖지 않고 오직 구성 속성들의 값으로만 정의된다.** 기술적 영속화 관련 상세(DB 자동 생성 ID 매핑, Fetch 전략 등)는 해당 도메인 모듈의 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)** 의 JPA Entity에만 정의한다. **Aggregate는 불변 객체로 설계한다.**
+
+##### 2.2.2. Aggregate Root 식별자 (ID)
+
+11.5. **Aggregate Root 식별자 (ID) 정의**: 모든 Aggregate Root 클래스는 해당 Aggregate의 고유 식별자를 나타내는 필드를 가져야 하며, 이 필드는 Rule 10에 따라 Domain ID Value Object 타입으로 정의되어야 한다. 이 식별자 필드는 `val`로 선언되어야 하며, 생성 시점에 할당된 이후 변경될 수 없다. 해당 필드는 외부 레이어(Application, Infrastructure)에서 Aggregate를 식별하고 참조할 수 있도록 `public val` 또는 `internal val`로 노출해야 한다.
+
+##### 2.2.3. Aggregate VO 사용 제한
+
+12. **Aggregate VO 사용 제한**: 도메인 내 Aggregate의 Value Object는 Domain 레이어 외부에서 참조하거나 직접 사용하지 않아야 한다. 외부 레이어에서는 DTO로 변환하여 사용한다.
+
+##### 2.2.4. VO 불변성 및 생성
+
+13. **VO 불변성 및 생성 제어**: 모든 VO는 불변 객체로 설계하며, `private` 생성자와 `companion object`의 `of` 메서드 (또는 `ofString` 등 의미있는 정적 팩토리 메서드)를 통해 생성을 제어해야 한다.
+61. **VO 생성 규칙**: VO는 `companion object`의 `of` 메서드 (또는 `ofString` 등 의미있는 정적 팩토리 메서드) 로만 생성하며, `private` 생성자를 사용하여 직접 생성을 차단한다. VO 생성 시 발생하는 유효성 검사 실패는 Rule 14에 따라 해당 도메인 모듈의 **Domain Layer (`domains/{domain}/domain/exception/` - Rule 141 준수)에 정의된 InvalidInput 관련 `DomainException`을 상속하는 특정 유효성 검사 예외 타입** (Rule 68 참조)으로 발생되어 상위로 전파되어야 한다.
+
+##### 2.2.5. VO 유효성 검사
+
+14. **VO 유효성 검사**: VO의 유효성 검사는 `init` 블록 또는 팩토리 메서드에서 수행하며, 유효성 검사 실패 시 해당 도메인 레이어에 정의된 **`DomainException`을 상속하는 특정 유효성 검사 예외 타입** (Rule 68 참조)을 던져야 한다. 이러한 유효성 검사 예외는 Rule 68에 명시된 Validation 관련 베이스 예외 타입(예: `UserDomainException.Validation`)을 상속해야 한다. **표준 Validation API 어노테이션(`jakarta.validation.constraints.*`)을 VO 필드에 명시하는 것은 허용될 수 있으나, 실제 검증 로직 실행 및 예외 발생 책임은 여전히 `init` 또는 팩토리 메서드 내에 있어야 합니다.**
+
+##### 2.2.6. VO toString 오버라이드
+
+15. **VO toString 오버라이드**: VO의 `toString()` 메서드는 디버깅 및 로깅을 위해 값 자체를 명확히 표현하도록 재정의하거나, 민감 정보(예: 비밀번호)는 보안을 위해 마스킹 처리할 수 있다. (예: `Password.toString()`은 `********` 반환)
+
+##### 2.2.7. Aggregate 팩토리 함수
+
+16. **Aggregate 팩토리 함수**: Aggregate 및 Domain Entity는 `companion object`에 `create` (신규 생성) 및 `reconstitute` (영속성 로딩 후 재구성) 팩토리 함수를 정의해야 한다. `reconstitute`는 Domain 식별자 Value Object를 인자로 받아야 한다. **`reconstitute` 팩토리 함수는 오직 해당 도메인 모듈의 Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수) 내 Repository 구현체 내부에서, 데이터베이스 등 영속성 저장소로부터 읽어온 데이터(예: JPA Entity)를 기반으로 Domain Aggregate 객체를 메모리 상에 재구성(rehydrate)할 목적으로만 사용되어야 한다.** Application 레이어나 다른 Domain 객체 내에서 이 메서드를 직접 호출해서는 안 된다. `create` 팩토리 함수는 애그리거트의 초기 상태를 생성하며, 이 과정에서 발생하는 초기 상태 변경(`UserCreated` 등)에 대한 `DomainEvent`를 애그리거트 내부의 이벤트 목록에 `addDomainEvent()` 메서드를 통해 추가한다.
+
+##### 2.2.8. 공통 AggregateRoot 상속
+
+17. **공통 AggregateRoot 상속**: 모든 도메인 Aggregate 클래스는 `domains/common` 모듈의 domain 레이어 (`domains/common/domain/` - Rule 141 준수)에 정의된 추상 클래스 `AggregateRoot`를 상속받아야 한다.
+
+##### 2.2.9. AggregateRoot 이벤트 관리
+
+18. **AggregateRoot 이벤트 관리**: `AggregateRoot` 베이스 클래스는 발생한 `DomainEvent` 객체들을 저장하기 위한 컬렉션(예: `private val domainEvents: MutableList<DomainEvent> = mutableListOf()`)을 내부에 가져야 하며, 이벤트를 추가하는 `addDomainEvent(event: DomainEvent)`, 읽기 전용 목록을 노출하는 `fun getDomainEvents(): List<DomainEvent>`, 이벤트 목록을 초기화하는 `fun clearDomainEvents()` 메서드를 제공해야 한다. **`addDomainEvent(event: DomainEvent)` 메서드는 `internal` 가시성을 가져야 하며, Aggregate의 상태 변경 메서드나 `create` 팩토리 함수 내에서만 호출되어야 한다.** Immutable Aggregate의 상태 변경 메서드는 변경된 Aggregate의 *새로운 인스턴스*를 반환한다. 이 새로운 인스턴스는 해당 변경으로 인해 발생한 이벤트를 자신의 내부 이벤트 목록에 포함해야 한다. `create` 팩토리 함수도 초기 상태 변경에 대한 `DomainEvent`를 생성하여 `addDomainEvent()`를 호출한다. Repository 구현체는 애그리거트 저장 전 최종 Aggregate 인스턴스의 `getDomainEvents()`로 이벤트를 수집하고 Rule 85에 따라 Outbox 저장을 위한 변환 및 저장을 위임한다. 저장 성공 후 `clearDomainEvents()`를 호출한다.
+    *   Aggregate 내 상태 변경 메서드 (Immutable) 예시:
+        *   `fun changeName(newName: String): User` 와 같은 메서드는 `this.copy(...)`를 사용하여 새로운 인스턴스를 생성한다.
+        *   상태 변경에 따른 `DomainEvent` (예: `UserEvent.NameChanged`)를 생성하여 새로운 인스턴스의 `addDomainEvent()`를 호출한다.
+        *   변경된 새로운 인스턴스를 반환한다.
+    *   `AggregateRoot` 내 `addDomainEvent` (internal 가시성) 예시:
+        *   `internal fun addDomainEvent(event: DomainEvent) { this.domainEvents.add(event) }`
+
+#### 2.3. 도메인 이벤트
+
+##### 2.3.1. 공통 DomainEvent 인터페이스
+
+32. **공통 DomainEvent 인터페이스 정의**: 모든 도메인 이벤트가 구현해야 할 `DomainEvent` 인터페이스는 `domains/common` 모듈의 domain 레이어 패키지(`domains/common/domain/event/DomainEvent.kt` - Rule 141 준수)에 정의하며, 기술 독립적이어야 한다. 이 인터페이스를 구현하는 클래스는 Kotlinx Serialization을 위해 `@Serializable` 어노테이션을 가질 수 있다. `independent/outbox` 모듈은 이 인터페이스를 **직접 의존하지 않는다** (Rule 80 참조, Rule 141 미적용). 도메인 Infrastructure 레이어는 이 인터페이스를 구현하는 구체적인 이벤트를 처리한다.
+
+##### 2.3.2. 도메인 이벤트 정의 및 위치
+
+33. **도메인 이벤트 정의 위치**: 도메인 이벤트 클래스는 해당 도메인 모듈의 `domain/event/` 패키지 (`domains/{domain}/domain/event/` - Rule 141 준수)에 정의하며, 순수 Kotlin `data class`로 구현하고 `DomainEvent` 인터페이스를 구현해야 한다. **이 `data class`는 Kotlinx Serialization 라이브러리(`org.jetbrains.kotlinx:kotlinx-serialization-json`)를 사용하여 JSON으로 직렬화/역직렬화 가능해야 하며, 이벤트 클래스는 `@Serializable` 어노테이션을 가져야 한다 (Rule 10, Rule VII.1 참조).** 이벤트 페이로드는 불변 타입 및 불변 컬렉션(`List`, `Map` 등)만을 포함해야 한다. 모든 이벤트에는 공통 필드(`id`, `eventId`, `occurredAt`)가 포함되며, `type` 필드는 이벤트 타입을 구분하는 식별자 역할을 하며 Kotlinx Serialization의 다형성 처리에 사용될 수 있다.
+
+##### 2.3.3. Aggregate별 이벤트 그룹화
+
+34. **Aggregate별 이벤트 그룹화**: 각 Aggregate (또는 도메인 엔티티)와 관련된 모든 도메인 이벤트는 해당 Aggregate의 이름 뒤에 `Events`를 붙인 파일명(예: `UserEvent.kt`)으로, 해당 도메인 모듈의 `domain/event/` 패키지 (`domains/{domain}/domain/event/` - Rule 141 준수) 내에 정의한다. 이벤트들은 하나의 `sealed class`로 상위 타입을 정의하고 (예: `sealed class UserEvent(...) : DomainEvent`), 실제 발행 이벤트들은 해당 `sealed class` 내부에 `@Serializable` 어노테이션을 가진 `data class`로 중첩하여 구현한다 (예: `data class UserEvent.Created(...) : UserEvent(...)`). **이 중첩된 `data class`들 또한 Kotlinx Serialization을 통해 JSON으로 직렬화/역직렬화 가능해야 한다 (Rule 10, Rule VII.1 참조).** 중첩된 이벤트는 상위 `sealed class`의 생성자를 통해 공통 필드(예: `occurredAt`, 관련 Aggregate 식별자 Value Object 등)를 상속받아 관리한다. 특히 `userId`와 같은 관련 Aggregate 식별자는 상위 `sealed class UserEvent`의 추상 프로퍼티나 생성자 인자로 정의하고, 하위 이벤트 데이터 클래스들이 이를 상속받아 사용한다. 이벤트 페이로드에는 Infrastructure-specific ID(예: `Long`)를 포함하지 않고 Domain적인 의미를 가지는 데이터만 포함한다.
+
+### III. 애플리케이션 계층 개발 원칙
+
+#### 3.1. 애플리케이션 서비스 (Use Case)
+
+*   **Command/Query 분리 및 의존성**: Application 레이어 내 `command` 패키지와 `query` 패키지 간 직접적인 의존성은 명시적으로 금지된다. Command 처리 로직과 Query 처리 로직 간 코드 공유가 필요한 경우, 해당 도메인의 `application/common/` (또는 `application/shared/`) 패키지나 `domains/common/application/`에 공유 유틸리티/서비스를 정의하여 사용한다. 이 공유 로직은 특정 Command나 Query에 종속되지 않아야 하며, 코드 중복은 일정 수준 감수한다.
+
+#### 3.2. 예외 처리 및 전파
+
+69. **Application 계층 예외 전파**: Application 레이어의 Command Handler와 Query Handler는 DomainException 및 그 하위 예외를 절대 `catch` 하거나 다른 예외로 변환하지 않는다. 비즈니스 규칙 위반 발생 시 DomainException은 Application 레이어를 그대로 통과하여 상위 계층(Presentation/GlobalExceptionHandler)으로 전파되어야 한다.
+70. **Application 계층 자체 예외 처리**: Application 핸들러는 자신의 책임 범위 내에서 발생하는 문제(예: Command/Query DTO 기반의 입력값 형식 오류 *전* 처리, 외부 서비스 호출 실패 시 Resilience4j 예외, 복구 불가능한 예상치 못한 시스템 오류 등 기술적 오류)에 대해서만 해당 도메인 모듈의 `ApplicationException` sealed class (기술적 오류 관련 data class - `domains/{domain}/application/exception/` - Rule 141 준수)를 발생시키고 상위로 전파한다. Domain 로직 위반으로 인한 예외(예: VO `init` 블록 `require` 실패)를 ApplicationException으로 래핑하지 않도록 한다.
+
+#### 3.3. 재시도 및 Resilience
+
+75. **재시도 로직 포함**: Application 레이어 (`domains/{domain}/application/` - Rule 141 준수)는 일시적 오류(예: 외부 API 호출 실패)에 대해 최대 3회 재시도 로직을 포함하며, 재시도 실패 시 해당 도메인 모듈의 `ApplicationException` sealed class (기술적 오류 관련 data class - `domains/{domain}/application/exception/` - Rule 141 준수)를 발생시킨다. (Resilience4j `@Retry` 사용 권장)
+76. **Resilience4j 회로 차단기**: 외부 시스템 호출은 Resilience4j를 사용하여 회로 차단기 패턴을 적용하며, 기본 타임아웃은 5초로 설정한다. 회로 차단기 설정은 `@CircuitBreaker` 어노테이션을 사용하고, 폴백 메서드를 정의하여 장애 시 기본 응답을 반환한다.
+77. **Resilience4j 재시도 설정**: Resilience4j의 `@Retry` 어노테이션을 사용하여 일시적 오류에 대해 최대 3회 재시도하며, 재시도 간격은 지수 백오프(exponential backoff) 전략을 따른다.
+
+#### 3.4. 컬렉션 사용
+
+65. **불변 컬렉션 사용 의무화**: Domain 및 Application 레이어의 모든 공개 메서드 (public, internal) 및 생성자는 `MutableList` 또는 `MutableMap` 타입을 반환하거나 파라미터로 사용해서는 안 된다. 대신 Kotlin의 불변 컬렉션 타입인 `List`, `Map` 또는 Guava의 `ImmutableList`, `ImmutableMap` 등과 같이 불변성이 보장된 컬렉션 타입을 사용해야 한다.
+66. **Infrastructure 경계에서의 Mutable 컬렉션 사용**: Infrastructure 레이어에서 JPA 엔티티와 Domain 객체 또는 DTO 간의 데이터 변환이 발생하는 모듈 경계에서는 데이터 구조 변환을 위해 필요한 경우 mutable 컬렉션 타입의 사용이 제한적으로 허용될 수 있다. 하지만 변환 완료 후 Domain 또는 Application 레이어로 전달될 때는 반드시 불변 컬렉션으로 변환하여 전달해야 한다.
+
+### IV. Presentation 계층 및 API 개발 규칙
+
+#### 4.1. API 응답 형식
+
+35. **Command 요청 동기 응답**: Command 요청의 동기 응답은 JSON 형식으로 `status` (예: "SUCCESS"), `message` (결과 메시지)를 필수로 포함한다. Command 실행 성공 응답은 Common 모듈의 Presentation 레이어에 정의된 `CommandResultResponse` DTO (`domains/common/presentation/dto/response/CommandResultResponse.kt` - Rule 141 준수)를 사용한다.
+36. **Command 요청 비동기 응답**: 비동기 Command 응답은 `status`, `message`, `jobId` (작업 ID)를 포함한다.
+42. **다건 조회 페이지네이션**: 다건 조회 API는 반드시 페이지네이션을 구현하며, 응답은 `content`, `page`, `size`, `totalElements`, `totalPages` 필드를 포함한다.
+43. **커서 페이지네이션 우선**: 페이지네이션은 커서 기반 페이지네이션을 기본으로 사용하며, 오프셋 페이지네이션은 성능 검증 후 사용한다.
+
+#### 4.2. API 유효성 검사 (Validation)
+
+44. **Presentation Validation**: 해당 도메인 모듈의 Presentation 레이어 (`domains/{domain}/presentation/` - Rule 141 준수) 내의 버전별 폴더(`vX/`) 아래의 **`command/dto/request/` 및 `query/dto/request/` 하위**에 정의된 **요청 DTO**의 유효성 검사는 `jakarta.validation.constraints` 어노테이션(예: `@NotNull`, `@Size`)을 사용하여 수행한다.
+45. **Validation 의존성**: 프로젝트는 `spring-boot-starter-validation`을 의존성에 반드시 추가한다.
+46. **Request DTO Validation**: 모든 해당 도메인 모듈의 Presentation 레이어 (`domains/{domain}/presentation/` - Rule 141 준수) 내의 버전별 폴더(`vX/`) 아래의 **`command/dto/request/` 및 `query/dto/request/` 하위**에 정의된 **요청 DTO** 필드는 적절한 검증 어노테이션을 반드시 적용하며, 검증 로직은 어노테이션으로 처리한다.
+47. **Controller `@Valid` 사용**: Controller 메서드는 **요청 DTO (Rule 44, 46에 명시된 위치)** 에 `@Valid` 어노테이션을 적용하여 유효성 검사를 트리거한다.
+
+#### 4.3. API 에러 처리 및 응답
+
+48. **Validation 에러 응답**: Validation 실패 시 RFC 9457 `ProblemDetail` 형식을 따르며, `invalid-params` 필드에 필드별 에러 메시지(예: `[{ "field": "name", "reason": "cannot be empty" }]`를 포함한다.
+49. **에러 응답 형식**: 모든 에러 응답은 RFC 9457을 준수하며, `ProblemDetail` 클래스를 사용하여 `type`, `title`, `detail`, `errorCode`, `timestamp`를 포함해야 한다.
+50. **ProblemDetail 속성 설정**: `ProblemDetail`은 `.apply { ... }` 람다 블록으로 속성을 설정하며, `ResponseEntity.status(determinedHttpStatus).body(problemDetail)`로 반환한다. HTTP 상태 코드는 Common 모듈의 GlobalExceptionHandler (`domains/common/presentation/GlobalExceptionHandler.kt` - Rule 141 준수)가 발생한 예외(및 ErrorCode)에 기반하여 **자체 매핑 로직으로 결정한 값(`determinedHttpStatus`)**을 사용한다.
+51. **GlobalExceptionHandler 구현**: 모든 프로젝트는 Common 모듈의 Presentation 레이어 (`domains/common/presentation/GlobalExceptionHandler.kt` - Rule 141 준수)에 `GlobalExceptionHandler` 클래스를 구현하며, 다음 예외를 반드시 처리한다: `MethodArgumentNotValidException` (규칙 48 상세 포함), `HttpMessageNotReadableException`, `DomainException`, `ApplicationException`, `OptimisticLockException`, `Exception`. GlobalExceptionHandler는 처리하는 모든 예외에 대해 Rule 49, 50에 따라 `ProblemDetail` 응답을 생성한다.
+52. **컨트롤러 및 글로벌 예외 처리**: 컨트롤러 레벨(`@ExceptionHandler` in ControllerAdvice) 예외 처리는 특정 컨트롤러에 국한되는 경우에만 제한적으로 사용하고, DomainException, ApplicationException, OptimisticLockException을 포함한 대부분의 예외 처리는 Common 모듈의 GlobalExceptionHandler (`domains/common/presentation/GlobalExceptionHandler.kt` - Rule 141 준수)에서 수행하여 일관된 응답 형식을 유지한다. DomainException과 ApplicationException은 Application 레이어에서 잡지 않고 Presentation/GlobalExceptionHandler까지 전파되어 일관된 응답 형식으로 변환된다.
+73. **Presentation/Global 예외 처리 및 HTTP 상태 코드 매핑 책임**: Common 모듈의 Presentation 레이어에 위치한 `ControllerAdvice` 또는 `GlobalExceptionHandler` (`domains/common/presentation/GlobalExceptionHandler.kt` - Rule 141 준수)는 Application 레이어에서 전파된 `DomainException`과 `ApplicationException`, Infrastructure 레이어에서 전파된 `OptimisticLockException`, **`independent/outbox` 모듈의 Infrastructure 레이어 내 `exception` 패키지 (`independent/outbox/infrastructure/exception/` - Rule 80 참조, Rule 141 미적용)에서 전파된 Outbox 관련 예외**를 모두 catch한다. **이 핸들러는 catch한 예외(및 그 안의 `errorCode`)의 타입이나 `code` 값, 또는 표준 예외 타입(`OptimisticLockException`, `MethodArgumentNotValidException` 등)을 기반으로, 자체적인 매핑 로직(예: `when` 문, Map 등)을 통해 적절한 `HttpStatus`를 결정하고, 이를 사용하여 Rule 50에 따라 `ResponseEntity`를 생성하는 책임을 진다.** 또한, 예외 객체가 가진 `errorCode` 정보를 사용하여 RFC 9457 `ProblemDetail` 형식의 응답 본문을 구성한다. GlobalExceptionHandler에서 `errorCode` 정보에 접근하기 위해 Common 모듈의 `DomainException` (`domains/common/domain/exception/DomainException.kt` - Rule 141 준수) 및 `ApplicationException` (`domains/common/application/exception/ApplicationException.kt` - Rule 141 준수) 클래스에 `abstract val errorCode: ErrorCode` 추상 프로퍼티를 유지한다. GlobalExceptionHandler는 특히 Rule 68에서 정의된 Validation 관련 `DomainException` 하위 타입을 식별하여, Rule 48의 `invalid-params` 필드 등 유효성 검사 실패에 특화된 응답 상세를 포함할 수 있다. **Outbox 예외의 경우, 해당 예외 타입 및 포함된 에러 정보를 기반으로 `GlobalExceptionHandler` 내 매핑 로직을 통해 적절한 `HttpStatus` 및 `ProblemDetail`을 구성한다.**
+
+#### 4.4. API 문서화 (Swagger)
+
+53. **API 문서화 Swagger**: API 문서화는 `springdoc-openapi` 라이브러리를 사용하여 Swagger로 구현한다.
+54. **Swagger 어노테이션**: Controller의 모든 엔드포인트는 `@Operation` (설명), `@ApiResponse` (응답), `@Parameter` (파라미터) 어노테이션을 적용한다.
+55. **Swagger 에러 응답**: Swagger 문서는 RFC 9457 `ProblemDetail` 형식을 반영한다.
+
+#### 4.5. API 버전 관리
+
+57. **API 버전 관리**: API는 해당 도메인 모듈의 Presentation 레이어 경로 (`domains/{domain}/presentation/` - Rule 141 준수) 하위에 `/v1/` 접두사를 사용하여 버전을 관리하며, 이 버전별 경로 바로 아래에 CQRS 역할을 명확히 구분하는 **`command/` 및 `query/` 폴더 구조를 필수로 가진다**. 새로운 주요 변경 시 버전(`vX`)을 증가시킨다 (예: `/v2/command/...`).
+
+#### 4.6. DTO 변환
+
+58. **DTO 변환**: Presentation 레이어의 **요청 DTO (Rule 44에 명시된 위치)** 는 Application 레이어의 `command/dto` 또는 `query/dto`에 정의된 DTO로 변환되며, 이 변환은 Presentation 레이어의 해당 버전(`vX/command/extensions/dto/request/` 또는 `vX/query/extensions/dto/request/` - Rule 141 및 Rule 5 준수)의 확장 함수로 구현한다. Application 레이어의 `query/dto`에 정의된 Query Result DTO는 Presentation 레이어의 **응답 DTO (Rule 141.5의 `presentation/vX/query/dto/response/` 하위)** 로 변환되며, 이 변환은 Presentation 레이어의 해당 버전(`vX/query/extensions/dto/response/` - Rule 141 및 Rule 5 준수)의 확장 함수로 구현한다. **이러한 변환 함수는 Rule 5에 명시된 구조와 위치를 필수로 준수해야 한다.**
+59. **DTO 변환 파일명**: DTO 변환 확장 함수 파일은 `{Domain}DtoExtensions.kt` 또는 `{Domain}RequestExtensions.kt` 형식을 따를 수 있다. **Presentation 레이어의 DTO 변환 확장 함수 파일명은 Rule 5 및 7에 따라 해당 구조를 반영하여 `UserCommandRequestExtensions.kt` (request to command DTO), `UserProfileQueryRequestExtensions.kt` (request to query DTO), `UserProfileQueryResponseExtensions.kt` (query result to response DTO) 등으로 명명해야 하며, 파일명은 해당 폴더 구조(command/query)의 의미를 포함하도록 명확하게 작성한다.**
+60. **데이터 변환 일관성**: 모든 데이터 변환(예: DTO, 엔티티, Domain Entity/VO 간)은 확장 함수를 사용하며, 변환 로직은 단일 책임 원칙을 준수해야 한다. **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)** 변환 함수는 Domain ID (Value Object)와 Persistence ID (Long, UUID) 매핑을 처리해야 한다. **또한 Infrastructure 레이어는 Domain Event를 메시지 브로커(예: Kafka)로 전송하기 위한 페이로드로 변환하는 역할을 담당한다 (Rule 85, Rule VII.1 참조).**
+
+### V. Infrastructure 계층 개발 원칙
+
+#### 5.1. JPA 엔티티
+
+##### 5.1.1. 위치 및 책임
+
+19. **JPA 엔티티 위치**: JPA 엔티티는 반드시 해당 도메인 모듈의 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)의 `entity` 패키지**에 정의하며, 도메인 로직을 포함하지 않는다. `independent/outbox` 등 독립 모듈의 JPA 엔티티는 해당 모듈의 Infrastructure 레이어 (`independent/outbox/infrastructure/entity/` - Rule 80 참조, Rule 141 미적용)에 정의한다. JPA 엔티티는 Domain 모델과 1:1로 매핑되지 않고 영속화 구조를 반영한다. Domain ID (Value Object)와 JPA Long ID는 Infrastructure에서 매핑된다.
+30. **JPA 도메인 로직 배제**: JPA 엔티티에는 비즈니스 로직을 포함시키지 않으며, 로직은 Domain 레이어의 Aggregate 또는 Domain Entity에서 처리한다.
+
+##### 5.1.2. 불변성 및 Lazy Loading
+
+20. **JPA 엔티티 불변성 및 Lazy Loading 공존**: JPA 엔티티의 기본 필드는 가능한 `val`로 선언하여 불변성을 유지하며, Setter 메서드는 절대 사용하지 않는다. 연관 관계 필드는 `@OneToMany`, `@ManyToOne` 등에 `fetch = FetchType.LAZY`를 설정한다. Hibernate 프록시를 통한 지연 로딩 시 Kotlin `val` 필드 접근 문제가 발생할 수 있으므로, 영속성 컨텍스트 외부에서 사용하거나 성능 최적화가 필요한 경우 Projection (인터페이스 기반 DTO) 또는 EntityGraph를 사용하여 필요한 데이터를 명시적으로 조회하도록 설계한다. `lateinit var`나 `@JvmField` 사용은 최소화하고 신중하게 적용한다. `kotlin-jpa` 및 `kotlin-allopen` 플러그인을 반드시 적용한다. JPA 엔티티 클래스 자체에는 `@ConsistentCopyVisibility` 어노테이션을 사용하지 않는다.
+
+##### 5.1.3. ID 필드
+
+21. **JPA 엔티티 ID 필드**: JPA 엔티티는 DB 자동 생성 키에 매핑되는 `val id: Long? = null` 필드와 함께, Domain 모델의 고유 식별자(예: `UserId` Value Object가 캡슐화한 `UUID`)에 매핑되는 `val domainId: UUID`와 같은 필드를 포함해야 한다.
+
+##### 5.1.4. 테이블명 및 컬럼 속성
+
+22. **JPA 엔티티 테이블명**: JPA 엔티티의 테이블명은 `@Table` 어노테이션으로 명시하며, 소문자 복수형을 사용한다 (예: `@Table(name = "users")`).
+23. **JPA 엔티티 컬럼 속성**: JPA 엔티티의 컬럼은 `@Column` 어노테이션으로 제약 조건을 명시하며, 데이터베이스 스키마와 일치해야 한다 (예: `@Column(nullable = false, length = 50)`).
+63. **데이터베이스 스키마 일치**: JPA 엔티티의 `@Table`, `@Column` 정의는 데이터베이스 스키마와 1:1로 일치해야 하며, 스키마 변경 시 엔티티를 동기화한다.
+
+##### 5.1.5. 관계 설정 및 Fetch 전략
+
+26. **JPA 관계 설정**: JPA 엔티티의 관계는 단방향을 우선하며, 양방향 관계는 명확한 필요성(예: 비즈니스 요구사항)이 있을 때만 사용한다.
+27. **JPA Fetch 전략**: JPA 엔티티 관계는 기본적으로 `@ManyToOne`, `@OneToMany` 등에 `fetch = FetchType.LAZY`를 설정하며, Eager 로딩은 성능 검증 후 사용한다. Repository 메서드에 `@EntityGraph`를 사용하여 필요한 연관 엔티티를 함께 로딩한다.
+62. **JPA 엔티티 관계 Lazy 로딩**: JPA 엔티티 관계는 `FetchType.LAZY`를 기본으로 설정하며, 관계 접근 시 N+1 문제를 방지하기 위해 `@EntityGraph` 또는 JPQL, Projection을 사용한다. Repository 메서드에서 Domain 객체로 변환 시 연관 객체가 필요한 경우, `@EntityGraph`를 사용하여 Eager 로딩하고 Domain 객체로 변환한다.
+
+##### 5.1.6. Kotlin 플러그인
+
+28. **JPA Kotlin 플러그인**: `kotlin-jpa`와 `kotlin-allopen` 플러그인을 반드시 적용하여 JPA 요구사항을 충족한다.
+
+##### 5.1.7. 동시성 제어
+
+31. **JPA 동시성 제어**: 모든 JPA 엔티티는 낙관적 잠금을 기본으로 사용하며, `@Version` 어노테이션을 필수로 포함하여 동시성 충돌을 관리한다. 낙관적 잠금 실패 시 발생하는 `OptimisticLockException`은 상위 레이어(Presentation/GlobalExceptionHandler)로 전파되어 일관된 응답으로 변환된다.
+
+#### 5.2. 데이터 변환 (JPA 엔티티와 도메인 매핑)
+
+24. **JPA 엔티티와 도메인 매핑**: JPA 엔티티와 도메인 Aggregate/Entity/VO 간 변환은 해당 도메인 모듈의 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)의 `mapper` (또는 `extensions`) 폴더**에서 코틀린 확장 함수로 정의한다 (예: `UserEntity.toDomain()`). 이 변환 함수는 Domain ID (Value Object)와 Persistence ID (Long, UUID) 간의 매핑을 처리해야 한다. (규칙 60의 일부)
+25. **JPA 매핑 파일명**: JPA 매핑 확장 함수 파일은 `{Domain}EntityMapper.kt` 또는 `{Domain}EntityExtensions.kt` 형식을 따라야 한다 (예: `UserEntityMapper.kt`).
+
+#### 5.3. 리포지토리 (Repository)
+
+##### 5.3.1. 인터페이스 정의
+
+137. **리포지토리 인터페이스 정의**: Domain 레이어의 리포지토리 (`domains/{domain}/domain/repository/` - Rule 141 준수)는 순수한 인터페이스 역할을 수행하며, 특정 영속화 기술에 종속되지 않는 인터페이스로 정의한다 (예: `UserRepository`). 이 인터페이스는 Domain 모델 객체 (Immutable Aggregate의 경우 업데이트된 상태를 반영하는 *새로운 인스턴스*)를 반환/사용해야 한다.
+
+##### 5.3.2. 구현체 위치 및 네이밍
+
+138. **리포지토리 구현체 위치**: Domain 레이어 (`domains/{domain}/domain/` - Rule 141 준수)에서 정의된 리포지토리 인터페이스의 실제 구현체는 해당 도메인 모듈의 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)의 `repository` 패키지**에 위치한다.
+139. **리포지토리 구현체 네이밍 및 책임**: **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)의 `repository` 패키지**에 위치한 리포지토리 구현체는 사용하는 기술 스택을 명시하는 접미사를 붙인다 (예: Spring Data JPA 사용 시 `SpringDataJpaUserRepository`, 커스텀 구현 시 `UserRepositoryImpl`). `SpringDataJpaUserRepository`는 Spring Data JPA가 요구하는 인터페이스를 상속받고, `UserRepositoryImpl`은 Domain 레이어의 `UserRepository` 인터페이스를 구현하며 `SpringDataJpaUserRepository`와 독립적인 `independent/outbox` 모듈의 Outbox 메시지 저장 Repository 인터페이스(Rule 81 참조), **그리고 동일 도메인 모듈 Infrastructure 레이어의 이벤트 변환 컴포넌트(예: `DomainEventToOutboxMessageConverter` - Rule 85 참조)** 를 주입받아 사용한다. Repository 구현체는 JPA Entity 저장 시 Rule 85에 따라 Aggregate에서 발생한 Domain Events를 읽어와 **이벤트 변환 컴포넌트(`DomainEventToOutboxMessageConverter`)에 전달하여, 메시지 브로커(예: Kafka) 전송을 위한 `OutboxMessage` 객체 목록을 생성하고**, 이를 독립적인 `independent/outbox` 모듈의 `OutboxMessageRepository` (Rule 80 참조)를 통해 저장한다. JPA Entity 저장 후 반환된 Entity를 Domain Aggregate (Immutable Aggregate의 경우 *새로운 인스턴스*)로 변환하여 Domain Repository 인터페이스의 `save` 메서드 반환 타입 요구사항을 만족해야 한다. 또한 Domain 객체 (Domain ID Value Object 포함)와 JPA Entity 간의 변환을 담당하며, **Rule 85에 명시된 대로 이벤트 처리 위임 및 Outbox 저장 로직**을 포함한다. 조회 시에는 Domain ID (Value Object가 캡슐화한 UUID)를 사용하여 JPA Entity의 `domainId` 필드를 조회하는 쿼리 메서드를 정의하고 사용한다.
+
+##### 5.3.3. JPA 리포지토리 사용
+
+140. **JPA 리포지토리 사용**: Spring Data JPA 등의 기술별 리포지토리 인터페이스는 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)의 `repository` 패키지**에서 정의하고 사용한다 (예: `interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long>`). Domain 레이어는 이 기술별 인터페이스나 구현체를 직접 참조하지 않는다. Repository 구현체는 이 기술별 인터페이스를 사용하여 실제 DB 접근을 수행한다.
+
+### VI. 트랜잭셔널 아웃박스 패턴
+
+78. **트랜잭셔널 아웃박스 패턴 도입**: 애플리케이션 상태 변경과 이벤트 발행의 원자성 보장을 위해 트랜잭셔널 아웃박스 패턴을 사용한다. Domain Aggregate에서 발생한 이벤트는 Repository를 통해 저장 시 Database의 Outbox 테이블에 함께 기록된다.
+79. **독립적인 Outbox 모듈 정의**: Outbox 패턴 구현 및 관리를 위해 프로젝트 최상위 레벨의 `independent/` 폴더 내에 별도의 독립 모듈(예: `independent/outbox/` - Rule 80 참조, Rule 141 미적용)을 정의한다.
+80. **Outbox 모듈 책임 및 독립성**: Outbox 모듈 (`independent/outbox/`)은 도메인 이벤트를 담고 있는 메시지(`OutboxMessage`)의 데이터베이스 저장, 주기적인 조회, 메시지 브로커 전송 처리, 관련 상태 관리 및 오류 처리를 담당한다. 이 모듈은 자체적인 레이어 구조(application, infrastructure 등)를 가질 수 있으며, **프로젝트 내의 어떤 특정 도메인 모듈 또는 `domains/common` 모듈에도 의존하지 않아 (규칙 9 참조) 완전한 독립성과 이식성을 보장해야 합니다. Kafka 메시징에는 `org.springframework.kafka:spring-kafka` 라이브러리의 `KafkaTemplate<String, String>`을 사용하며, 메시지 값(value)은 Kotlinx Serialization으로 직렬화된 JSON 문자열이므로 프로듀서 측에서는 `org.apache.kafka.common.serialization.StringSerializer`를 사용합니다.** `independent/outbox` 모듈의 Infrastructure 레이어는 `spring-kafka`, `kafka-clients` 라이브러리에 의존할 수 있습니다. Outbox 모듈 자체는 특정 JSON 스키마 정의를 포함하지 않고, 범용적인 `String` 페이로드(Kotlinx Serialization으로 직렬화된 JSON)를 처리합니다 (Rule VII.1 참조). Outbox 모듈은 자체적인 예외(`OutboxException`) 및 에러 코드 체계를 각각 **해당 모듈의 Infrastructure 레이어 내 `exception` 및 `error` 패키지** (`independent/outbox/infrastructure/exception/`, `independent/outbox/infrastructure/error/` - Rule 67, 68, 90 참조) 내에 정의하고 사용한다.
+81. **Outbox 메시지 저장 Repository 인터페이스 및 메시지 구조 정의**: Outbox 모듈의 Application 레이어 내 DTO 패키지 (`independent/outbox/application/dto/` - Rule 80 참조, Rule 141 미적용)에 Outbox에 저장될 메시지 목록 저장을 위한 기술 독립적인 Repository 인터페이스를 정의한다 (예: `OutboxMessageRepository.kt`). 이 인터페이스는 `List<OutboxMessage>`를 받아 저장하는 메서드를 제공해야 한다. 저장될 메시지의 구조는 `OutboxMessage` data class로 정의하며, 이는 `independent/outbox/application/dto/OutboxMessage.kt` (Rule 80 참조, Rule 141 미적용)에 위치한다. `OutboxMessage`는 메시지 브로커 전송에 필요한 모든 정보(payload `String` (Kotlinx Serialization으로 직렬화된 이벤트 객체의 JSON 문자열), target topic name `String`, headers `Map<String, String>` - including `aggregateType`, `aggregateId` (String), event type name, `contentType` (예: `application/json`) 등)를 포함해야 하며, 프로젝트의 `DomainEvent` 인터페이스나 특정 도메인의 구체적인 `DomainEvent` 클래스에 의존하지 않는다 (Rule VII.1 참조). `aggregateId` 필드 값은 Kafka 메시지의 키로 사용된다.
+82. **Outbox 메시지 저장 Repository 구현체**: Outbox 메시지 저장 Repository 인터페이스의 구현체는 Outbox 모듈의 Infrastructure 레이어 내 repository 패키지 (`independent/outbox/infrastructure/repository/` - Rule 80 참조, Rule 141 미적용)에 위치한다 (예: `JpaOutboxMessageRepository.kt`). 이 구현체는 JPA 등의 기술을 사용하여 `OutboxEventEntity`를 데이터베이스에 저장하는 로직을 포함한다. `OutboxMessage`를 받아 `OutboxEventEntity`로 변환하여 저장한다.
+83. **Outbox 이벤트 엔티티**: Outbox 메시지를 저장하기 위한 `OutboxEventEntity`는 Outbox 모듈의 Infrastructure 레이어 내 entity 패키지 (`independent/outbox/infrastructure/entity/OutboxEventEntity.kt` - Rule 80 참조, Rule 141 미적용)에 정의한다. 이 엔티티는 Rule 81의 `OutboxMessage` 구조에 대응하여 최소한 이벤트 payload (`String` (Kotlinx Serialization으로 직렬화된 JSON 문자열)), 이벤트 타입명(`String`), 타겟 토픽명(`String`), 헤더(`Map<String, String>`), 생성 시간, 상태 (Pending, Sent, Failed 등), 재시도 횟수 등을 포함해야 한다 (Rule VII.1 참조).
+84. **리포지토리 구현체의 Outbox 의존성**: 각 도메인의 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)** 에 위치한 Repository 구현체(예: `domains/user/infrastructure/repository/UserRepositoryImpl.kt`)는 독립적인 `independent/outbox` 모듈의 Outbox 메시지 저장 Repository 인터페이스 (`OutboxMessageRepository` - `independent/outbox/application/dto/` - Rule 80 참조, Rule 141 미적용)를 의존성으로 주입받아 사용한다.
+85. **Repository 저장 시 이벤트 처리 및 메시지 변환 책임**: Repository 구현체(**Infrastructure 레이어** - `domains/{domain}/infrastructure/` - Rule 141 준수)는 Aggregate 저장 시, 해당 Aggregate의 `aggregateRoot.getDomainEvents()` 메서드를 통해 발생한 이벤트 목록을 읽어온다. **이 이벤트 목록을 동일 도메인 모듈의 Infrastructure 레이어 내 `mapper` 패키지 (`domains/{domain}/infrastructure/mapper/DomainEventToOutboxMessageConverter.kt` - Rule 141 준수)에 정의된 컴포넌트(예: `DomainEventToOutboxMessageConverter`)에 전달하여, 해당 컴포넌트가 각 `DomainEvent` 객체에 대해 다음을 수행하여 `OutboxMessage` 객체를 생성하도록 해야 한다:**
+    1.  **`DomainEvent` 객체 (Rule 33, 34에 따라 정의된 `@Serializable` `data class`)를 Kotlinx Serialization 라이브러리(`org.jetbrains.kotlinx:kotlinx-serialization-json`)를 사용하여 JSON 문자열로 직렬화하여 `OutboxMessage`의 `payload`를 생성한다 (Rule VII.1 참조).**
+    2.  타겟 메시지 브로커 토픽명을 결정한다. (Rule VII.2.6 참조)
+    3.  메시지 헤더 정보(aggregateType, aggregateId, eventTypeName, **`contentType` (예: `application/json`)** 등)를 준비한다. aggregateId는 Aggregate의 Domain ID Value Object의 문자열 표현을 사용한다.
+    4.  Rule 81에 정의된 `OutboxMessage` 객체 (`independent/outbox/application/dto/OutboxMessage.kt` - Rule 80 참조)를 생성한다.
+    준비된 `OutboxMessage` 객체 목록을 동일 트랜잭션 내에서 독립적인 `independent/outbox` 모듈의 Outbox 메시지 저장 Repository (`outboxMessageRepository.save(listOfOutboxMessages)`)를 호출하여 저장해야 한다. 이벤트 저장이 완료된 후에는 `aggregateRoot.clearDomainEvents()`를 호출하여 Aggregate 내부의 이벤트 목록을 초기화해야 한다.
+86. **Outbox 폴링/전송 컴포넌트**: Outbox 모듈의 Application 레이어 (`independent/outbox/application/` - Rule 80 참조, Rule 141 미적용)에 Outbox 테이블에서 이벤트를 주기적으로 조회하는 컴포넌트(예: `OutboxPoller.kt`)를 구현하고, Infrastructure 레이어 (`independent/outbox/infrastructure/messaging/` - Rule 80 참조)에 조회된 메시지를 메시지 브로커로 전송하는 `OutboxMessageSender.kt` (Rule 88 참조, `KafkaTemplate<String, String>` 사용)를 구현한다.
+87. **Outbox 폴링 동시성 제어**: Outbox 폴러는 여러 인스턴스가 동시에 실행될 수 있으므로, 이벤트를 읽어올 때 데이터베이스 수준의 잠금(`FOR UPDATE SKIP LOCKED` 등)을 사용하여 동일한 이벤트가 여러 번 처리되지 않도록 해야 한다. 이 로직은 `independent/outbox` 모듈 내에서 관리된다 (Rule 80 참조).
+88. **Outbox 메시지 전송**: `independent/outbox` 모듈의 Infrastructure 레이어에 위치한 `OutboxMessageSender`는 `OutboxEventEntity`를 읽어와 `OutboxMessage` 객체를 재구성한다. **`org.springframework.kafka.core.KafkaTemplate<String, String>`을 사용하여 `OutboxMessage` (payload는 Kotlinx Serialization으로 직렬화된 JSON 문자열)를 해당 `OutboxEventEntity`에 저장된 target topic으로 전송한다. 메시지 키는 `OutboxMessage.aggregateId` 값을 사용한다. 메시지 헤더에는 `OutboxMessage.headers` 맵의 내용과 함께 `outbox-message-id`, `aggregate-type`, `event-type`, `created-at` 등의 표준 메타데이터를 `org.apache.kafka.common.header.internals.RecordHeader` 형태로 추가하여 전송한다.** `OutboxMessageSender`는 특정 도메인 이벤트 타입이나 특정 직렬화 스키마를 직접 참조하지 않는다. 필요한 메시지 브로커 관련 설정은 `independent/outbox` 모듈의 `application.yml` (또는 이에 준하는 설정 파일) 내 `spring.kafka.*` 설정을 통해 관리되며, 프로듀서의 값(value) 직렬화기는 `org.apache.kafka.common.serialization.StringSerializer`를 사용한다 (Rule 80, Rule VII.1, Rule VII.2.17 참조). 전송 결과는 `CompletableFuture`로 처리되며, 실패 시 예외 로깅 및 재발생 처리한다.
+89. **Outbox 이벤트 상태 업데이트**: Outbox 프로세서는 메시지 전송 결과에 따라 Outbox Event Entity (`independent/outbox/infrastructure/entity/OutboxEventEntity.kt` - Rule 80 참조)의 상태를 업데이트한다.
+90. **Outbox 프로세서 재시도/실패 처리**: Outbox 프로세서의 메시지 전송 실패는 `independent/outbox` 모듈 내에서 정의된 재시도 정책에 따른다 (Rule 80 참조). `OutboxEventEntity`의 `retryCount` 필드를 증가시키며 지수 백오프(exponential backoff) 등 적절한 간격으로 재시도를 수행한다. 정의된 최대 재시도 횟수를 초과한 이벤트는 DLQ로 보내거나 별도의 실패 테이블/메커니즘으로 관리한다. 실패 처리 시 **`independent/outbox` 모듈의 Infrastructure 레이어 내 `exception` 패키지 (`independent/outbox/infrastructure/exception/` - Rule 80 참조) 내에서 정의된 자체 예외 및 Infrastructure 레이어 내 `error` 패키지 (`independent/outbox/infrastructure/error/` - Rule 80 참조) 내에서 정의된 에러 코드**를 사용한다.
+
+### VII. 메시징 시스템 (Kafka - Kotlinx Serialization 및 JSON Schema 기반)
+
+#### VII.1. Kotlinx Serialization 및 JSON Schema 기반 메시징 원칙 및 워크플로우 (Spring for Apache Kafka 기반)
+
+##### VII.1.1. 개요 및 핵심 철학
+
+*   **VII.1.1.1. 이벤트 객체 중심**: 코틀린 `data class` (주로 `@Serializable` 어노테이션이 적용된 `DomainEvent` - Rule 33, 34 참조)를 Kafka 메시지 내용의 핵심으로 삼는다.
+*   **VII.1.1.2. 스키마 생성 및 관리 방식**: 코틀린 `data class`를 먼저 정의한다. JSON 스키마(`.json` 파일)는 **`buildSrc/src/main/kotlin/GenerateJsonSchemaTask.kt`에 정의된 `GenerateJsonSchemaTask` Gradle 태스크에 의해 생성된다.** 이 태스크는 **내부에 하드코딩된 JSON Schema 정의 맵(Map)을 기반으로** 스키마 파일을 출력한다. 따라서, **Kotlin 이벤트 클래스의 실제 구조와 JSON 스키마 내용은 개발자가 수동으로 일치시켜야 한다.** 생성된 스키마는 Confluent Schema Registry에 등록되며, 주로 메시지 소비 과정에서 스키마 유효성 검증에 활용될 수 있다.
+*   **VII.1.1.3. 주요 장점 및 고려사항**: 스키마 기반의 메시지 유효성 검증(주로 컨슈머 측), 스키마 진화 관리 용이성 (Schema Registry 활용 시). 단, 스키마가 코드로부터 자동 생성되지 않으므로, 코드와 스키마 간의 불일치 위험을 인지하고 관리해야 한다.
+
+##### VII.1.2. 주요 기술 및 라이브러리
+
+*   **VII.1.2.1. 필수 라이브러리**:
+    *   `org.springframework.kafka:spring-kafka`: Spring 애플리케이션 내 Kafka 프로듀서 및 컨슈머 개발 간소화.
+    *   `org.apache.kafka:kafka-clients`: Kafka 클러스터와 직접 통신하기 위한 저수준 공식 클라이언트.
+    *   `org.jetbrains.kotlinx:kotlinx-serialization-json`: Kotlin 객체의 JSON 직렬화/역직렬화.
+    *   `org.jetbrains.kotlin:kotlin-reflect`: `GenerateJsonSchemaTask`에서 Kotlin 클래스 정보를 로드하는 데 필요할 수 있음.
+    *   `io.confluent:kafka-schema-registry-client`: Confluent Schema Registry 연동 클라이언트 (주로 컨슈머 측 또는 Gradle 플러그인에서 사용).
+    *   `io.confluent:kafka-json-schema-serializer` / `io.confluent:kafka-json-schema-deserializer`: Kafka 메시지 값을 JSON 스키마에 맞춰 직렬화/역직렬화 (프로듀서는 `StringSerializer` 사용, 컨슈머는 `StringDeserializer` 후 수동 파싱 또는 `KafkaJsonSchemaDeserializer` 사용 가능).
+    *   `com.github.imflog:kafka-schema-registry-gradle-plugin`: Gradle 빌드 과정에서 스키마 레지스트리 작업(등록, 호환성 검사 등) 자동화.
+    *   Kotlin (2.x 이상 권장), Confluent Kafka (7.x 이상, Kafka 브로커 및 Schema Registry), Gradle.
+
+##### VII.1.3. 주요 빌드 및 메시징 워크플로우
+
+*   **VII.1.3.1. `DomainEvent` `data class` 정의**:
+    *   `DomainEvent`는 Rule 33 및 Rule 34에 따라 코틀린 `data class`로 정의하며, Kotlinx Serialization 라이브러리가 JSON으로 직렬화/역직렬화할 수 있도록 `@Serializable` 어노테이션을 사용한다.
+    *   Optional 필드는 nullable(`?`)로, 기본값 지정이 가능하다.
+    *   `type` 필드는 이벤트 타입을 구분하는 식별자 역할을 하며, Kotlinx Serialization의 다형성 처리에 사용될 수 있다. 이 `type` 필드 값에 따라 요구되는 추가 필드가 JSON 스키마에 정의된다.
+*   **VII.1.3.2. 빌드 시점 JSON 스키마 생성 (Gradle 태스크)**:
+    *   각 도메인 모듈의 `build.gradle.kts` 파일에서 `buildSrc`에 정의된 `GenerateJsonSchemaTask` (예: `tasks.register<GenerateJsonSchemaTask>("generateUserEventJsonSchema") { ... }`)를 호출하여 JSON 스키마(`.json` 파일)를 생성한다.
+    *   **`GenerateJsonSchemaTask` (`buildSrc/src/main/kotlin/GenerateJsonSchemaTask.kt`)는 Kotlin 이벤트 데이터 클래스를 로드하고 `kotlinx.serialization` 호환성을 검증할 수 있으나, 핵심적으로는 태스크 코드 내에 하드코딩된 JSON Schema 정의 맵(Map)을 읽어 지정된 경로에 `.json` 파일로 출력한다.**
+    *   생성된 JSON 스키마는 해당 도메인 모듈의 `infrastructure/src/main/resources/schemas/` 디렉토리 (예: `domains/user/infrastructure/src/main/resources/schemas/user_event.json`)에 저장된다 (Rule 141.5 준수).
+    *   이 태스크는 `processResources` 태스크 이전에 실행되도록 의존성을 설정한다.
+    *   **주의: Kotlin 이벤트 클래스의 변경 사항은 `GenerateJsonSchemaTask.kt` 내의 하드코딩된 스키마 정의에 수동으로 반영해야 한다.**
+*   **VII.1.3.3. CI/CD를 통한 Schema Registry 등록 및 호환성 검사 (Gradle 플러그인)**:
+    *   루트 또는 각 도메인 모듈의 `build.gradle.kts`에 `com.github.imflog.kafka-schema-registry-gradle-plugin` (예: 버전 2.3.2)을 설정한다.
+    *   플러그인의 `register` 태스크(예: `registerSchemasTask`)는 VII.1.3.2에서 생성된 `.json` 스키마 파일을 읽어 Confluent Schema Registry (예: 개발 환경 `http://localhost:8081`)에 자동으로 등록한다.
+    *   Schema Registry의 Subject Naming Strategy를 고려하여 Subject 이름을 결정한다 (예: **`dev.user-team.user.event.user-created-value`**). 스키마 타입은 `JSON`으로 명시한다.
+    *   플러그인 설정에서 스키마 호환성 검사 규칙(예: `BACKWARD`)을 지정하여, 스키마 등록 시 기존 버전과의 호환성을 자동으로 검사한다. 호환성 위반 시 빌드가 실패하도록 설정한다.
+    *   이 태스크는 `generateJsonSchema` 태스크 완료 후에 실행되도록 의존성을 설정하며 (예: `registerSchemasTask.dependsOn(generateUserEventJsonSchema)`), 애플리케이션 빌드(JAR 패키징) 이전에 실행되어야 한다.
+*   **VII.1.3.4. Kafka 메시지 발행 (페이로드 직렬화 및 `KafkaTemplate`을 통한 전송)**:
+    *   **`DomainEventToOutboxMessageConverter` 책임 (Rule 85 수정사항 반영)**: 해당 도메인의 Infrastructure 레이어 (`domains/{domain}/infrastructure/mapper/`)에 위치한 `DomainEventToOutboxMessageConverter`는 `@Serializable` `DomainEvent` `data class` 인스턴스를 Kotlinx Serialization의 `Json` 객체를 사용하여 JSON 문자열로 직렬화한다. 이 결과물은 `OutboxMessage`의 `payload` 필드에 저장되며, `OutboxMessage` 헤더에는 `contentType`으로 `application/json`을 명시한다.
+    *   **`OutboxMessageSender` 책임 (Rule 88 수정사항 반영)**: `independent/outbox` 모듈의 Infrastructure 레이어 (`independent/outbox/infrastructure/messaging/`)에 위치한 `OutboxMessageSender`는 `OutboxEventEntity`로부터 Kotlinx Serialization으로 직렬화된 JSON 페이로드(문자열)와 헤더 정보를 읽어온다. `org.springframework.kafka.core.KafkaTemplate<String, String>`을 사용하여 Kafka 메시지를 전송한다. 메시지 키는 `OutboxMessage.aggregateId`를, 값은 `OutboxMessage.payload` (JSON 문자열)를 사용한다. Rule 88에 명시된 표준 헤더들이 추가된다.
+    *   **`spring-kafka` Producer 설정 (`application.yml`)**:
+        *   `spring.kafka.bootstrap-servers`: Kafka 브로커 주소 설정.
+        *   `spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer`.
+        *   `spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.StringSerializer`.
+        *   `spring.kafka.producer.properties.schema.registry.url`: Schema Registry 주소 설정 (Gradle 플러그인 및 컨슈머 측에서 주로 사용).
+        *   `spring.kafka.producer.properties.auto.register.schemas=false` (스키마 등록은 Gradle 플러그인이 담당).
+        *   `spring.kafka.producer.properties.use.latest.version=true` (컨슈머가 스키마 레지스트리 사용 시 영향).
+        *   기타 필요한 Kafka Producer 속성을 `spring.kafka.producer.properties` 하위에 설정한다.
+*   **VII.1.3.5. Kafka 메시지 소비 및 `data class`로 역직렬화 (`@KafkaListener` 방식)**:
+    *   **동일 `DomainEvent` `@Serializable` `data class` 사용**: 발행 측과 동일한 `DomainEvent` `data class` 정의 (Rule 33, 34)를 소비 측 애플리케이션(해당 도메인의 Infrastructure 레이어 또는 다른 도메인 모듈)에서도 사용한다.
+    *   **`spring-kafka` Consumer 설정 (`application.yml`)**:
+        *   `spring.kafka.bootstrap-servers`: Kafka 브로커 주소 설정.
+        *   `spring.kafka.consumer.group-id`: Consumer group 설정.
+        *   `spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer`.
+        *   `spring.kafka.consumer.value-deserializer`:
+            *   `org.apache.kafka.common.serialization.StringDeserializer`: JSON 문자열로 받은 후, Kotlinx Serialization (`Json.decodeFromString`)을 사용하여 수동으로 `data class`로 역직렬화.
+            *   또는 `io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer`: Schema Registry를 통해 스키마를 가져와 유효성 검사 및 역직렬화 수행. 이 경우 `spring.kafka.consumer.properties.json.value.type`에 소비하려는 `data class`의 FQCN (예: `com.restaurant.user.domain.event.UserEvent.Created`)을 명시하거나 `@KafkaListener`에서 타입 정보를 제공해야 한다.
+        *   `spring.kafka.consumer.properties.schema.registry.url`: `KafkaJsonSchemaDeserializer` 사용 시 Schema Registry 주소 설정.
+        *   기타 필요한 Kafka Consumer 속성을 `spring.kafka.consumer.properties` 하위에 설정한다.
+    *   **`@KafkaListener` 기반 메시지 핸들러**:
+        *   해당 도메인 모듈의 `infrastructure/messaging/` 패키지 (Rule 141.5 참조)에 `@KafkaListener` 어노테이션을 사용하여 메시지 컨슈머를 정의한다.
+        *   예시 (`StringDeserializer` 사용 시): `@KafkaListener(topics = "dev.user-team.user.event.user-created", groupId = "my-group") fun handleUserEvent(jsonPayload: String) { val event = Json.decodeFromString<UserEvent.Created>(jsonPayload); /* 로직 처리 */ }`.
+        *   예시 (`KafkaJsonSchemaDeserializer` 사용 시): `@KafkaListener(topics = "dev.user-team.user.event.user-created", groupId = "my-group") fun handleUserEvent(event: UserEvent.Created) { /* 로직 처리 */ }`.
+        *   `KafkaJsonSchemaDeserializer`는 Schema Registry 정보를 활용하여 수신된 JSON 메시지를 지정된 `data class` 타입으로 자동 역직렬화한다. 프로듀서가 스키마 ID를 포함하지 않으므로, 컨슈머는 토픽명 기반의 서브젝트 이름 조회 전략을 사용해야 한다.
+
+##### VII.1.4. 컴파일 타임 및 빌드 타임 검증 메커니즘
+
+*   **VII.1.4.1. 코틀린 컴파일러 타입 체크**: `@Serializable` `data class` 필드 참조 오류, 타입 불일치 등은 코틀린 컴파일러가 컴파일 시점에 감지한다.
+*   **VII.1.4.2. CI/CD 빌드 파이프라인의 스키마 호환성 검증**: Gradle 플러그인(`kafka-schema-registry-gradle-plugin`)을 통해 `GenerateJsonSchemaTask.kt`에서 생성된 JSON 스키마와 Schema Registry의 기존 스키마 간 호환성을 빌드 시점에 검증한다. 불일치 시 빌드를 실패시켜 런타임 오류를 사전에 방지한다. **단, 이는 스키마 파일 자체의 호환성을 검증하는 것이며, Kotlin `data class`와 `GenerateJsonSchemaTask.kt` 내 하드코딩된 스키마 정의 간의 불일치는 감지하지 못한다.**
+
+##### VII.1.5. 한계점 및 주의사항
+
+*   **VII.1.5.1. 의미론적 변경 감지 불가**: 필드 타입/이름/필수 여부 변경 없이 값의 의미만 변경되는 경우는 자동화된 스키마 검증으로 감지할 수 없다. 이는 통합 테스트, 계약 테스트 등으로 보완해야 한다.
+*   **VII.1.5.2. 환경 설정 오류**: `schema.registry.url`, `bootstrap.servers` 등 Kafka 관련 환경 설정 오류는 여전히 런타임에 발생할 수 있다.
+*   **VII.1.5.3. 코드-스키마 수동 동기화**: JSON 스키마가 `GenerateJsonSchemaTask.kt` 내 하드코딩된 맵에서 생성되므로, Kotlin `DomainEvent` `data class`의 변경 사항은 반드시 `GenerateJsonSchemaTask.kt`의 스키마 정의에도 수동으로 반영되어야 한다. 이 동기화가 누락될 경우, 스키마 레지스트리에 등록된 스키마와 실제 메시지 페이로드 구조 간의 불일치로 인해 컨슈머 측에서 역직렬화 오류 또는 데이터 유실이 발생할 수 있다.
+
+#### VII.2. Kafka 메시징 시스템 일반 원칙 (`spring-kafka` 기반)
+
+*   **VII.2.1. 메시징 시스템**: 외부 시스템과의 통신을 위한 메시징 시스템으로 Apache Kafka를 사용한다.
+*   **VII.2.2. Kafka 클라이언트**: `Spring for Apache Kafka (org.springframework.kafka:spring-kafka)` 라이브러리를 사용하여 Kafka와 연동하며, `independent/outbox` 모듈의 `OutboxMessageSender`는 `KafkaTemplate<String, String>`을 사용한다. 관련 설정은 주로 메시지 발행을 담당하는 `independent/outbox` 모듈 (Rule 80, Rule VII.1 참조) 또는 메시지 소비를 담당하는 모듈 (해당 도메인 `infrastructure` 레이어 등 - Rule 141 준수, Rule VII.1.3.5 참조)의 `application.yml` (또는 이에 준하는 설정 파일) 및 Java/Kotlin 설정 클래스(`@Configuration` 빈 정의 등)에서 이루어진다.
+*   **VII.2.3. Kafka 사용 범위**: 모든 도메인 이벤트 발행(Aggregate 내 `addDomainEvent`로 추가된 이벤트)은 트랜잭셔널 아웃박스 패턴을 통해 처리된다. Database의 Outbox 테이블에 이벤트가 기록된 후, `independent/outbox` 모듈의 프로세서 (Rule 80, 86 참조)가 이를 조회하여 `KafkaTemplate<String, String>`을 통해 Kafka 토픽으로 전송한다 (Rule VII.1 참조). Kafka는 내부 및 외부 시스템 간의 비동기/이벤트 기반 통신 채널로 사용된다.
+*   **VII.2.4. 분산 트랜잭션**: 분산 트랜잭션 처리가 필요한 경우 Saga 패턴을 적용하며, 상태 변경 명령과 보상 트랜잭션을 Kafka 이벤트를 통해 전달한다. Saga 오케스트레이션/코레오그래피는 `independent/outbox` 패턴 (Rule 80 참조)을 통해 메시지를 발행한다.
+*   **VII.2.5. 요청-응답 패턴**: Kafka를 사용한 동기적 요청-응답 패턴은 `spring-kafka`의 `ReplyingKafkaTemplate` 또는 별도 HTTP API 연동을 고려하며, 비동기 이벤트는 `independent/outbox` 모듈 (Rule 80 참조)을 통해 `KafkaTemplate<String, String>`을 사용하여 Kafka 토픽으로 발행한다.
+*   **VII.2.6. Kafka 토픽 이름**: Kafka 토픽 이름은 다음 형식을 **반드시** 따른다: **`{environment}.{team}.{domain}.{data-type}[.{action}]`**. 예를 들어, `user` 도메인의 `UserCreated` 이벤트는 **`dev.user-team.user.event.user-created`** 와 같이 명명될 수 있다. 토픽명 결정 및 메시지 구성은 Rule 85에 따라 해당 도메인 모듈의 **Infrastructure 레이어 (`domains/{domain}/infrastructure/` - Rule 141 준수)** 에서 수행되어 `OutboxMessage`에 포함되며, `KafkaTemplate.send(topic, ...)` 호출 시 또는 `@KafkaListener(topics = "...")` 어노테이션에 이 토픽명이 사용된다.
+*   **VII.2.7. 토픽 네이밍 컨벤션 - environment**: `environment`는 운영 환경을 나타낸다 (예: `prod`, `staging`, `dev`).
+*   **VII.2.8. 토픽 네이밍 컨벤션 - domain**: `domain`은 도메인 이름을 나타낸다 (예: `user`, `order`, `payment`).
+*   **VII.2.9. 토픽 네이밍 컨벤션 - team**: **`team`은 해당 메시지를 발행하는 주체인 팀 또는 조직을 소문자로 명시한다 (예: `user-team`, `order-team`, `payment-gateway`).**
+*   **VII.2.10. 토픽 네이밍 컨벤션 - data-type**: **`data-type`은 메시지가 담고 있는 데이터의 유형을 명시한다 (예: `event`, `command`, `saga`, `notification`).**
+*   **VII.2.11. 토픽 네이밍 컨벤션 - action**: **`action`은 [선택사항]으로, 메시지의 구체적인 행위나 이벤트의 종류를 나타낸다. 분리 토픽 전략(Rule VII.2.20)에 따라 이벤트 유형별로 토픽을 생성할 때 사용된다 (예: `user-created`, `order-paid`, `start-shipping`).**
+*   **VII.2.12. 외부 도메인 이벤트 토픽**: 외부 시스템으로 발행되는 도메인 이벤트는 `data-type`을 `event`로 한정한다.
+*   **VII.2.13. Kafka 토픽 이름 제약**: Kafka 토픽 이름은 소문자와 하이픈(`-`)만 사용하고, 최대 249자로 제한한다.
+*   **VII.2.14. Saga 토픽 네이밍**: Saga 패턴 관련 Kafka 토픽은 `data-type`을 `saga`로 하여 새로운 네이밍 컨벤션을 따른다. (예: **`dev.payment-team.order.saga.compensate-payment`**)
+*   **VII.2.15. Request/Response 토픽 네이밍**: Request & Response 패턴 관련 Kafka 요청 토픽은 `data-type`을 `request`로, 응답 토픽은 `response`로 하여 새로운 네이밍 컨벤션을 따른다. (예: 요청-**`dev.search-team.product.request.get-stock`**, 응답-**`dev.inventory-team.product.response.get-stock`**)
+*   **VII.2.16. Request/Response Correlation**: Request & Response 패턴 구현 시 요청과 응답 매핑을 위해 메시지 헤더의 `correlationId` (Spring Messaging 표준 `KafkaHeaders.CORRELATION_ID`) 또는 커스텀 `eventId` 필드를 사용한다. `spring-kafka`는 헤더 전파를 지원한다.
+*   **VII.2.17. Kafka 설정**: Kafka 관련 설정은 주로 `application.yml` (또는 `.properties`) 파일의 `spring.kafka` 네임스페이스 아래에 정의한다.
+    *   **공통 설정**: `spring.kafka.bootstrap-servers` (Kafka 브로커 주소).
+    *   **Producer 설정**: `spring.kafka.producer.*` (예: `key-serializer=org.apache.kafka.common.serialization.StringSerializer`, `value-serializer=org.apache.kafka.common.serialization.StringSerializer`). (Rule VII.1.3.4 참조)
+    *   **Consumer 설정**: `spring.kafka.consumer.*` (예: `group-id`, `key-deserializer`, `value-deserializer`는 `StringDeserializer` 또는 `KafkaJsonSchemaDeserializer`, `properties.schema.registry.url`은 `KafkaJsonSchemaDeserializer` 사용 시, `properties.json.value.type`은 `KafkaJsonSchemaDeserializer` 사용 시). (Rule VII.1.3.5 참조)
+    *   **Listener 설정**: `spring.kafka.listener.*` (예: `ack-mode`, `concurrency`).
+    *   **Schema Registry 설정**: Producer/Consumer의 `properties.schema.registry.url`을 통해 Confluent Schema Registry 주소를 설정한다 (`KafkaJsonSchemaDeserializer` 사용 시 또는 Gradle 플러그인 설정 시).
+    *   **Java/Kotlin 설정 클래스**: `KafkaTemplate` 빈, `ConsumerFactory`, `ProducerFactory`, `@KafkaListenerContainerFactory` 등의 커스텀 빈 정의, `@EnableKafka` 어노테이션 설정 등에 사용될 수 있다.
+*   **VII.2.18. Kafka 설정 - Bootstrap Servers**: Kafka Bootstrap 서버 주소는 `spring.kafka.bootstrap-servers` 속성을 통해 `application.yml`에 설정한다.
+*   **VII.2.19. Kafka 설정 - Key/Value Serializer/Deserializer**:
+    *   프로듀서: `spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer`, `spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.StringSerializer`.
+    *   컨슈머: `spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer`. 값(value)에는 `org.apache.kafka.common.serialization.StringDeserializer` (수동 역직렬화 필요) 또는 `io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer` (Schema Registry 연동)를 사용한다.
+*   **VII.2.20. 토픽 세분화**: **분리 토픽(Separate Topic) 전략을 원칙으로 한다. 즉, 하나의 이벤트 유형은 반드시 하나의 독립된 Kafka 토픽에 1:1로 매핑되어야 한다.** (예: `UserCreated` 이벤트는 `...event.user-created` 토픽으로, `UserNameChanged` 이벤트는 `...event.user-name-changed` 토픽으로 발행). **단, 이벤트 소싱(Event Sourcing)과 같이 특정 Aggregate의 모든 이벤트를 순서대로 저장해야 하는 명확하고 예외적인 경우에는, 아키텍처 위원회의 승인 하에 단일 토픽(예: `...event.user-aggregate`)을 사용할 수 있다.**
+*   **VII.2.21. 통합 테스트**: Kafka를 포함한 통합 테스트는 Testcontainers (Embedded Kafka 포함) 또는 `spring-kafka-test` 라이브러리의 `@EmbeddedKafka` 어노테이션을 사용하여 작성한다.
+*   **VII.2.22. 이벤트 타임스탬프**: 이벤트 `timestamp`는 **마이크로초** 단위로 기록하고, 시스템 간 시간 동기화 (NTP 등)를 고려한다. Kafka 메시지 자체의 타임스탬프 또는 페이로드 내의 필드를 활용할 수 있다.
+*   **VII.2.23. 모니터링**: 스키마 버전 불일치, 메시지 처리 실패 등 잠재적 오류를 감지하기 위한 모니터링 설정을 구축한다. `spring-kafka`는 Micrometer를 통한 메트릭 수집을 지원한다. `independent/outbox` 모듈 자체의 메트릭(저장된 메시지 수, 전송 실패 수 등)도 모니터링 대상이다 (Rule 80 참조).
+*   **VII.2.24. `@KafkaListener` 기반 메시지 처리**: 메시지 소비는 가급적 `@KafkaListener` 어노테이션을 사용하여 해당 도메인 모듈의 `infrastructure/messaging/` 패키지 내 클래스 메서드에서 처리한다.
+    *   메서드 파라미터 타입은 `StringDeserializer` 사용 시 `String` (JSON 페이로드), `KafkaJsonSchemaDeserializer` 사용 시 직접적인 페이로드 타입 `T` (예: `@Serializable` `DomainEvent` `data class`) 또는 `ConsumerRecord<K, V>`, `Message<T>` 등을 사용할 수 있다. (Rule VII.1.3.5 참조)
+    *   에러 핸들링은 `spring-kafka`의 `DefaultErrorHandler`, `@RetryableTopic` 어노테이션을 활용한 재시도 및 DLQ (Dead Letter Queue) 설정을 통해 구성한다. `application.yml`에서 관련 속성(`spring.kafka.listener.retry-topic.*`, `spring.kafka.consumer.properties.isolation.level` 등)을 설정할 수 있다.
+*   **VII.2.25. Content-Type 및 JSON 스키마 참조**:
+    *   메시지 발행 시 `KafkaTemplate<String, String>`을 사용할 때, 메시지 헤더에 `contentType`으로 `application/json`을 명시할 수 있다 (Rule 88 참조).
+    *   프로듀서는 `StringSerializer`를 사용하므로 메시지에 스키마 ID를 직접 포함하지 않는다.
+    *   컨슈머가 `KafkaJsonSchemaDeserializer`를 사용하는 경우, Schema Registry와 통신하여 토픽명 기반의 서브젝트 이름 조회 전략을 통해 메시지에 사용된 스키마 정보를 확인/등록하며, 이 과정은 주로 자동으로 처리된다.
+
+### VIII. 애플리케이션 핸들러 예외 처리 규칙 (sealed class & ErrorCode 규칙 적용)
+
+67. **ErrorCode 인터페이스 및 구현체 정의**:
+    *   **ErrorCode Interface**: 모든 에러 코드가 구현해야 할 `ErrorCode` 인터페이스는 `domains/common` 모듈의 **Domain 레이어** 내 **`error` 패키지** (`domains/common/domain/error/ErrorCode.kt` - Rule 141 준수)에 정의하며, 이 인터페이스는 **`val code: String` 및 `val message: String` 속성**만 정의한다.
+    *   **Domain ErrorCode**: 모든 도메인 비즈니스 규칙 위반 관련 에러 코드는 각 도메인 모듈의 **Domain 레이어** 내 **`error` 패키지** (`domains/{domain}/domain/error/` - Rule 141 준수)에 정의된 Enum 클래스(예: `domains/user/domain/error/UserDomainErrorCodes.kt`)로 구현한다. 이 Enum은 Rule 67에 정의된 `ErrorCode` 인터페이스를 구현해야 하며, **`code: String` 및 `message: String` 필드**를 포함해야 한다. ErrorCode의 `code` 필드는 `{DOMAIN}-{LAYER}-{NUMBER}` 형태의 패턴을 따른다 (예: `USER-DOMAIN-001`). **HTTP 상태 코드 정보는 포함하지 않는다.**
+    *   **Application ErrorCode**: Application 레이어에서 발생하는 기술적 오류(예: 외부 서비스 연동 실패 등)는 각 도메인 모듈의 **Application 레이어** 내 **`error` 패키지** (`domains/{domain}/application/error/` - Rule 141 준수)에 정의된 Enum(예: `domains/user/application/error/UserApplicationErrorCode.kt`)으로 정의한다. 이 Enum도 Rule 67에 정의된 `ErrorCode` 인터페이스를 구현해야 하며, **`code: String` 및 `message: String` 필드**를 포함해야 한다. ErrorCode의 `code` 필드는 `{DOMAIN}-{LAYER}-{NUMBER}` 형태의 패턴을 따른다 (예: `USER-APPLICATION-101`). **HTTP 상태 코드 정보는 포함하지 않는다.**
+    *   **Common System ErrorCode**: 공통적인 시스템 오류(예: 동시성 충돌, 기본적인 입력 형식 오류 등)에 대한 공통 ErrorCode Enum은 `domains/common` 모듈의 **Domain 레이어** 내 **`error` 패키지** (`domains/common/domain/error/CommonSystemErrorCode.kt` - Rule 141 준수)에 정의한다. 이 Enum도 Rule 67에 정의된 `ErrorCode` 인터페이스를 구현해야 하며, **`code: String` 및 `message: String` 필드**를 포함해야 한다. ErrorCode의 `code` 필드는 `{DOMAIN}-{LAYER}-{NUMBER}` 형태의 패턴을 따른다 (예: `COMMON-DOMAIN-001` 또는 `COMMON-SYSTEM-500`). **HTTP 상태 코드 정보는 포함하지 않는다.** (이 에러 코드는 시스템 수준 오류지만, DomainException을 통해 전달될 수 있으므로 Domain 레이어에 위치시킨다.)
+    *   **Independent Module ErrorCode**: `independent/outbox` 모듈과 같은 독립 모듈은 자체적인 ErrorCode Enum 및 체계를 해당 모듈의 **Infrastructure 레이어** 내 **`error` 패키지** (`independent/outbox/infrastructure/error/OutboxErrorCodes.kt` - Rule 80 참조, Rule 141 미적용) 내에 정의하고 사용한다. 독립 모듈의 ErrorCode는 `domains/common`의 `ErrorCode` 인터페이스를 구현하지 않을 수 있으며, 자체적으로 필요한 정보(예: 내부 처리 상태 코드)를 가질 수 있다.
+
+    > **[ErrorCode 선택 가이드라인]**
+    >
+    > 예외 상황 발생 시 적절한 ErrorCode(및 Exception 타입)를 선택하기 위해 다음 질문을 고려하십시오:
+    >
+    > 1.  **핵심 비즈니스 규칙이나 정책 위반인가?** (예: 사용자 이름 중복, 잔고 부족, VO 유효성 검사 실패)
+    >     *   **Yes** -> 해당 도메인의 `DomainException` 및 `DomainErrorCode` 사용 (예: `UserDomainException.DuplicateUsername`, `OrderDomainException.InsufficientBalance` - `domains/{domain}/domain/exception/`, `domains/{domain}/domain/error/` - Rule 141 준수)
+    > 2.  **Application 레이어의 책임 범위 내 기술적 문제 또는 외부 요인인가?** (예: 외부 서비스 연동 실패 후 재시도 소진, 요청 DTO 파싱/변환 오류, 예상치 못한 복구 불가능 오류)
+    >     *   **Yes** -> 해당 도메인의 `ApplicationException` 및 `ApplicationErrorCode` 사용 (예: `PaymentApplicationException.ExternalApiFailure`, `UserApplicationException.UnexpectedError` - `domains/{domain}/application/exception/`, `domains/{domain}/application/error/` - Rule 141 준수)
+    > 3.  **여러 도메인에 걸쳐 발생 가능하거나 특정 도메인과 무관한 시스템 수준의 문제인가?** (예: 낙관적 잠금 충돌, 기본적인 입력 형식 오류(Presentation 단계 처리 후에도 발생 시), 인증/인가 실패)
+    >     *   **Yes** -> `domains/common` 모듈의 공통 ErrorCode (`domains/common/domain/error/CommonSystemErrorCode.kt` - Rule 141 준수) 또는 관련 표준 예외 처리 메커니즘(예: `OptimisticLockException` 처리) 활용 고려. (단, `independent/` 모듈은 자체 ErrorCode 체계 사용 - `independent/{module}/infrastructure/error/` - Rule 80 참조, Rule 141 미적용)
+
+68. **DomainException 및 ApplicationException 정의**:
+    *   **Common Base DomainException**: 모든 도메인별 `DomainException` sealed class의 상위 타입 역할을 하는 추상 `DomainException` 클래스는 `domains/common` 모듈의 **Domain 레이어** 내 **`exception` 패키지** (`domains/common/domain/exception/DomainException.kt` - Rule 141 준수)에 정의한다. 이 추상 클래스는 Rule 67에 정의된 `ErrorCode`를 참조하는 `abstract val errorCode: ErrorCode` 프로퍼티를 포함해야 한다.
+    *   **Common Base ApplicationException**: 모든 도메인별 `ApplicationException` sealed class의 상위 타입 역할을 하는 추상 `ApplicationException` 클래스는 `domains/common` 모듈의 **Application 레이어** 내 **`exception` 패키지** (`domains/common/application/exception/ApplicationException.kt` - Rule 141 준수)에 정의한다. 이 추상 클래스도 Rule 67에 정의된 `ErrorCode`를 참조하는 `abstract val errorCode: ErrorCode` 프로퍼티를 포함해야 한다.
+    *   **Domain Exception**: 비즈니스 로직에서 발생한 예외는 각 도메인 모듈의 **Domain 레이어** 내 **`exception` 패키지** (`domains/{domain}/domain/exception/` - Rule 141 준수)에서 정의된 sealed class (예: `domains/user/domain/exception/UserDomainException.kt`)를 사용한다. 이 sealed class는 Rule 68에 정의된 Common Base `DomainException`을 상속해야 하며, 해당 도메인의 Domain ErrorCode (Rule 67에 정의된 Enum 구현체)를 `errorCode: ErrorCode` 프로퍼티를 통해 참조해야 한다. **Domain 모델에서 발생하는 유효성 검사 실패를 나타내는 예외들은 `UserDomainException.Validation`과 같이 `DomainException` 하위에 특정 베이스 예외 타입(sealed class 또는 interface)을 정의하고 이를 상속하는 하위 data class로 정의해야 한다.** Domain 모델에서 발생하는 유효성 검사 실패(VO `init`, Aggregate 메서드 내 `require` 등)는 Rule 14 및 61에 따라 이 `DomainException`을 상속하는 특정 유효성 검사 예외 타입을 직접 던져야 한다.
+    *   **Application Exception**: Application 레이어 자체에서 발생하는 예외(예: Command/Query DTO 기반의 입력값 형식 오류 *전* 처리, 외부 서비스 호출 실패 시 Resilience4j 예외, 복구 불가능한 예상치 못한 시스템 오류 등 기술적 오류)는 각 도메인 모듈의 **Application 레이어** 내 **`exception` 패키지** (`domains/{domain}/application/exception/` - Rule 141 준수)에서 정의된 sealed class (예: `domains/user/application/exception/UserApplicationException.kt`)를 사용한다. 이 sealed class는 Rule 68에 정의된 Common Base `ApplicationException`을 상속해야 하며, 해당 도메인의 Application ErrorCode (Rule 67에 정의된 Enum 구현체)를 `errorCode: ErrorCode` 프로퍼티를 통해 참조해야 한다. Domain 로직 위반으로 인한 예외를 ApplicationException으로 래핑하지 않도록 한다.
+    *   **Independent Module Exception**: `independent/outbox` 모듈과 같은 독립 모듈은 자체적인 `OutboxException` 베이스 클래스 및 하위 예외들을 해당 모듈의 **Infrastructure 레이어** 내 **`exception` 패키지** (`independent/outbox/infrastructure/exception/OutboxException.kt` - Rule 80 참조, Rule 141 미적용) 내에 정의하고 사용한다. 독립 모듈의 예외는 `domains/common`의 예외 클래스를 상속하지 않을 수 있다.
+71. **예외 발생 시 ErrorCode 로깅**: Application 레이어에서 예외 발생 시 SLF4J를 사용하여 예외 정보와 함께 발생한 예외 객체가 가진 `errorCode.code`를 명시적으로 로깅해야 한다 (예: `log.error("Failed to process command, errorCode={}, error={}", e.errorCode.code, e.message, e)`).
+72. **예외 메시지 표준화**: 각 도메인 모듈의 `ApplicationException` 및 `DomainException` sealed class와 하위 data class (`domains/{domain}/{layer}/exception/` - Rule 141 준수)는 해당 예외가 가진 `ErrorCode` (Enum)를 참조하여 사용자 친화적인 메시지와 개발자용 디버깅 메시지를 관리하며, 메시지는 단일 언어로 명확히 정의한다. 각 예외 클래스의 기본 메시지는 연결된 `errorCode.message`를 사용하고, 필요시 오버라이드하여 상세 정보를 추가할 수 있다.
+74. **비동기 Command 예외 처리**: 비동기 Command Handler는 예외 발생 시 `jobId`와 함께 예외 정보 및 `ErrorCode`를 별도의 `JobError` 엔티티에 저장하고, 상태 조회 API를 통해 클라이언트가 확인할 수 있도록 한다.
+64. **로깅 표준화**: 모든 레이어에서 로깅은 SLF4J를 사용하며, 구조화된 로깅을 적용한다 (예: `log.info("Processing user creation")`).
+
+====================================================================
 모듈들의 전체 코드가 첨부되어있다.
 코드를 보면 불완전 한 부분도 있고 규칙을 지키지 않는 부분도 있다.
 따라서 코드에 기준으로 작업을 완료하려고 하면 완성이 안될꺼다. 왜냐하면 코드가 정말 엉망이기 떄문이다. 어떤 요구사항인지 잘생각해서 수정계획을 해야한다.
@@ -120,45 +741,45 @@ BUILD SUCCESSFUL in 6s
 > Task :domains:user:domain:jar
 > Task :domains:user:domain:assemble
 > Task :domains:user:domain:build
-
-> Task :domains:user:application:compileKotlin FAILED
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetAddressByIdQueryHandler.kt:17:62 Return type of 'getAddressById' is not a subtype of the return type of the overridden member 'fun getAddressById(query: GetAddressByIdQuery): Address' defined in 'com/restaurant/user/application/query/usecase/GetAddressByIdUseCase'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserAddressesQueryHandler.kt:13:1 Class 'GetUserAddressesQueryHandler' is not abstract and does not implement abstract member 'getUserAddresses'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserAddressesQueryHandler.kt:16:5 'getUserAddresses' overrides nothing. Potential signatures for overriding:
-fun getUserAddresses(query: <ERROR TYPE REF: Symbol not found for GetAllAddressesQuery>): List<Address>
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserProfileQueryHandler.kt:14:1 Class 'GetUserProfileQueryHandler' is not abstract and does not implement abstract member 'getUserProfile'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserProfileQueryHandler.kt:18:5 'getUserProfile' overrides nothing. Potential signatures for overriding:
-fun getUserProfile(query: <ERROR TYPE REF: Symbol not found for GetUserProfileQuery>): UserProfileDto
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAllAddressesUseCase.kt:3:50 Unresolved reference 'GetAllAddressesQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAllAddressesUseCase.kt:10:32 Unresolved reference 'GetAllAddressesQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetProfileByIdUseCase.kt:3:50 Unresolved reference 'GetProfileByIdQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetProfileByIdUseCase.kt:10:31 Unresolved reference 'GetProfileByIdQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserAddressesUseCase.kt:3:50 Unresolved reference 'GetAllAddressesQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserAddressesUseCase.kt:10:33 Unresolved reference 'GetAllAddressesQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserProfileUseCase.kt:3:50 Unresolved reference 'GetUserProfileQuery'.
-e: file:///Users/junhoko/Documents/Fredko/kotlin-spring-boot-msa/restaurant/domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserProfileUseCase.kt:10:31 Unresolved reference 'GetUserProfileQuery'.
-
 > Task :domains:common:presentation:compileKotlin
+> Task :domains:common:presentation:compileJava NO-SOURCE
+> Task :domains:common:presentation:classes UP-TO-DATE
+> Task :domains:common:presentation:jar
+> Task :domains:user:application:compileKotlin
+> Task :domains:user:application:compileJava NO-SOURCE
+> Task :domains:user:application:classes UP-TO-DATE
+> Task :domains:user:application:jar
+> Task :domains:user:application:assemble
+> Task :domains:user:application:build
+> Task :domains:user:infrastructure:compileKotlin
+> Task :domains:user:infrastructure:compileJava NO-SOURCE
+> Task :domains:user:infrastructure:generateJsonSchema UP-TO-DATE
+> Task :domains:user:infrastructure:processResources
+> Task :domains:user:infrastructure:classes
+> Task :domains:user:infrastructure:jar
+> Task :domains:user:infrastructure:assemble
+> Task :domains:user:infrastructure:build
+> Task :domains:user:presentation:compileKotlin
+> Task :domains:user:presentation:compileJava NO-SOURCE
+> Task :domains:user:presentation:classes UP-TO-DATE
+> Task :domains:user:presentation:jar
+> Task :domains:user:presentation:assemble
+> Task :domains:user:presentation:build
+> Task :apps:user-app:compileKotlin
+> Task :apps:user-app:compileJava NO-SOURCE
+> Task :apps:user-app:classes
+> Task :apps:user-app:resolveMainClassName
+> Task :apps:user-app:bootJar
+> Task :apps:user-app:jar
+> Task :apps:user-app:assemble
+> Task :apps:user-app:build
 
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':domains:user:application:compileKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-BUILD FAILED in 15s
-17 actionable tasks: 14 executed, 3 up-to-date
+BUILD SUCCESSFUL in 12s
+29 actionable tasks: 25 executed, 4 up-to-date
 
 
 ==============================================================
- Gradle Build Completed: 2025-06-09 22:05:17 
+ Gradle Build Completed: 2025-06-11 21:01:56 
 ==============================================================
 
 
@@ -455,7 +1076,7 @@ gradle
 ====================================================================
  File: apps/user-app/build.gradle.kts
  Path: apps/user-app/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -465,8 +1086,6 @@ plugins {
     id("org.springframework.boot") version "3.5.0"
     id("io.spring.dependency-management")
 }
-
-extra["springCloudVersion"] = "2023.0.1" // Spring Cloud 2023.0.1 is compatible with Spring Boot 3.2.x
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -496,12 +1115,6 @@ configurations.all {
     // Previously excluded but needed for StreamBridge
 }
 
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
-}
-
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
@@ -518,11 +1131,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-    // Spring Cloud Stream with Function
-    implementation("org.springframework.cloud:spring-cloud-stream")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka-streams")
-    implementation("org.springframework.cloud:spring-cloud-function-context")
+    // Kafka
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -533,8 +1142,8 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
 
     // Resilience4j
-    implementation("io.github.resilience4j:resilience4j-kotlin")
-    implementation("io.github.resilience4j:resilience4j-spring-boot3")
+    implementation("io.github.resilience4j:resilience4j-kotlin:2.2.0")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
 
     // UUID Generator
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
@@ -599,7 +1208,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/KafkaConfig.kt
  Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/KafkaConfig.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.apps.user.config
 
@@ -640,7 +1249,7 @@ class KafkaConfig {
 ====================================================================
  File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/SerializationConfig.kt
  Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/config/SerializationConfig.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.apps.user.config
 
@@ -669,7 +1278,7 @@ class SerializationConfig {
 ====================================================================
  File: apps/user-app/src/main/kotlin/com/restaurant/apps/user/UserApplication.kt
  Path: apps/user-app/src/main/kotlin/com/restaurant/apps/user/UserApplication.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 /**
  * UserApplication entry point for the user service.
@@ -734,7 +1343,7 @@ fun main(args: Array<String>) {
 ====================================================================
  File: build.gradle.kts
  Path: build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 /**
  * build.gradle.kts for the root project.
@@ -770,7 +1379,7 @@ plugins {
 ====================================================================
  File: domains/common/application/build.gradle.kts
  Path: domains/common/application/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 plugins {
     `java-library`
@@ -839,7 +1448,7 @@ tasks.bootJar {
 ====================================================================
  File: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Command.kt
  Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Command.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.application.dto
 
@@ -851,7 +1460,7 @@ interface Command
 ====================================================================
  File: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Query.kt
  Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/dto/Query.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.application.dto
 
@@ -863,7 +1472,7 @@ interface Query
 ====================================================================
  File: domains/common/application/src/main/kotlin/com/restaurant/common/application/exception/ApplicationException.kt
  Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/exception/ApplicationException.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.application.exception
 
@@ -890,7 +1499,7 @@ abstract class ApplicationException(
 ====================================================================
  File: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/CommandUseCase.kt
  Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/CommandUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.application.usecase
 
@@ -906,7 +1515,7 @@ interface CommandUseCase<COMMAND : Command, RESULT> {
 ====================================================================
  File: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/QueryUseCase.kt
  Path: domains/common/application/src/main/kotlin/com/restaurant/common/application/usecase/QueryUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.application.usecase
 
@@ -922,7 +1531,7 @@ interface QueryUseCase<QUERY : Query, RESULT> {
 ====================================================================
  File: domains/common/domain/build.gradle.kts
  Path: domains/common/domain/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 plugins {
     id("java-library")
@@ -984,7 +1593,7 @@ tasks.bootJar {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/aggregate/AggregateRoot.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.domain.aggregate
 
@@ -1025,7 +1634,7 @@ abstract class AggregateRoot {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/CommonSystemErrorCode.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.domain.error
 
@@ -1054,7 +1663,7 @@ enum class CommonSystemErrorCode(
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/error/ErrorCode.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.domain.error
 
@@ -1082,7 +1691,7 @@ interface ErrorCode {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/event/DomainEvent.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.domain.event
 
@@ -1097,6 +1706,7 @@ interface DomainEvent {
     val occurredAt: Instant
     val aggregateId: String
     val aggregateType: String
+    val version: Int
 }
 
 ====================================================================
@@ -1105,7 +1715,7 @@ interface DomainEvent {
 ====================================================================
  File: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
  Path: domains/common/domain/src/main/kotlin/com/restaurant/common/domain/exception/DomainException.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.domain.exception
 
@@ -1128,7 +1738,7 @@ abstract class DomainException(
 ====================================================================
  File: domains/common/infrastructure/build.gradle.kts
  Path: domains/common/infrastructure/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 plugins {
     `java-library`
@@ -1196,7 +1806,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/entity/BaseEntity.kt
  Path: domains/common/infrastructure/src/main/kotlin/com/restaurant/common/infrastructure/entity/BaseEntity.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 package com.restaurant.common.infrastructure.entity
 
@@ -1238,7 +1848,7 @@ abstract class BaseEntity {
 ====================================================================
  File: domains/common/presentation/build.gradle.kts
  Path: domains/common/presentation/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:56
 ====================================================================
 plugins {
     `java-library`
@@ -1296,7 +1906,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/OpenApiConfig.kt
  Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/OpenApiConfig.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.common.presentation.config
 
@@ -1400,7 +2010,7 @@ class OpenApiConfig {
 ====================================================================
  File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/PasswordEncoderConfig.kt
  Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/config/PasswordEncoderConfig.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.common.presentation.config
 
@@ -1421,7 +2031,7 @@ class PasswordEncoderConfig {
 ====================================================================
  File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
  Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/dto/response/CommandResultResponse.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.common.presentation.dto.response
 
@@ -1443,7 +2053,7 @@ data class CommandResultResponse(
 ====================================================================
  File: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/GlobalExceptionHandler.kt
  Path: domains/common/presentation/src/main/kotlin/com/restaurant/common/presentation/GlobalExceptionHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.common.presentation
 
@@ -1655,7 +2265,7 @@ class GlobalExceptionHandler {
 ====================================================================
  File: domains/user/application/build.gradle.kts
  Path: domains/user/application/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 plugins {
     `java-library`
@@ -1729,7 +2339,7 @@ tasks.withType<Jar> {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/ChangePasswordCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/ChangePasswordCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1745,7 +2355,7 @@ data class ChangePasswordCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteAddressCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteAddressCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1760,7 +2370,7 @@ data class DeleteAddressCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteUserCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/DeleteUserCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1779,7 +2389,7 @@ data class DeleteUserCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/LoginCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/LoginCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1794,7 +2404,7 @@ data class LoginCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterAddressCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterAddressCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1816,7 +2426,7 @@ data class RegisterAddressCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterUserCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/RegisterUserCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1849,7 +2459,7 @@ data class RegisterUserCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateAddressCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateAddressCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1872,7 +2482,7 @@ data class UpdateAddressCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateProfileCommand.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/dto/UpdateProfileCommand.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.dto
 
@@ -1888,7 +2498,7 @@ data class UpdateProfileCommand(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/ChangePasswordCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/ChangePasswordCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -1939,7 +2549,7 @@ class ChangePasswordCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteAddressCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteAddressCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -1983,7 +2593,7 @@ class DeleteAddressCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteUserCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/DeleteUserCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2025,7 +2635,7 @@ class DeleteUserCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/LoginCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/LoginCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2082,7 +2692,7 @@ class LoginCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterAddressCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterAddressCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2140,7 +2750,7 @@ class RegisterAddressCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterUserCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/RegisterUserCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2192,7 +2802,7 @@ class RegisterUserCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateAddressCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateAddressCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2248,7 +2858,7 @@ class UpdateAddressCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateProfileCommandHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/handler/UpdateProfileCommandHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.handler
 
@@ -2295,7 +2905,7 @@ class UpdateProfileCommandHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/ChangePasswordUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/ChangePasswordUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2311,7 +2921,7 @@ interface ChangePasswordUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteAddressUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteAddressUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2330,7 +2940,7 @@ interface DeleteAddressUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteUserUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/DeleteUserUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2349,7 +2959,7 @@ interface DeleteUserUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/LoginUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/LoginUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2369,7 +2979,7 @@ interface LoginUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterAddressUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterAddressUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2389,7 +2999,7 @@ interface RegisterAddressUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterUserUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/RegisterUserUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2409,7 +3019,7 @@ interface RegisterUserUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateAddressUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateAddressUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2428,7 +3038,7 @@ interface UpdateAddressUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateProfileUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/command/usecase/UpdateProfileUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.command.usecase
 
@@ -2447,7 +3057,7 @@ interface UpdateProfileUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/error/UserApplicationErrorCode.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/error/UserApplicationErrorCode.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.error
 
@@ -2477,7 +3087,7 @@ enum class UserApplicationErrorCode(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/exception/UserApplicationException.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/exception/UserApplicationException.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.exception
 
@@ -2560,7 +3170,7 @@ sealed class UserApplicationException(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/AddressDto.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/AddressDto.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -2587,7 +3197,7 @@ data class AddressDto(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetAddressByIdQuery.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetAddressByIdQuery.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -2602,7 +3212,7 @@ data class GetAddressByIdQuery(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserAddressesQuery.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserAddressesQuery.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -2616,7 +3226,7 @@ data class GetUserAddressesQuery(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserProfileByIdQuery.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/GetUserProfileByIdQuery.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -2630,7 +3240,7 @@ data class GetUserProfileByIdQuery(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/LoginResult.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/LoginResult.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -2650,7 +3260,7 @@ data class LoginResult(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/UserProfileDto.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/dto/UserProfileDto.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.dto
 
@@ -2688,7 +3298,7 @@ data class UserProfileDto(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetAddressByIdQueryHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetAddressByIdQueryHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.handler
 
@@ -2751,7 +3361,7 @@ class GetAddressByIdQueryHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserAddressesQueryHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserAddressesQueryHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.handler
 
@@ -2810,7 +3420,7 @@ class GetUserAddressesQueryHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserProfileQueryHandler.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/handler/GetUserProfileQueryHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.handler
 
@@ -2876,18 +3486,18 @@ class GetUserProfileQueryHandler(
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAddressByIdUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAddressByIdUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
+import com.restaurant.user.application.query.dto.AddressDto
 import com.restaurant.user.application.query.dto.GetAddressByIdQuery
-import com.restaurant.user.domain.entity.Address
 
 /**
  * 주소 ID로 주소 조회 유스케이스 인터페이스
  */
 interface GetAddressByIdUseCase {
-    fun getAddressById(query: GetAddressByIdQuery): Address
+    fun getAddressById(query: GetAddressByIdQuery): AddressDto
 }
 
 ====================================================================
@@ -2896,18 +3506,18 @@ interface GetAddressByIdUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAllAddressesUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetAllAddressesUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
-import com.restaurant.user.application.query.dto.GetAllAddressesQuery
-import com.restaurant.user.domain.entity.Address
+import com.restaurant.user.application.query.dto.AddressDto
+import com.restaurant.user.application.query.dto.GetUserAddressesQuery
 
 /**
  * 모든 주소 조회 유스케이스 인터페이스
  */
 interface GetAllAddressesUseCase {
-    fun getAllAddresses(query: GetAllAddressesQuery): List<Address>
+    fun getAllAddresses(query: GetUserAddressesQuery): List<AddressDto>
 }
 
 ====================================================================
@@ -2916,18 +3526,18 @@ interface GetAllAddressesUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetProfileByIdUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetProfileByIdUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
-import com.restaurant.user.application.query.dto.GetProfileByIdQuery
+import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
 import com.restaurant.user.application.query.dto.UserProfileDto
 
 /**
  * 프로필 ID로 프로필 조회 유스케이스 인터페이스
  */
 interface GetProfileByIdUseCase {
-    fun getProfileById(query: GetProfileByIdQuery): UserProfileDto
+    fun getProfileById(query: GetUserProfileByIdQuery): UserProfileDto
 }
 
 ====================================================================
@@ -2936,18 +3546,18 @@ interface GetProfileByIdUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserAddressesUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserAddressesUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
-import com.restaurant.user.application.query.dto.GetAllAddressesQuery
-import com.restaurant.user.domain.entity.Address
+import com.restaurant.user.application.query.dto.AddressDto
+import com.restaurant.user.application.query.dto.GetUserAddressesQuery
 
 /**
  * 특정 사용자의 모든 주소 조회 유스케이스 인터페이스
  */
 interface GetUserAddressesUseCase {
-    fun getUserAddresses(query: GetAllAddressesQuery): List<Address>
+    fun getUserAddresses(query: GetUserAddressesQuery): List<AddressDto>
 }
 
 ====================================================================
@@ -2956,18 +3566,18 @@ interface GetUserAddressesUseCase {
 ====================================================================
  File: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserProfileUseCase.kt
  Path: domains/user/application/src/main/kotlin/com/restaurant/user/application/query/usecase/GetUserProfileUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.application.query.usecase
 
-import com.restaurant.user.application.query.dto.GetUserProfileQuery
+import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
 import com.restaurant.user.application.query.dto.UserProfileDto
 
 /**
  * 사용자 프로필 조회 유스케이스 인터페이스
  */
 interface GetUserProfileUseCase {
-    fun getUserProfile(query: GetUserProfileQuery): UserProfileDto
+    fun getUserProfile(query: GetUserProfileByIdQuery): UserProfileDto
 }
 
 ====================================================================
@@ -2976,7 +3586,7 @@ interface GetUserProfileUseCase {
 ====================================================================
  File: domains/user/domain/build.gradle.kts
  Path: domains/user/domain/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 plugins {
     id("java-library")
@@ -3042,7 +3652,7 @@ sourceSets {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/User.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/aggregate/User.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.aggregate
 
@@ -3493,7 +4103,7 @@ data class User private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/entity/Address.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/entity/Address.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.entity
 
@@ -3679,7 +4289,7 @@ data class Address constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/error/UserDomainErrorCodes.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/error/UserDomainErrorCodes.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.error
 
@@ -3724,7 +4334,7 @@ enum class UserDomainErrorCodes(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/event/UserEvent.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/event/UserEvent.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.event
 
@@ -3790,6 +4400,10 @@ sealed class UserEvent : DomainEvent {
         get() = id.value.toString()
     override val aggregateType: String
         get() = "User"
+
+    // version 필드 추가 - 기본값 1로 설정
+    override val version: Int
+        get() = 1
 
     /**
      * User Created Event
@@ -3962,7 +4576,7 @@ sealed class UserEvent : DomainEvent {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/exception/UserDomainException.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/exception/UserDomainException.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.exception
 
@@ -4175,7 +4789,7 @@ sealed class UserDomainException(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/repository/UserRepository.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/repository/UserRepository.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.repository
 
@@ -4205,7 +4819,7 @@ interface UserRepository {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/AddressId.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/AddressId.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -4267,7 +4881,7 @@ object AddressIdSerializer : KSerializer<AddressId> {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Email.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Email.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4314,7 +4928,7 @@ value class Email private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Name.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Name.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -4351,7 +4965,7 @@ value class Name private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Password.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Password.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4402,7 +5016,7 @@ value class Password private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/PhoneNumber.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/PhoneNumber.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -4440,7 +5054,7 @@ value class PhoneNumber private constructor(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserId.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserId.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 import com.restaurant.user.domain.exception.UserDomainException
@@ -4516,7 +5130,7 @@ object UserIdSerializer : KSerializer<UserId> {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/Username.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4547,7 +5161,7 @@ value class Username(
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserStatus.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserStatus.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4566,7 +5180,7 @@ enum class UserStatus {
 ====================================================================
  File: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserType.kt
  Path: domains/user/domain/src/main/kotlin/com/restaurant/user/domain/vo/UserType.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.domain.vo
 
@@ -4584,7 +5198,7 @@ enum class UserType {
 ====================================================================
  File: domains/user/infrastructure/build.gradle.kts
  Path: domains/user/infrastructure/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 import java.net.URLClassLoader
 
@@ -4632,7 +5246,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.7") // Logging
-    
+
     // kotlinx.serialization 의존성 추가
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
@@ -4665,22 +5279,45 @@ tasks.register<GenerateJsonSchemaTask>("generateJsonSchema") {
     group = "schema"
     description = "Generate JSON schemas from UserEvent data classes using Jackson JsonSchemaGenerator"
     dependsOn("compileKotlin")
-    
+
     packageName.set("com.restaurant.user.domain.event")
     domainEventInterface.set("com.restaurant.common.domain.event.DomainEvent")
     outputDir.set(file("src/main/resources/schemas"))
 }
 
-// Schema Registry 설정 (Rule VII.1.3.3)
+// Schema Registry 설정 (Rule VII.1.3.3) - 새로운 토픽 네이밍 정책 적용
 schemaRegistry {
-    url.set("http://localhost:8081") // 개발 환경용, 실제 환경에서는 환경변수로 설정
-    
+    url.set("http://localhost:8081") // 개발 환경용, 실제 환경에서는 ENV 변수 등으로 설정
+
+    // === 자동화된 스키마 등록 ===
+    val env = System.getenv("ENV") ?: "dev"
+    val team = "restaurant"
+    val domain = "user"
+    val dataType = "event"
+    val version = "v1"
+
+    fun File.toActionName(): String =
+        this.nameWithoutExtension.removePrefix("user_event_")
+            .replace('_', '-')
+
+    // schemas 디렉터리 내 *.json 파일을 모두 탐색하여 register/compatibility 설정 자동 추가
+    val schemaDir = file("src/main/resources/schemas")
+    val schemaFiles = schemaDir.listFiles { f -> f.extension == "json" }?.toList() ?: emptyList()
+
     register {
-        subject("dev.user.domain-event.user.v1-value", "${projectDir}/src/main/resources/schemas/user_event.json", "JSON")
+        schemaFiles.forEach { schemaFile ->
+            val action = schemaFile.toActionName()
+            val subjectName = "$env.$team.$domain.$dataType.$action.$version-value"
+            subject(subjectName, schemaFile.absolutePath, "JSON")
+        }
     }
-    
+
     compatibility {
-        subject("dev.user.domain-event.user.v1-value", "${projectDir}/src/main/resources/schemas/user_event.json", "JSON")
+        schemaFiles.forEach { schemaFile ->
+            val action = schemaFile.toActionName()
+            val subjectName = "$env.$team.$domain.$dataType.$action.$version-value"
+            subject(subjectName, schemaFile.absolutePath, "JSON")
+        }
     }
 }
 
@@ -4701,14 +5338,14 @@ tasks.named("build") {
 // processResources가 generateJsonSchema 후에 실행되도록 설정
 tasks.named("processResources") {
     dependsOn("generateJsonSchema")
-} 
+}
 ====================================================================
 
 
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/AddressEntity.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/AddressEntity.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.entity
 
@@ -4765,7 +5402,7 @@ class AddressEntity(
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/UserEntity.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/entity/UserEntity.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.entity
 
@@ -4853,7 +5490,7 @@ class UserEntity(
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/AddressEntityMapper.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/AddressEntityMapper.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.mapper
 
@@ -4903,7 +5540,7 @@ fun Address.toEntity(): AddressEntity =
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/DomainEventToOutboxMessageConverter.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/DomainEventToOutboxMessageConverter.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.mapper
 
@@ -4930,7 +5567,8 @@ class DomainEventToOutboxMessageConverter(
         headers["eventId"] = domainEvent.eventId.toString()
         headers["occurredAt"] = domainEvent.occurredAt.toString()
         headers["contentType"] = "application/json" // KafkaJsonSchemaSerializer가 처리하므로 유지
-        headers["schemaVersion"] = "v1" // 필요시 스키마 버전 명시
+        headers["schemaVersion"] = "v${domainEvent.version}" // 이벤트에서 추출한 버전 사용
+        headers["version"] = domainEvent.version.toString() // 버전 정보 추가
 
         return OutboxMessage(
             payload = payloadAsJsonString, // JSON 문자열로 직렬화된 payload 전달
@@ -4942,15 +5580,38 @@ class DomainEventToOutboxMessageConverter(
         )
     }
 
+    /**
+     * 새로운 토픽 네이밍 정책: <환경>.<팀>.<도메인>.<데이터유형>.<액션>.<버전>
+     * 각 이벤트 타입별로 개별 토픽 생성 (1:1 분리 정책)
+     */
     private fun determineTopic(event: UserEvent): String {
         val environment = System.getenv("APP_ENV") ?: "dev"
+        val team = System.getenv("TEAM_NAME") ?: "restaurant" // 팀 정보 환경변수에서 추출
         val domain = "user"
-        val entityName = "user"
-        val eventTypeCategory = "domain-event"
-        val version = "v1"
+        val dataType = "event" // 데이터 유형
+        val action = determineAction(event) // 이벤트별 액션 결정
+        val version = "v${event.version}" // 이벤트에서 버전 추출
 
-        return "$environment.$domain.$eventTypeCategory.$entityName.$version"
+        return "$environment.$team.$domain.$dataType.$action.$version"
     }
+
+    /**
+     * 이벤트 타입별 액션 결정
+     */
+    private fun determineAction(event: UserEvent): String =
+        when (event) {
+            is UserEvent.Created -> "created"
+            is UserEvent.Deleted -> "deleted"
+            is UserEvent.PasswordChanged -> "password-changed"
+            is UserEvent.ProfileUpdated -> "profile-updated"
+            is UserEvent.AddressAdded -> "address-added"
+            is UserEvent.AddressUpdated -> "address-updated"
+            is UserEvent.AddressDeleted -> "address-deleted"
+            is UserEvent.Withdrawn -> "withdrawn"
+            is UserEvent.Deactivated -> "deactivated"
+            is UserEvent.Activated -> "activated"
+            else -> "unknown"
+        }
 
     private fun determineEventType(event: UserEvent): String =
         when (event) {
@@ -4974,7 +5635,7 @@ class DomainEventToOutboxMessageConverter(
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/UserEntityMapper.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/mapper/UserEntityMapper.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.mapper
 
@@ -5045,7 +5706,7 @@ fun User.toEntity(): UserEntity {
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/SpringDataJpaUserRepository.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/SpringDataJpaUserRepository.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.repository
 
@@ -5071,7 +5732,7 @@ interface SpringDataJpaUserRepository : JpaRepository<UserEntity, Long> {
 ====================================================================
  File: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/UserRepositoryImpl.kt
  Path: domains/user/infrastructure/src/main/kotlin/com/restaurant/user/infrastructure/repository/UserRepositoryImpl.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.infrastructure.repository
 
@@ -5139,7 +5800,7 @@ class UserRepositoryImpl(
 ====================================================================
  File: domains/user/presentation/build.gradle.kts
  Path: domains/user/presentation/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 plugins {
     `java-library`
@@ -5186,15 +5847,15 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserAddressController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserAddressController.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.controller
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.command.IDeleteAddressCommandHandler
-import com.restaurant.user.application.command.IRegisterAddressCommandHandler
-import com.restaurant.user.application.command.IUpdateAddressCommandHandler
 import com.restaurant.user.application.command.dto.DeleteAddressCommand
+import com.restaurant.user.application.command.usecase.DeleteAddressUseCase
+import com.restaurant.user.application.command.usecase.RegisterAddressUseCase
+import com.restaurant.user.application.command.usecase.UpdateAddressUseCase
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.command.dto.request.RegisterAddressRequestV1
@@ -5226,11 +5887,11 @@ private val log = KotlinLogging.logger {}
 
 @Tag(name = "User Address Commands", description = "사용자 주소 관리 API (생성/수정/삭제)")
 @RestController
-@RequestMapping("/api/v1/users/{userId}/addresses")
+@RequestMapping("/api/v1/users")
 class UserAddressController(
-    private val registerAddressCommandHandler: IRegisterAddressCommandHandler,
-    private val updateAddressCommandHandler: IUpdateAddressCommandHandler,
-    private val deleteAddressCommandHandler: IDeleteAddressCommandHandler,
+    private val registerAddressCommandHandler: RegisterAddressUseCase,
+    private val updateAddressCommandHandler: UpdateAddressUseCase,
+    private val deleteAddressCommandHandler: DeleteAddressUseCase,
 ) {
     @PostMapping
     @Operation(
@@ -5406,16 +6067,16 @@ class UserAddressController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/controller/UserController.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.controller
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
-import com.restaurant.user.application.command.IChangePasswordCommandHandler
-import com.restaurant.user.application.command.IDeleteUserCommandHandler
-import com.restaurant.user.application.command.ILoginCommandHandler
-import com.restaurant.user.application.command.IRegisterUserCommandHandler
-import com.restaurant.user.application.command.IUpdateProfileCommandHandler
+import com.restaurant.user.application.command.usecase.ChangePasswordUseCase
+import com.restaurant.user.application.command.usecase.DeleteUserUseCase
+import com.restaurant.user.application.command.usecase.LoginUseCase
+import com.restaurant.user.application.command.usecase.RegisterUserUseCase
+import com.restaurant.user.application.command.usecase.UpdateProfileUseCase
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.command.dto.request.ChangePasswordRequestV1
 import com.restaurant.user.presentation.v1.command.dto.request.DeleteUserRequestV1
@@ -5453,11 +6114,11 @@ private val log = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/v1/users")
 class UserController(
-    private val registerUserCommandHandler: IRegisterUserCommandHandler,
-    private val loginCommandHandler: ILoginCommandHandler,
-    private val updateProfileCommandHandler: IUpdateProfileCommandHandler,
-    private val changePasswordCommandHandler: IChangePasswordCommandHandler,
-    private val deleteUserCommandHandler: IDeleteUserCommandHandler,
+    private val registerUserCommandHandler: RegisterUserUseCase,
+    private val loginCommandHandler: LoginUseCase,
+    private val updateProfileCommandHandler: UpdateProfileUseCase,
+    private val changePasswordCommandHandler: ChangePasswordUseCase,
+    private val deleteUserCommandHandler: DeleteUserUseCase,
 ) {
     @PostMapping("/register")
     @Operation(
@@ -5711,7 +6372,7 @@ class UserController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/ChangePasswordRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/ChangePasswordRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -5737,7 +6398,7 @@ data class ChangePasswordRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/DeleteUserRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/DeleteUserRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -5759,7 +6420,7 @@ data class DeleteUserRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/LoginRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/LoginRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -5784,7 +6445,7 @@ data class LoginRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterAddressRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterAddressRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -5825,7 +6486,7 @@ data class RegisterAddressRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterUserRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/RegisterUserRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 /**
  * 사용자 등록 요청 DTO
@@ -5870,7 +6531,7 @@ data class RegisterUserRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateAddressRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateAddressRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -5911,7 +6572,7 @@ data class UpdateAddressRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateProfileRequestV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/dto/request/UpdateProfileRequestV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.dto.request
 
@@ -5935,7 +6596,7 @@ data class UpdateProfileRequestV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/extensions/dto/request/UserCommandRequestExtensions.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/command/extensions/dto/request/UserCommandRequestExtensions.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.command.extensions.dto.request
 
@@ -6027,14 +6688,14 @@ fun UpdateAddressRequestV1.toCommand(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserAddressQueryController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserAddressQueryController.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.controller
 
-import com.restaurant.user.application.query.GetAddressByIdQueryHandler
-import com.restaurant.user.application.query.GetUserAddressesQueryHandler
 import com.restaurant.user.application.query.dto.GetAddressByIdQuery
 import com.restaurant.user.application.query.dto.GetUserAddressesQuery
+import com.restaurant.user.application.query.usecase.GetAddressByIdUseCase
+import com.restaurant.user.application.query.usecase.GetUserAddressesUseCase
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.query.dto.response.AddressDetailResponseV1
@@ -6062,13 +6723,13 @@ import java.util.UUID
 private val log = KotlinLogging.logger {}
 
 @RestController
-@RequestMapping("/api/v1/users/{userId}/addresses")
+@RequestMapping("/api/v1/users")
 @Tag(name = "User Address Queries", description = "사용자 주소 조회 API")
 class UserAddressQueryController(
-    private val getUserAddressesQueryHandler: GetUserAddressesQueryHandler,
-    private val getAddressByIdQueryHandler: GetAddressByIdQueryHandler,
+    private val getUserAddressesQueryHandler: GetUserAddressesUseCase,
+    private val getAddressByIdQueryHandler: GetAddressByIdUseCase,
 ) {
-    @GetMapping
+    @GetMapping("/{userId}/addresses")
     @Operation(
         summary = "사용자 주소 목록 조회",
         description = "특정 사용자의 모든 주소를 조회합니다.",
@@ -6121,7 +6782,7 @@ class UserAddressQueryController(
         return ResponseEntity.ok(responseList)
     }
 
-    @GetMapping("/{addressId}")
+    @GetMapping("/{userId}/addresses/{addressId}")
     @Operation(
         summary = "특정 주소 상세 조회",
         description = "사용자의 특정 주소 상세 정보를 조회합니다.",
@@ -6182,12 +6843,12 @@ class UserAddressQueryController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserQueryController.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/controller/UserQueryController.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.controller
 
-import com.restaurant.user.application.query.GetUserProfileQueryHandler
 import com.restaurant.user.application.query.dto.GetUserProfileByIdQuery
+import com.restaurant.user.application.query.usecase.GetUserProfileUseCase
 import com.restaurant.user.domain.vo.UserId
 import com.restaurant.user.presentation.v1.query.dto.response.UserProfileResponseV1
 import com.restaurant.user.presentation.v1.query.extensions.dto.response.toResponseV1
@@ -6214,7 +6875,7 @@ private val log = KotlinLogging.logger {}
 @RequestMapping("/api/v1/users")
 @Tag(name = "User Queries", description = "사용자 정보 조회 API")
 class UserQueryController(
-    private val getUserProfileQueryHandler: GetUserProfileQueryHandler,
+    private val getUserProfileQueryHandler: GetUserProfileUseCase,
 ) {
     @GetMapping("/{userId}/profile")
     @Operation(
@@ -6271,7 +6932,7 @@ class UserQueryController(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressDetailResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressDetailResponseV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -6315,7 +6976,7 @@ data class AddressDetailResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/AddressResponseV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -6349,7 +7010,7 @@ data class AddressResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/LoginResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/LoginResponseV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -6373,7 +7034,7 @@ data class LoginResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/UserProfileResponseV1.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/dto/response/UserProfileResponseV1.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.dto.response
 
@@ -6411,7 +7072,7 @@ data class UserProfileResponseV1(
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserAddressQueryResponseExtensions.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserAddressQueryResponseExtensions.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.extensions.dto.response
 
@@ -6454,7 +7115,7 @@ fun AddressDto.toResponseV1(): AddressResponseV1 =
 ====================================================================
  File: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserQueryResponseExtensions.kt
  Path: domains/user/presentation/src/main/kotlin/com/restaurant/user/presentation/v1/query/extensions/dto/response/UserQueryResponseExtensions.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.user.presentation.v1.query.extensions.dto.response
 
@@ -6496,7 +7157,7 @@ fun UserProfileDto.AddressDto.toResponseV1(): AddressResponseV1 =
 ====================================================================
  File: independent/outbox/build.gradle.kts
  Path: independent/outbox/build.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 plugins {
     id("java-library")
@@ -6579,7 +7240,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessage.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessage.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.dto
 
@@ -6647,7 +7308,7 @@ data class OutboxMessage(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageRepository.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageRepository.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.dto
 
@@ -6773,7 +7434,7 @@ interface OutboxMessageRepository {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageStatus.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/dto/OutboxMessageStatus.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.dto
 
@@ -6816,7 +7477,7 @@ enum class OutboxMessageStatus {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxMetricsHandler.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxMetricsHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.handler
 
@@ -6907,7 +7568,7 @@ class OutboxMetricsHandler(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxPoller.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/OutboxPoller.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.handler
 
@@ -6974,7 +7635,7 @@ class OutboxPoller(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/ProcessOutboxEventsUseCaseHandler.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/handler/ProcessOutboxEventsUseCaseHandler.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.handler
 
@@ -7108,7 +7769,7 @@ open class ProcessOutboxEventsUseCaseHandler(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/usecase/ProcessOutboxEventsUseCase.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/application/usecase/ProcessOutboxEventsUseCase.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.application.usecase
 
@@ -7150,7 +7811,7 @@ interface ProcessOutboxEventsUseCase {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/config/OutboxKafkaConfig.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/config/OutboxKafkaConfig.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.config
 
@@ -7215,7 +7876,7 @@ open class OutboxKafkaConfig {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/converter/StringMapConverter.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/converter/StringMapConverter.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.converter
 
@@ -7261,7 +7922,7 @@ class StringMapConverter : AttributeConverter<Map<String, String>, String> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/entity/OutboxEventEntity.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/entity/OutboxEventEntity.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.entity
 
@@ -7362,7 +8023,7 @@ class OutboxEventEntity(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/error/OutboxErrorCodes.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/error/OutboxErrorCodes.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.error
 
@@ -7387,7 +8048,7 @@ enum class OutboxErrorCodes(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/exception/OutboxException.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/exception/OutboxException.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.exception
 
@@ -7482,7 +8143,7 @@ sealed class OutboxException(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/extensions/OutboxEventEntityExtensions.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/extensions/OutboxEventEntityExtensions.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.extensions
 
@@ -7555,7 +8216,7 @@ fun OutboxMessage.updateFromDomain(existingEntity: OutboxEventEntity): OutboxEve
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/messaging/OutboxMessageSender.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/messaging/OutboxMessageSender.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.messaging
 
@@ -7568,6 +8229,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Component
 import java.util.concurrent.CompletableFuture
+import org.springframework.beans.factory.annotation.Qualifier
 
 /**
  * Outbox 메시지 전송 컴포넌트
@@ -7577,7 +8239,7 @@ import java.util.concurrent.CompletableFuture
  */
 @Component
 class OutboxMessageSender(
-    private val kafkaTemplate: KafkaTemplate<String, String>,
+    @Qualifier("outboxKafkaTemplate") private val kafkaTemplate: KafkaTemplate<String, String>,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -7699,7 +8361,7 @@ class OutboxMessageSender(
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxEventRepository.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxEventRepository.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.repository
 
@@ -7763,7 +8425,7 @@ interface JpaOutboxEventRepository : JpaRepository<OutboxEventEntity, Long> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxMessageRepository.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/JpaOutboxMessageRepository.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.repository
 
@@ -7845,7 +8507,7 @@ interface JpaOutboxMessageRepository : JpaRepository<OutboxEventEntity, Long> {
 ====================================================================
  File: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/OutboxMessageRepositoryImpl.kt
  Path: independent/outbox/src/main/kotlin/com/restaurant/outbox/infrastructure/repository/OutboxMessageRepositoryImpl.kt
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 package com.restaurant.outbox.infrastructure.repository
 
@@ -8098,7 +8760,7 @@ open class OutboxMessageRepositoryImpl(
 ====================================================================
  File: settings.gradle.kts
  Path: settings.gradle.kts
- Timestamp: 2025-06-09 13:05:17
+ Timestamp: 2025-06-11 12:01:57
 ====================================================================
 import org.gradle.api.initialization.resolve.RepositoriesMode
 
@@ -8152,5 +8814,5 @@ include(":apps:user-app")
 ====================================================================
 
 ==============================================================
- File Collection Completed: 2025-06-09 22:05:17 
+ File Collection Completed: 2025-06-11 21:01:57 
 ==============================================================

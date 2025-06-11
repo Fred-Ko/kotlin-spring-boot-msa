@@ -1,0 +1,38 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://example.com/schemas/user_event_profile_updated.json",
+  "title" : "UserEvent.ProfileUpdated",
+  "description" : "User profile updated event schema",
+  "type" : "object",
+  "properties" : {
+    "type" : {
+      "type" : "string",
+      "description" : "Event type discriminator for kotlinx.serialization"
+    },
+    "id" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "User ID (UUID format)"
+    },
+    "eventId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Event ID (UUID format)"
+    },
+    "occurredAt" : {
+      "type" : "string",
+      "format" : "date-time",
+      "description" : "ISO-8601 timestamp when the event occurred"
+    },
+    "name" : {
+      "type" : "string",
+      "description" : "Updated user name"
+    },
+    "phoneNumber" : {
+      "type" : [ "string", "null" ],
+      "description" : "Updated phone number (optional)"
+    }
+  },
+  "required" : [ "type", "id", "eventId", "occurredAt", "name" ],
+  "additionalProperties" : false
+}

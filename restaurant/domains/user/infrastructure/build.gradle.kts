@@ -44,7 +44,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.7") // Logging
-    
+
     // kotlinx.serialization 의존성 추가
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
@@ -77,22 +77,45 @@ tasks.register<GenerateJsonSchemaTask>("generateJsonSchema") {
     group = "schema"
     description = "Generate JSON schemas from UserEvent data classes using Jackson JsonSchemaGenerator"
     dependsOn("compileKotlin")
-    
+
     packageName.set("com.restaurant.user.domain.event")
     domainEventInterface.set("com.restaurant.common.domain.event.DomainEvent")
     outputDir.set(file("src/main/resources/schemas"))
 }
 
-// Schema Registry 설정 (Rule VII.1.3.3)
+// Schema Registry 설정 (Rule VII.1.3.3) - 새로운 토픽 네이밍 정책 적용
 schemaRegistry {
-    url.set("http://localhost:8081") // 개발 환경용, 실제 환경에서는 환경변수로 설정
-    
+    url.set("http://localhost:8081") // 개발 환경용, 실제 환경에서는 ENV 변수 등으로 설정
+
+    // === 자동화된 스키마 등록 ===
+    val env = System.getenv("ENV") ?: "dev"
+    val team = "restaurant"
+    val domain = "user"
+    val dataType = "event"
+    val version = "v1"
+
+    fun File.toActionName(): String =
+        this.nameWithoutExtension.removePrefix("user_event_")
+            .replace('_', '-')
+
+    // schemas 디렉터리 내 *.json 파일을 모두 탐색하여 register/compatibility 설정 자동 추가
+    val schemaDir = file("src/main/resources/schemas")
+    val schemaFiles = schemaDir.listFiles { f -> f.extension == "json" }?.toList() ?: emptyList()
+
     register {
-        subject("dev.user.domain-event.user.v1-value", "${projectDir}/src/main/resources/schemas/user_event.json", "JSON")
+        schemaFiles.forEach { schemaFile ->
+            val action = schemaFile.toActionName()
+            val subjectName = "$env.$team.$domain.$dataType.$action.$version-value"
+            subject(subjectName, schemaFile.absolutePath, "JSON")
+        }
     }
-    
+
     compatibility {
-        subject("dev.user.domain-event.user.v1-value", "${projectDir}/src/main/resources/schemas/user_event.json", "JSON")
+        schemaFiles.forEach { schemaFile ->
+            val action = schemaFile.toActionName()
+            val subjectName = "$env.$team.$domain.$dataType.$action.$version-value"
+            subject(subjectName, schemaFile.absolutePath, "JSON")
+        }
     }
 }
 
@@ -113,4 +136,4 @@ tasks.named("build") {
 // processResources가 generateJsonSchema 후에 실행되도록 설정
 tasks.named("processResources") {
     dependsOn("generateJsonSchema")
-} 
+}

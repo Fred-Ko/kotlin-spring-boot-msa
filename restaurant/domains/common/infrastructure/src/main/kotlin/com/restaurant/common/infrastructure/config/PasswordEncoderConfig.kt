@@ -1,4 +1,4 @@
-package com.restaurant.common.presentation.config
+package com.restaurant.common.infrastructure.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

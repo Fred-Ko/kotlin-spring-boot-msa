@@ -6,12 +6,6 @@ import java.io.Serializable
 value class Name private constructor(
     val value: String,
 ) : Serializable {
-    init {
-        if (value.isBlank()) {
-            throw UserDomainException.Validation.InvalidNameFormat("Invalid name format: $value")
-        }
-    }
-
     companion object {
         private const val MIN_LENGTH = 2
         private const val MAX_LENGTH = 50

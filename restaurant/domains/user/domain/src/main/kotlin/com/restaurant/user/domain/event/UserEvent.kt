@@ -63,6 +63,10 @@ sealed class UserEvent : DomainEvent {
     override val aggregateType: String
         get() = "User"
 
+    // version 필드 추가 - 기본값 1로 설정
+    override val version: Int
+        get() = 1
+
     /**
      * User Created Event
      */

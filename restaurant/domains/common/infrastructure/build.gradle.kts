@@ -33,16 +33,17 @@ dependencyManagement {
 dependencies {
     implementation(project(":domains:common:domain"))
     implementation(project(":domains:common:application"))
-    
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.5.0") // JPA 어노테이션 사용 목적
-    implementation("org.springframework.kafka:spring-kafka:4.0.0-M2")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa") // JPA 어노테이션 사용 목적
+    implementation("org.springframework.boot:spring-boot-starter-security") // PasswordEncoder 사용 목적
+    implementation("org.springframework.kafka:spring-kafka")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-    
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.0")
-    testImplementation("org.springframework.kafka:spring-kafka-test:4.0.0-M2")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
     testImplementation("io.mockk:mockk:1.14.2")
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.0-M3")
     testImplementation("org.assertj:assertj-core:4.0.0-M1")

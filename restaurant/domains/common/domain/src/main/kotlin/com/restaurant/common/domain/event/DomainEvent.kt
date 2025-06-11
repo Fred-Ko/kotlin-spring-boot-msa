@@ -11,4 +11,5 @@ interface DomainEvent {
     val occurredAt: Instant
     val aggregateId: String
     val aggregateType: String
+    val version: Int
 }

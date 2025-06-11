@@ -1,4 +1,4 @@
-package com.restaurant.apps.user.config
+package com.restaurant.outbox.infrastructure.config
 
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringSerializer
@@ -10,7 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
 
 @Configuration
-class KafkaConfig {
+class KafkaProducerConfig {
     @Value("\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
 

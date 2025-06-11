@@ -6,12 +6,6 @@ import java.io.Serializable
 value class PhoneNumber private constructor(
     val value: String,
 ) : Serializable {
-    init {
-        if (!value.matches(PHONE_NUMBER_REGEX)) {
-            throw UserDomainException.Validation.InvalidPhoneNumberFormat(value)
-        }
-    }
-
     companion object {
         private val PHONE_NUMBER_REGEX = Regex("^010-?\\d{4}-?\\d{4}$")
 

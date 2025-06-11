@@ -1,0 +1,67 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://example.com/schemas/user_event_address_updated.json",
+  "title" : "UserEvent.AddressUpdated",
+  "description" : "User address updated event schema",
+  "type" : "object",
+  "properties" : {
+    "type" : {
+      "type" : "string",
+      "description" : "Event type discriminator for kotlinx.serialization"
+    },
+    "id" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "User ID (UUID format)"
+    },
+    "eventId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Event ID (UUID format)"
+    },
+    "occurredAt" : {
+      "type" : "string",
+      "format" : "date-time",
+      "description" : "ISO-8601 timestamp when the event occurred"
+    },
+    "addressId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Address ID (UUID format)"
+    },
+    "name" : {
+      "type" : "string",
+      "description" : "Address name"
+    },
+    "streetAddress" : {
+      "type" : "string",
+      "description" : "Street address"
+    },
+    "detailAddress" : {
+      "type" : [ "string", "null" ],
+      "description" : "Detail address (optional)"
+    },
+    "city" : {
+      "type" : "string",
+      "description" : "City"
+    },
+    "state" : {
+      "type" : "string",
+      "description" : "State"
+    },
+    "country" : {
+      "type" : "string",
+      "description" : "Country"
+    },
+    "zipCode" : {
+      "type" : "string",
+      "description" : "ZIP code"
+    },
+    "isDefault" : {
+      "type" : "boolean",
+      "description" : "Whether this is the default address"
+    }
+  },
+  "required" : [ "type", "id", "eventId", "occurredAt", "addressId", "name", "streetAddress", "city", "state", "country", "zipCode", "isDefault" ],
+  "additionalProperties" : false
+}
