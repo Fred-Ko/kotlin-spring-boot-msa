@@ -7,7 +7,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 /**
- * Gradle task to generate JSON schemas from UserEvent data classes using kotlinx.serialization.
+ * Gradle task to generate JSON schemas from Event data classes using kotlinx.serialization.
  * This task validates kotlinx.serialization compatibility and generates individual JSON Schema files for each event type.
  */
 abstract class GenerateJsonSchemaTask : DefaultTask() {
@@ -39,8 +39,14 @@ abstract class GenerateJsonSchemaTask : DefaultTask() {
                 .asFile
         val runtimeClasspath = project.configurations.getByName("runtimeClasspath")
 
-        // domain 모듈의 컴파일된 클래스 디렉토리도 포함
-        val domainClassesDir = project.rootProject.file("domains/user/domain/build/classes/kotlin/main")
+        // domain 모듈의 컴파일된 클래스 디렉토리도 포함 - 동적으로 결정
+        val domainName =
+            when {
+                packageName.contains("user") -> "user"
+                packageName.contains("payment") -> "payment"
+                else -> "user" // 기본값
+            }
+        val domainClassesDir = project.rootProject.file("domains/$domainName/domain/build/classes/kotlin/main")
         val commonDomainClassesDir = project.rootProject.file("domains/common/domain/build/classes/kotlin/main")
 
         logger.lifecycle("Compiled classes directory: ${compiledClassesDir.absolutePath}")
@@ -54,24 +60,32 @@ abstract class GenerateJsonSchemaTask : DefaultTask() {
         val allClasspaths = (runtimeClasspath.files + compiledClassesDir + domainClassesDir + commonDomainClassesDir).filter { it.exists() }
         logger.lifecycle("Total valid classpaths: ${allClasspaths.size}")
 
-        // UserEvent 클래스 직접 로드 및 kotlinx.serialization 테스트
+        // Event 클래스 동적 로드 및 kotlinx.serialization 테스트
         val eventClasses =
             try {
                 // URLClassLoader 생성
                 val urls = allClasspaths.map { it.toURI().toURL() }.toTypedArray()
                 val classLoader = java.net.URLClassLoader(urls, Thread.currentThread().contextClassLoader)
 
-                // UserEvent 클래스 로드
-                logger.lifecycle("Loading UserEvent class...")
-                val userEventClass = Class.forName("$packageName.UserEvent", true, classLoader)
-                logger.lifecycle("Successfully loaded UserEvent class: ${userEventClass.name}")
+                // 동적으로 Event 클래스 이름 결정
+                val eventClassName =
+                    when (domainName) {
+                        "user" -> "UserEvent"
+                        "payment" -> "PaymentEvent"
+                        else -> "UserEvent"
+                    }
+
+                // Event 클래스 로드
+                logger.lifecycle("Loading $eventClassName class...")
+                val eventClass = Class.forName("$packageName.$eventClassName", true, classLoader)
+                logger.lifecycle("Successfully loaded $eventClassName class: ${eventClass.name}")
 
                 // kotlinx.serialization 호환성 테스트
-                testKotlinxSerializationCompatibility(userEventClass, classLoader)
+                testKotlinxSerializationCompatibility(eventClass, classLoader)
 
-                listOf(userEventClass)
+                listOf(eventClass)
             } catch (e: Exception) {
-                logger.error("Failed to load or test UserEvent class: ${e.message}")
+                logger.error("Failed to load or test Event class: ${e.message}")
                 throw e
             }
 
@@ -117,34 +131,66 @@ abstract class GenerateJsonSchemaTask : DefaultTask() {
     ) {
         logger.lifecycle("Generating individual kotlinx.serialization-based schemas for ${clazz.simpleName}...")
 
-        if (clazz.simpleName == "UserEvent") {
-            // 각 이벤트 타입별 스키마 정의
-            val eventSchemas =
-                mapOf(
-                    "user_event_created" to createUserCreatedSchema(),
-                    "user_event_deleted" to createUserDeletedSchema(),
-                    "user_event_password_changed" to createUserPasswordChangedSchema(),
-                    "user_event_profile_updated" to createUserProfileUpdatedSchema(),
-                    "user_event_address_added" to createUserAddressAddedSchema(),
-                    "user_event_address_updated" to createUserAddressUpdatedSchema(),
-                    "user_event_address_deleted" to createUserAddressDeletedSchema(),
-                    "user_event_withdrawn" to createUserWithdrawnSchema(),
-                    "user_event_deactivated" to createUserDeactivatedSchema(),
-                    "user_event_activated" to createUserActivatedSchema(),
-                )
+        when (clazz.simpleName) {
+            "UserEvent" -> generateUserEventSchemas(outputDir)
+            "PaymentEvent" -> generatePaymentEventSchemas(outputDir)
+            else -> logger.warn("Unknown event class: ${clazz.simpleName}")
+        }
+    }
 
-            // 각 스키마를 개별 파일로 저장
-            eventSchemas.forEach { (fileName, schema) ->
-                val schemaFile = File(outputDir, "$fileName.json")
-                val prettyJson =
-                    com.fasterxml.jackson.databind
-                        .ObjectMapper()
-                        .writerWithDefaultPrettyPrinter()
-                        .writeValueAsString(schema)
-                schemaFile.writeText(prettyJson)
+    private fun generateUserEventSchemas(outputDir: File) {
+        // 각 이벤트 타입별 스키마 정의
+        val eventSchemas =
+            mapOf(
+                "user_event_created" to createUserCreatedSchema(),
+                "user_event_deleted" to createUserDeletedSchema(),
+                "user_event_password_changed" to createUserPasswordChangedSchema(),
+                "user_event_profile_updated" to createUserProfileUpdatedSchema(),
+                "user_event_address_added" to createUserAddressAddedSchema(),
+                "user_event_address_updated" to createUserAddressUpdatedSchema(),
+                "user_event_address_deleted" to createUserAddressDeletedSchema(),
+                "user_event_withdrawn" to createUserWithdrawnSchema(),
+                "user_event_deactivated" to createUserDeactivatedSchema(),
+                "user_event_activated" to createUserActivatedSchema(),
+            )
 
-                logger.lifecycle("Generated individual schema: ${schemaFile.absolutePath}")
-            }
+        // 각 스키마를 개별 파일로 저장
+        eventSchemas.forEach { (fileName, schema) ->
+            val schemaFile = File(outputDir, "$fileName.json")
+            val prettyJson =
+                com.fasterxml.jackson.databind
+                    .ObjectMapper()
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(schema)
+            schemaFile.writeText(prettyJson)
+
+            logger.lifecycle("Generated individual schema: ${schemaFile.absolutePath}")
+        }
+    }
+
+    private fun generatePaymentEventSchemas(outputDir: File) {
+        // 각 이벤트 타입별 스키마 정의
+        val eventSchemas =
+            mapOf(
+                "payment_event_payment_requested" to createPaymentRequestedSchema(),
+                "payment_event_payment_approved" to createPaymentApprovedSchema(),
+                "payment_event_payment_failed" to createPaymentFailedSchema(),
+                "payment_event_payment_refunded" to createPaymentRefundedSchema(),
+                "payment_event_payment_refund_failed" to createPaymentRefundFailedSchema(),
+                "payment_event_payment_method_registered" to createPaymentMethodRegisteredSchema(),
+            )
+
+        // 각 스키마를 개별 파일로 저장
+        eventSchemas.forEach { (fileName, schema) ->
+            val schemaFile = File(outputDir, "$fileName.json")
+            val prettyJson =
+                com.fasterxml.jackson.databind
+                    .ObjectMapper()
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(schema)
+            schemaFile.writeText(prettyJson)
+
+            logger.lifecycle("Generated individual schema: ${schemaFile.absolutePath}")
         }
     }
 
@@ -160,7 +206,7 @@ abstract class GenerateJsonSchemaTask : DefaultTask() {
                 mapOf(
                     "type" to "string",
                     "pattern" to "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-                    "description" to "User ID (UUID format)",
+                    "description" to "Entity ID (UUID format)",
                 ),
             "eventId" to
                 mapOf(
@@ -421,6 +467,244 @@ abstract class GenerateJsonSchemaTask : DefaultTask() {
             "type" to "object",
             "properties" to getCommonEventProperties(),
             "required" to listOf("type", "id", "eventId", "occurredAt"),
+            "additionalProperties" to false,
+        )
+
+    // Payment Event Schema 생성 메서드들
+    private fun createPaymentRequestedSchema() =
+        mapOf(
+            "\$schema" to "http://json-schema.org/draft-07/schema#",
+            "\$id" to "http://example.com/schemas/payment_event_payment_requested.json",
+            "title" to "PaymentEvent.PaymentRequested",
+            "description" to "Payment requested event schema",
+            "type" to "object",
+            "properties" to (
+                getCommonEventProperties() +
+                    mapOf(
+                        "orderId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Order ID",
+                            ),
+                        "userId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "User ID",
+                            ),
+                        "paymentMethodId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Payment method ID",
+                            ),
+                        "amount" to
+                            mapOf(
+                                "type" to "number",
+                                "description" to "Payment amount",
+                            ),
+                    )
+            ),
+            "required" to listOf("type", "id", "eventId", "occurredAt", "orderId", "userId", "paymentMethodId", "amount"),
+            "additionalProperties" to false,
+        )
+
+    private fun createPaymentApprovedSchema() =
+        mapOf(
+            "\$schema" to "http://json-schema.org/draft-07/schema#",
+            "\$id" to "http://example.com/schemas/payment_event_payment_approved.json",
+            "title" to "PaymentEvent.PaymentApproved",
+            "description" to "Payment approved event schema",
+            "type" to "object",
+            "properties" to (
+                getCommonEventProperties() +
+                    mapOf(
+                        "orderId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Order ID",
+                            ),
+                        "userId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "User ID",
+                            ),
+                        "transactionId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Transaction ID",
+                            ),
+                        "amount" to
+                            mapOf(
+                                "type" to "number",
+                                "description" to "Payment amount",
+                            ),
+                        "paymentMethodId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Payment method ID",
+                            ),
+                    )
+            ),
+            "required" to listOf("type", "id", "eventId", "occurredAt", "orderId", "userId", "transactionId", "amount", "paymentMethodId"),
+            "additionalProperties" to false,
+        )
+
+    private fun createPaymentFailedSchema() =
+        mapOf(
+            "\$schema" to "http://json-schema.org/draft-07/schema#",
+            "\$id" to "http://example.com/schemas/payment_event_payment_failed.json",
+            "title" to "PaymentEvent.PaymentFailed",
+            "description" to "Payment failed event schema",
+            "type" to "object",
+            "properties" to (
+                getCommonEventProperties() +
+                    mapOf(
+                        "orderId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Order ID",
+                            ),
+                        "userId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "User ID",
+                            ),
+                        "amount" to
+                            mapOf(
+                                "type" to "number",
+                                "description" to "Payment amount",
+                            ),
+                        "paymentMethodId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Payment method ID",
+                            ),
+                        "failureReason" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Failure reason",
+                            ),
+                    )
+            ),
+            "required" to listOf("type", "id", "eventId", "occurredAt", "orderId", "userId", "amount", "paymentMethodId", "failureReason"),
+            "additionalProperties" to false,
+        )
+
+    private fun createPaymentRefundedSchema() =
+        mapOf(
+            "\$schema" to "http://json-schema.org/draft-07/schema#",
+            "\$id" to "http://example.com/schemas/payment_event_payment_refunded.json",
+            "title" to "PaymentEvent.PaymentRefunded",
+            "description" to "Payment refunded event schema",
+            "type" to "object",
+            "properties" to (
+                getCommonEventProperties() +
+                    mapOf(
+                        "orderId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Order ID",
+                            ),
+                        "userId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "User ID",
+                            ),
+                        "originalAmount" to
+                            mapOf(
+                                "type" to "number",
+                                "description" to "Original payment amount",
+                            ),
+                        "refundedAmount" to
+                            mapOf(
+                                "type" to "number",
+                                "description" to "Refunded amount",
+                            ),
+                        "reason" to
+                            mapOf(
+                                "type" to listOf("string", "null"),
+                                "description" to "Refund reason (optional)",
+                            ),
+                    )
+            ),
+            "required" to listOf("type", "id", "eventId", "occurredAt", "orderId", "userId", "originalAmount", "refundedAmount"),
+            "additionalProperties" to false,
+        )
+
+    private fun createPaymentRefundFailedSchema() =
+        mapOf(
+            "\$schema" to "http://json-schema.org/draft-07/schema#",
+            "\$id" to "http://example.com/schemas/payment_event_payment_refund_failed.json",
+            "title" to "PaymentEvent.PaymentRefundFailed",
+            "description" to "Payment refund failed event schema",
+            "type" to "object",
+            "properties" to (
+                getCommonEventProperties() +
+                    mapOf(
+                        "orderId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Order ID",
+                            ),
+                        "userId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "User ID",
+                            ),
+                        "refundAmount" to
+                            mapOf(
+                                "type" to "number",
+                                "description" to "Attempted refund amount",
+                            ),
+                        "failureReason" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Refund failure reason",
+                            ),
+                    )
+            ),
+            "required" to listOf("type", "id", "eventId", "occurredAt", "orderId", "userId", "refundAmount", "failureReason"),
+            "additionalProperties" to false,
+        )
+
+    private fun createPaymentMethodRegisteredSchema() =
+        mapOf(
+            "\$schema" to "http://json-schema.org/draft-07/schema#",
+            "\$id" to "http://example.com/schemas/payment_event_payment_method_registered.json",
+            "title" to "PaymentEvent.PaymentMethodRegistered",
+            "description" to "Payment method registered event schema",
+            "type" to "object",
+            "properties" to (
+                getCommonEventProperties() +
+                    mapOf(
+                        "userId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "User ID",
+                            ),
+                        "paymentMethodId" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Payment method ID (UUID format)",
+                            ),
+                        "paymentMethodType" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Payment method type",
+                            ),
+                        "alias" to
+                            mapOf(
+                                "type" to "string",
+                                "description" to "Payment method alias",
+                            ),
+                        "isDefault" to
+                            mapOf(
+                                "type" to "boolean",
+                                "description" to "Whether this is the default payment method",
+                            ),
+                    )
+            ),
+            "required" to
+                listOf("type", "id", "eventId", "occurredAt", "userId", "paymentMethodId", "paymentMethodType", "alias", "isDefault"),
             "additionalProperties" to false,
         )
 }

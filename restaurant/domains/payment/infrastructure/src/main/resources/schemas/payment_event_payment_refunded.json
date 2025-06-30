@@ -1,0 +1,50 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://example.com/schemas/payment_event_payment_refunded.json",
+  "title" : "PaymentEvent.PaymentRefunded",
+  "description" : "Payment refunded event schema",
+  "type" : "object",
+  "properties" : {
+    "type" : {
+      "type" : "string",
+      "description" : "Event type discriminator for kotlinx.serialization"
+    },
+    "id" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Entity ID (UUID format)"
+    },
+    "eventId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Event ID (UUID format)"
+    },
+    "occurredAt" : {
+      "type" : "string",
+      "format" : "date-time",
+      "description" : "ISO-8601 timestamp when the event occurred"
+    },
+    "orderId" : {
+      "type" : "string",
+      "description" : "Order ID"
+    },
+    "userId" : {
+      "type" : "string",
+      "description" : "User ID"
+    },
+    "originalAmount" : {
+      "type" : "number",
+      "description" : "Original payment amount"
+    },
+    "refundedAmount" : {
+      "type" : "number",
+      "description" : "Refunded amount"
+    },
+    "reason" : {
+      "type" : [ "string", "null" ],
+      "description" : "Refund reason (optional)"
+    }
+  },
+  "required" : [ "type", "id", "eventId", "occurredAt", "orderId", "userId", "originalAmount", "refundedAmount" ],
+  "additionalProperties" : false
+}

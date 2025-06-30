@@ -44,6 +44,12 @@ include(":domains:account:application")
 include(":domains:account:infrastructure")
 include(":domains:account:presentation")
 
+// Payment modules
+include(":domains:payment:domain")
+include(":domains:payment:application")
+include(":domains:payment:infrastructure")
+include(":domains:payment:presentation")
+
 // Independent modules
 include(":independent:outbox")
 

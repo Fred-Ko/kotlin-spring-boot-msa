@@ -1,0 +1,50 @@
+{
+  "$schema" : "http://json-schema.org/draft-07/schema#",
+  "$id" : "http://example.com/schemas/payment_event_payment_approved.json",
+  "title" : "PaymentEvent.PaymentApproved",
+  "description" : "Payment approved event schema",
+  "type" : "object",
+  "properties" : {
+    "type" : {
+      "type" : "string",
+      "description" : "Event type discriminator for kotlinx.serialization"
+    },
+    "id" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Entity ID (UUID format)"
+    },
+    "eventId" : {
+      "type" : "string",
+      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description" : "Event ID (UUID format)"
+    },
+    "occurredAt" : {
+      "type" : "string",
+      "format" : "date-time",
+      "description" : "ISO-8601 timestamp when the event occurred"
+    },
+    "orderId" : {
+      "type" : "string",
+      "description" : "Order ID"
+    },
+    "userId" : {
+      "type" : "string",
+      "description" : "User ID"
+    },
+    "transactionId" : {
+      "type" : "string",
+      "description" : "Transaction ID"
+    },
+    "amount" : {
+      "type" : "number",
+      "description" : "Payment amount"
+    },
+    "paymentMethodId" : {
+      "type" : "string",
+      "description" : "Payment method ID"
+    }
+  },
+  "required" : [ "type", "id", "eventId", "occurredAt", "orderId", "userId", "transactionId", "amount", "paymentMethodId" ],
+  "additionalProperties" : false
+}
