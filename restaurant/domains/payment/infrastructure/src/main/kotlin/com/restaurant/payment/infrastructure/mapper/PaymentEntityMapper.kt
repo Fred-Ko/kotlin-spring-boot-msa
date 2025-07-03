@@ -13,18 +13,18 @@ import com.restaurant.payment.infrastructure.entity.PaymentEntity
  * PaymentEntity와 Payment Domain 객체 간 변환 (Rule 24-25)
  */
 fun PaymentEntity.toDomain(): Payment =
-    Payment.reconstitute(
-        paymentId = PaymentId(this.domainId),
-        orderId = OrderId(this.orderId),
-        userId = UserId(this.userId),
-        amount = Amount(this.amount),
-        paymentMethodId = PaymentMethodId(this.paymentMethodId),
+    Payment(
+        id = PaymentId.of(this.domainId),
+        orderId = OrderId.of(this.orderId),
+        userId = UserId.of(this.userId),
+        amount = Amount.of(this.amount),
+        paymentMethodId = PaymentMethodId.of(this.paymentMethodId),
         status = this.status,
-        transactionId = this.transactionId?.let { TransactionId(it) },
+        transactionId = this.transactionId?.let { TransactionId.of(it) },
         failureMessage = this.failureMessage,
         requestedAt = this.requestedAt,
         completedAt = this.completedAt,
-        version = this.version,
+        version = 0L, // 기본값 사용
     )
 
 fun Payment.toEntity(): PaymentEntity =

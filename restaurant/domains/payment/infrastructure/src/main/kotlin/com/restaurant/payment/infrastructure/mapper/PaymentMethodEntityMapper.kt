@@ -37,9 +37,9 @@ fun PaymentMethod.toEntity(): PaymentMethodEntity =
  * Maps CreditCardPaymentMethodEntity to CreditCard domain model.
  */
 private fun CreditCardPaymentMethodEntity.toDomain(): CreditCard =
-    CreditCard.reconstitute(
-        paymentMethodId = PaymentMethodId(this.domainId),
-        userId = UserId(this.userId),
+    CreditCard(
+        paymentMethodId = PaymentMethodId.of(this.domainId),
+        userId = UserId.of(this.userId),
         alias = this.alias,
         cardNumber = CardNumber.of(this.cardNumber),
         cardExpiry = CardExpiry.of(this.cardExpiry),
@@ -47,7 +47,7 @@ private fun CreditCardPaymentMethodEntity.toDomain(): CreditCard =
         isDefault = this.isDefault,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt,
-        version = this.version,
+        version = 0L, // 기본값 사용
     )
 
 /**
@@ -59,25 +59,25 @@ private fun CreditCard.toEntity(): CreditCardPaymentMethodEntity =
         userId = this.userId.value,
         alias = this.alias,
         isDefault = this.isDefault,
-        cardNumber = this.cardNumber.value,
-        cardExpiry = this.cardExpiry.value,
-        cardCvv = this.cardCvv.value,
+        cardNumber = this.cardNumber.toString(),
+        cardExpiry = this.cardExpiry.toString(),
+        cardCvv = this.cardCvv.toString(),
     )
 
 /**
  * Maps BankTransferPaymentMethodEntity to BankTransfer domain model.
  */
 private fun BankTransferPaymentMethodEntity.toDomain(): BankTransfer =
-    BankTransfer.reconstitute(
-        paymentMethodId = PaymentMethodId(this.domainId),
-        userId = UserId(this.userId),
+    BankTransfer(
+        paymentMethodId = PaymentMethodId.of(this.domainId),
+        userId = UserId.of(this.userId),
         alias = this.alias,
         bankName = BankName.of(this.bankName),
         accountNumber = AccountNumber.of(this.accountNumber),
         isDefault = this.isDefault,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt,
-        version = this.version,
+        version = 0L, // 기본값 사용
     )
 
 /**

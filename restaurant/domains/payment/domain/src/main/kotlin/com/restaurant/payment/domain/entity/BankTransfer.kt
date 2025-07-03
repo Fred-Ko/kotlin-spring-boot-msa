@@ -10,7 +10,7 @@ import java.time.Instant
 /**
  * 계좌이체 결제 수단 구현체
  */
-data class BankTransfer private constructor(
+data class BankTransfer internal constructor(
     override val paymentMethodId: PaymentMethodId,
     override val userId: UserId,
     override val alias: String,
@@ -45,29 +45,6 @@ data class BankTransfer private constructor(
                 version = 0L,
             )
         }
-
-        fun reconstitute(
-            paymentMethodId: PaymentMethodId,
-            userId: UserId,
-            alias: String,
-            bankName: BankName,
-            accountNumber: AccountNumber,
-            isDefault: Boolean,
-            createdAt: Instant,
-            updatedAt: Instant,
-            version: Long,
-        ): BankTransfer =
-            BankTransfer(
-                paymentMethodId = paymentMethodId,
-                userId = userId,
-                alias = alias,
-                bankName = bankName,
-                accountNumber = accountNumber,
-                isDefault = isDefault,
-                createdAt = createdAt,
-                updatedAt = updatedAt,
-                version = version,
-            )
     }
 
     override fun updateAlias(newAlias: String): BankTransfer = this.copy(alias = newAlias, updatedAt = Instant.now())

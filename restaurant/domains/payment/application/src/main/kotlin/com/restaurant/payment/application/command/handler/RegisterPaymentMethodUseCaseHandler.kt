@@ -10,14 +10,13 @@ import com.restaurant.payment.domain.repository.PaymentMethodRepository
 import com.restaurant.payment.domain.vo.PaymentMethodId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
 
 @Service
 class RegisterPaymentMethodUseCaseHandler(
     private val paymentMethodRepository: PaymentMethodRepository,
 ) : RegisterPaymentMethodUseCase {
     @Transactional
-    override suspend fun registerPaymentMethod(command: RegisterPaymentMethodCommand): PaymentMethodId {
+    override suspend fun execute(command: RegisterPaymentMethodCommand): String {
         if (command.isDefault) {
             paymentMethodRepository.findByUserIdAndIsDefault(command.userId)?.let {
                 val nonDefaultMethod = it.unsetAsDefault()
@@ -29,7 +28,7 @@ class RegisterPaymentMethodUseCaseHandler(
             when (command) {
                 is RegisterCreditCardCommand ->
                     CreditCard.create(
-                        paymentMethodId = PaymentMethodId(UUID.randomUUID()),
+                        paymentMethodId = PaymentMethodId.generate(),
                         userId = command.userId,
                         alias = command.alias,
                         cardNumber = command.cardNumber,
@@ -39,7 +38,7 @@ class RegisterPaymentMethodUseCaseHandler(
                     )
                 is RegisterBankTransferCommand ->
                     BankTransfer.create(
-                        paymentMethodId = PaymentMethodId(UUID.randomUUID()),
+                        paymentMethodId = PaymentMethodId.generate(),
                         userId = command.userId,
                         alias = command.alias,
                         bankName = command.bankName,
@@ -49,6 +48,6 @@ class RegisterPaymentMethodUseCaseHandler(
             }
 
         val savedMethod = paymentMethodRepository.save(newPaymentMethod)
-        return savedMethod.paymentMethodId
+        return savedMethod.paymentMethodId.toString()
     }
 }

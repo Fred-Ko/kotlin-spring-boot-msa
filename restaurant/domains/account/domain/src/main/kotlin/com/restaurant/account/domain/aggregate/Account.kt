@@ -9,7 +9,7 @@ import com.restaurant.common.domain.aggregate.AggregateRoot
 import java.math.BigDecimal
 import java.time.Instant
 
-data class Account private constructor(
+data class Account internal constructor(
     val id: AccountId,
     val userId: UserId,
     val balance: Balance,
@@ -40,25 +40,6 @@ data class Account private constructor(
             )
             return account
         }
-
-        fun reconstitute(
-            id: AccountId,
-            userId: UserId,
-            balance: Balance,
-            status: AccountStatus,
-            createdAt: Instant,
-            updatedAt: Instant,
-            version: Long,
-        ): Account =
-            Account(
-                id = id,
-                userId = userId,
-                balance = balance,
-                status = status,
-                createdAt = createdAt,
-                updatedAt = updatedAt,
-                version = version,
-            )
     }
 
     fun deposit(amount: Balance): Account {

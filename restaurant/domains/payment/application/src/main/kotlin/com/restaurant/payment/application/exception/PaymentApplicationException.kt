@@ -161,6 +161,37 @@ sealed class PaymentApplicationException(
                 "Payment method not found: $paymentMethodId",
             )
 
+        class PaymentMethodOwnershipMismatch(
+            paymentMethodId: String,
+            userId: String,
+        ) : Validation(
+                PaymentApplicationErrorCodes.PAYMENT_METHOD_VALIDATION_ERROR,
+                "Payment method $paymentMethodId does not belong to user $userId",
+            )
+
+        class PaymentMethodExpired(
+            paymentMethodId: String,
+        ) : Validation(
+                PaymentApplicationErrorCodes.PAYMENT_METHOD_VALIDATION_ERROR,
+                "Payment method $paymentMethodId has expired",
+            )
+
+        class CannotDeletePaymentMethodWithOngoingPayments(
+            paymentMethodId: String,
+            ongoingPaymentCount: Int,
+        ) : Validation(
+                PaymentApplicationErrorCodes.PAYMENT_METHOD_VALIDATION_ERROR,
+                "Cannot delete payment method $paymentMethodId: $ongoingPaymentCount ongoing payments exist",
+            )
+
+        class CannotDeactivatePaymentMethodWithOngoingPayments(
+            paymentMethodId: String,
+            ongoingPaymentCount: Int,
+        ) : Validation(
+                PaymentApplicationErrorCodes.PAYMENT_METHOD_VALIDATION_ERROR,
+                "Cannot deactivate payment method $paymentMethodId: $ongoingPaymentCount ongoing payments exist",
+            )
+
         class OrderNotFound(
             orderId: String,
         ) : NotFound(

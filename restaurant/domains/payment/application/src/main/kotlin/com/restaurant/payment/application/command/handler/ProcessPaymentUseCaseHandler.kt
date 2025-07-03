@@ -4,6 +4,7 @@ import com.restaurant.payment.application.command.dto.ProcessPaymentCommand
 import com.restaurant.payment.application.command.usecase.ProcessPaymentUseCase
 import com.restaurant.payment.application.exception.PaymentApplicationException
 import com.restaurant.payment.domain.aggregate.Payment
+import com.restaurant.payment.domain.repository.PaymentMethodRepository
 import com.restaurant.payment.domain.repository.PaymentRepository
 import com.restaurant.payment.domain.vo.Amount
 import com.restaurant.payment.domain.vo.OrderId
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ProcessPaymentUseCaseHandler(
     private val paymentRepository: PaymentRepository,
+    private val paymentMethodRepository: PaymentMethodRepository,
 ) : ProcessPaymentUseCase {
     private val log = LoggerFactory.getLogger(ProcessPaymentUseCaseHandler::class.java)
 
@@ -32,35 +34,36 @@ class ProcessPaymentUseCaseHandler(
         log.info("Processing payment for order: ${command.orderId}, user: ${command.userId}")
 
         try {
-            // 1. Command 검증
-            validateCommand(command)
+            // 1. PaymentMethod 존재 및 유효성 검증
+            val paymentMethodId = PaymentMethodId.ofString(command.paymentMethodId)
+            val paymentMethod =
+                paymentMethodRepository.findById(paymentMethodId)
+                    ?: throw PaymentApplicationException.NotFound.PaymentMethodNotFound(command.paymentMethodId)
 
-            // 2. 기존 결제 중복 확인
-            val orderId = OrderId.ofString(command.orderId)
-            val existingPayment = paymentRepository.findByOrderId(orderId)
-            if (existingPayment != null) {
-                log.warn("Payment already exists for order: ${command.orderId}")
-                throw PaymentApplicationException.Validation.InvalidPaymentRequest(
-                    "Payment already exists for order: ${command.orderId}",
+            // 2. PaymentMethod 소유권 검증
+            val userId = UserId.ofString(command.userId)
+            if (paymentMethod.userId != userId) {
+                throw PaymentApplicationException.Validation.PaymentMethodOwnershipMismatch(
+                    command.paymentMethodId,
+                    command.userId,
                 )
             }
 
-            // 3. Payment Aggregate 생성
-            val paymentId = PaymentId.generate()
-            val userId = UserId.ofString(command.userId)
-            val paymentMethodId = PaymentMethodId.ofString(command.paymentMethodId)
-            val amount = Amount.of(command.amount)
+            // 3. PaymentMethod 만료 검증 (CreditCard인 경우)
+            if (paymentMethod is com.restaurant.payment.domain.entity.CreditCard && paymentMethod.isExpired()) {
+                throw PaymentApplicationException.Validation.PaymentMethodExpired(command.paymentMethodId)
+            }
 
+            // 4. Payment 생성
             val payment =
                 Payment.create(
-                    id = paymentId,
-                    orderId = orderId,
+                    paymentId = PaymentId.generate(),
+                    orderId = OrderId.ofString(command.orderId),
                     userId = userId,
+                    amount = Amount.of(command.amount),
                     paymentMethodId = paymentMethodId,
-                    amount = amount,
                 )
 
-            // 4. Payment 저장 (Domain Event 발행 포함)
             val savedPayment = paymentRepository.save(payment)
 
             log.info(

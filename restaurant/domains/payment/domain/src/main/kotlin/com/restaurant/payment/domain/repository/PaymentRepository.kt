@@ -3,6 +3,8 @@ package com.restaurant.payment.domain.repository
 import com.restaurant.payment.domain.aggregate.Payment
 import com.restaurant.payment.domain.vo.OrderId
 import com.restaurant.payment.domain.vo.PaymentId
+import com.restaurant.payment.domain.vo.PaymentMethodId
+import com.restaurant.payment.domain.vo.PaymentStatus
 import com.restaurant.payment.domain.vo.UserId
 
 /**
@@ -53,4 +55,17 @@ interface PaymentRepository {
      * 주문 ID로 결제 존재 여부를 확인합니다.
      */
     suspend fun existsByOrderId(orderId: OrderId): Boolean
+    
+    /**
+     * 특정 결제 수단으로 진행 중인 결제들을 조회합니다.
+     */
+    suspend fun findByPaymentMethodIdAndStatus(
+        paymentMethodId: PaymentMethodId, 
+        statuses: List<PaymentStatus>
+    ): List<Payment>
+    
+    /**
+     * 특정 결제 수단을 사용한 모든 결제를 조회합니다.
+     */
+    suspend fun findByPaymentMethodId(paymentMethodId: PaymentMethodId): List<Payment>
 }

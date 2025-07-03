@@ -19,7 +19,7 @@ fun UserEntity.toDomain(): User {
 
     // User.reconstitute에서 defaultAddressId를 사용하지 않거나,
     // User 도메인 객체가 addresses 리스트 내 isDefault 플래그로 관리한다고 가정
-    return User.reconstitute(
+    return User(
         id = userDomainId,
         username = Username.of(this.username),
         password = Password.of(this.passwordHash),

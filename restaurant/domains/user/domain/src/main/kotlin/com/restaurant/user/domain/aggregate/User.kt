@@ -22,7 +22,7 @@ import kotlin.ConsistentCopyVisibility
  * 사용자와 관련된 모든 비즈니스 로직을 담당하는 Aggregate Root
  */
 @ConsistentCopyVisibility
-data class User private constructor(
+data class User internal constructor(
     val id: UserId,
     val username: Username,
     val email: Email,
@@ -37,6 +37,14 @@ data class User private constructor(
     @JsonIgnore
     val version: Long = 0L,
 ) : AggregateRoot() {
+    init {
+        // 기본 주소 검증 (reconstitute에서 이동)
+        val defaultAddresses = addresses.filter { it.isDefault }
+        if (defaultAddresses.size > 1) {
+            throw UserDomainException.Address.MultipleDefaultsOnInit()
+        }
+    }
+
     companion object {
         private const val MAX_ADDRESSES = 10
 
@@ -83,45 +91,6 @@ data class User private constructor(
             )
 
             return user
-        }
-
-        /**
-         * 기존 데이터로부터 User를 재구성합니다.
-         */
-        fun reconstitute(
-            id: UserId,
-            username: Username,
-            email: Email,
-            password: Password,
-            name: Name,
-            phoneNumber: PhoneNumber?,
-            userType: UserType,
-            status: UserStatus,
-            addresses: List<Address>,
-            createdAt: Instant,
-            updatedAt: Instant,
-            version: Long,
-        ): User {
-            // 기본 주소 검증
-            val defaultAddresses = addresses.filter { it.isDefault }
-            if (defaultAddresses.size > 1) {
-                throw UserDomainException.Address.MultipleDefaultsOnInit()
-            }
-
-            return User(
-                id = id,
-                username = username,
-                email = email,
-                password = password,
-                name = name,
-                phoneNumber = phoneNumber,
-                userType = userType,
-                status = status,
-                addresses = addresses,
-                createdAt = createdAt,
-                updatedAt = updatedAt,
-                version = version,
-            )
         }
     }
 

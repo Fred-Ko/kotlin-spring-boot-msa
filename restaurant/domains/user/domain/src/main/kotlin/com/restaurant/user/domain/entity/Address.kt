@@ -9,7 +9,7 @@ import java.time.Instant
  * Address Domain Entity (Rule 11)
  * User Aggregate에 속하지만 자체 식별자를 가짐.
  */
-data class Address constructor(
+data class Address internal constructor(
     val addressId: AddressId,
     val name: String,
     val streetAddress: String,
@@ -126,35 +126,6 @@ data class Address constructor(
                 version = 0L,
             )
         }
-
-        fun reconstitute(
-            addressId: AddressId,
-            name: String,
-            streetAddress: String,
-            detailAddress: String?,
-            city: String,
-            state: String,
-            country: String,
-            zipCode: String,
-            isDefault: Boolean,
-            createdAt: Instant,
-            updatedAt: Instant,
-            version: Long,
-        ): Address =
-            Address(
-                addressId = addressId,
-                name = name,
-                streetAddress = streetAddress,
-                detailAddress = detailAddress,
-                city = city,
-                state = state,
-                country = country,
-                zipCode = zipCode,
-                isDefault = isDefault,
-                createdAt = createdAt,
-                updatedAt = updatedAt,
-                version = version,
-            )
     }
 
     fun markAsDefault(): Address {

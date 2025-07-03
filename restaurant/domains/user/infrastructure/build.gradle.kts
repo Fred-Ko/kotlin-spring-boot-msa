@@ -67,7 +67,12 @@ dependencies {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions {
-        freeCompilerArgs.addAll(listOf("-Xjsr305=strict"))
+        freeCompilerArgs.addAll(
+            listOf(
+                "-Xjsr305=strict",
+                "-Xfriend-paths=${project(":domains:user:domain").layout.buildDirectory.dir("classes/kotlin/main").get().asFile.absolutePath}"
+            )
+        )
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }

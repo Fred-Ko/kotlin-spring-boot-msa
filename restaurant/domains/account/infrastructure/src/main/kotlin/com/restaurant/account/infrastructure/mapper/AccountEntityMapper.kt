@@ -18,7 +18,7 @@ object AccountEntityMapper {
         )
 
     fun toDomain(entity: AccountEntity): Account =
-        Account.reconstitute(
+        Account(
             id = AccountId.of(entity.domainId),
             userId = UserId.of(entity.userId),
             balance = Balance.of(entity.balance),

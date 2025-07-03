@@ -50,9 +50,6 @@ class PaymentRepositoryImpl(
     override suspend fun save(payment: Payment): Payment {
         val paymentEntity = payment.toEntity()
 
-        // 양방향 관계 설정 (PaymentMethodEntity들이 PaymentEntity를 참조하도록)
-        paymentEntity.paymentMethods.forEach { it.payment = paymentEntity }
-
         val savedEntity = springDataJpaPaymentRepository.save(paymentEntity)
 
         // 도메인 이벤트 처리 (Rule 85)

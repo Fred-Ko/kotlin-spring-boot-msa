@@ -177,7 +177,7 @@ sealed class PaymentEvent : DomainEvent {
     ) : PaymentEvent()
 
     /**
-     * 결제 수단 등록 이벤트
+     * 결제 수단 등록 이벤트 (Payment 애그리거트 내부에서 발행)
      */
     @Serializable
     @SerialName("PaymentMethodRegistered")

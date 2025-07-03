@@ -3,11 +3,10 @@ package com.restaurant.user.infrastructure.mapper
 import com.restaurant.user.domain.entity.Address
 import com.restaurant.user.domain.vo.AddressId
 import com.restaurant.user.infrastructure.entity.AddressEntity
-import java.time.Instant
 
 // Address.reconstitute에서 userId를 사용하지 않는다고 가정
 fun AddressEntity.toDomain(): Address =
-    Address.reconstitute(
+    Address(
         addressId = AddressId.of(this.domainId),
         name = this.name,
         streetAddress = this.streetAddress,
