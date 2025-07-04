@@ -34,4 +34,12 @@ interface SpringDataJpaPaymentRepository : JpaRepository<PaymentEntity, Long> {
     fun existsByOrderId(orderId: UUID): Boolean
 
     fun existsByTransactionId(transactionId: String): Boolean
+
+    // 추가된 메서드들
+    fun findByStatus(status: String): List<PaymentEntity>
+
+    fun findByUserIdAndStatus(
+        userId: UUID,
+        status: String,
+    ): List<PaymentEntity>
 }

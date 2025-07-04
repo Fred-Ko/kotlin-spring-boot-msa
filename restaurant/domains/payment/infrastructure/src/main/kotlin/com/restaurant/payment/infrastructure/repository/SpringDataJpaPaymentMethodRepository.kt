@@ -38,4 +38,9 @@ interface SpringDataJpaPaymentMethodRepository : JpaRepository<PaymentMethodEnti
     ): Boolean
 
     fun findByUserIdAndIsDefaultTrue(userId: UUID): PaymentMethodEntity?
+
+    // 추가된 메서드들
+    fun deleteByDomainId(domainId: UUID)
+
+    fun existsByDomainId(domainId: UUID): Boolean
 }

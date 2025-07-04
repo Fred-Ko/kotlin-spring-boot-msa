@@ -4,8 +4,8 @@ import com.restaurant.payment.application.command.dto.RegisterBankTransferComman
 import com.restaurant.payment.application.command.dto.RegisterCreditCardCommand
 import com.restaurant.payment.application.command.dto.RegisterPaymentMethodCommand
 import com.restaurant.payment.application.command.usecase.RegisterPaymentMethodUseCase
-import com.restaurant.payment.domain.entity.BankTransfer
-import com.restaurant.payment.domain.entity.CreditCard
+import com.restaurant.payment.domain.aggregate.BankTransfer
+import com.restaurant.payment.domain.aggregate.CreditCard
 import com.restaurant.payment.domain.repository.PaymentMethodRepository
 import com.restaurant.payment.domain.vo.PaymentMethodId
 import org.springframework.stereotype.Service
@@ -16,9 +16,9 @@ class RegisterPaymentMethodUseCaseHandler(
     private val paymentMethodRepository: PaymentMethodRepository,
 ) : RegisterPaymentMethodUseCase {
     @Transactional
-    override suspend fun execute(command: RegisterPaymentMethodCommand): String {
+    override fun execute(command: RegisterPaymentMethodCommand): String {
         if (command.isDefault) {
-            paymentMethodRepository.findByUserIdAndIsDefault(command.userId)?.let {
+            paymentMethodRepository.findDefaultByUserId(command.userId)?.let {
                 val nonDefaultMethod = it.unsetAsDefault()
                 paymentMethodRepository.save(nonDefaultMethod)
             }

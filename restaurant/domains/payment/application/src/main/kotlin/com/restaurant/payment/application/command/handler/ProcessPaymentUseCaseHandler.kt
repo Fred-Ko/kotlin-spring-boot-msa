@@ -30,31 +30,34 @@ class ProcessPaymentUseCaseHandler(
     @Transactional
     @Retry(name = "payment-processing")
     @CircuitBreaker(name = "payment-processing", fallbackMethod = "fallbackProcessPayment")
-    override suspend fun execute(command: ProcessPaymentCommand): String {
+    override fun execute(command: ProcessPaymentCommand): String {
         log.info("Processing payment for order: ${command.orderId}, user: ${command.userId}")
 
         try {
-            // 1. PaymentMethod 존재 및 유효성 검증
+            // 1. 입력 검증
+            validateCommand(command)
+
+            // 2. PaymentMethod 존재 및 유효성 검증
             val paymentMethodId = PaymentMethodId.ofString(command.paymentMethodId)
             val paymentMethod =
                 paymentMethodRepository.findById(paymentMethodId)
                     ?: throw PaymentApplicationException.NotFound.PaymentMethodNotFound(command.paymentMethodId)
 
-            // 2. PaymentMethod 소유권 검증
+            // 3. PaymentMethod 소유권 검증
             val userId = UserId.ofString(command.userId)
             if (paymentMethod.userId != userId) {
-                throw PaymentApplicationException.Validation.PaymentMethodOwnershipMismatch(
+                throw PaymentApplicationException.NotFound.PaymentMethodOwnershipMismatch(
                     command.paymentMethodId,
                     command.userId,
                 )
             }
 
-            // 3. PaymentMethod 만료 검증 (CreditCard인 경우)
-            if (paymentMethod is com.restaurant.payment.domain.entity.CreditCard && paymentMethod.isExpired()) {
-                throw PaymentApplicationException.Validation.PaymentMethodExpired(command.paymentMethodId)
+            // 4. PaymentMethod 만료 검증 (CreditCard인 경우)
+            if (paymentMethod is com.restaurant.payment.domain.aggregate.CreditCard && paymentMethod.isExpired()) {
+                throw PaymentApplicationException.NotFound.PaymentMethodExpired(command.paymentMethodId)
             }
 
-            // 4. Payment 생성
+            // 5. Payment 생성
             val payment =
                 Payment.create(
                     paymentId = PaymentId.generate(),
@@ -117,7 +120,7 @@ class ProcessPaymentUseCaseHandler(
     /**
      * Circuit Breaker 폴백 메서드
      */
-    private suspend fun fallbackProcessPayment(
+    private fun fallbackProcessPayment(
         command: ProcessPaymentCommand,
         exception: Exception,
     ): String {

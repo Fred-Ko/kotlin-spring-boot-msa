@@ -9,5 +9,5 @@ interface RefundPaymentUseCase {
     /**
      * 결제를 환불합니다.
      */
-    suspend fun execute(command: RefundPaymentCommand): String
+    fun execute(command: RefundPaymentCommand): String
 }

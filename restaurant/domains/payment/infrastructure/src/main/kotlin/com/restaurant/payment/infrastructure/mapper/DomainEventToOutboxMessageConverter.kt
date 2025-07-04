@@ -64,7 +64,6 @@ class DomainEventToOutboxMessageConverter(
             is PaymentEvent.PaymentFailed -> "payment-failed"
             is PaymentEvent.PaymentRefunded -> "payment-refunded"
             is PaymentEvent.PaymentRefundFailed -> "payment-refund-failed"
-            is PaymentEvent.PaymentMethodRegistered -> "payment-method-registered"
             else -> "unknown"
         }
 

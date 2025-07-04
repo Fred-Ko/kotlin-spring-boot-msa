@@ -2,66 +2,11 @@ package com.restaurant.payment.domain.event
 
 import com.restaurant.common.domain.event.DomainEvent
 import com.restaurant.payment.domain.vo.PaymentId
-import com.restaurant.payment.domain.vo.PaymentMethodId
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
-
-/**
- * Custom serializer for UUID
- */
-object UUIDSerializer : KSerializer<UUID> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: UUID,
-    ) {
-        encoder.encodeString(value.toString())
-    }
-
-    override fun deserialize(decoder: Decoder): UUID = UUID.fromString(decoder.decodeString())
-}
-
-/**
- * Custom serializer for Instant
- */
-object InstantSerializer : KSerializer<Instant> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Instant,
-    ) {
-        encoder.encodeString(value.toString())
-    }
-
-    override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
-}
-
-/**
- * Custom serializer for BigDecimal
- */
-object BigDecimalSerializer : KSerializer<BigDecimal> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: BigDecimal,
-    ) {
-        encoder.encodeString(value.toString())
-    }
-
-    override fun deserialize(decoder: Decoder): BigDecimal = BigDecimal(decoder.decodeString())
-}
 
 /**
  * Sealed class grouping all domain events related to the Payment aggregate. (Rule 34)
@@ -170,24 +115,6 @@ sealed class PaymentEvent : DomainEvent {
         @Serializable(with = BigDecimalSerializer::class)
         val refundAmount: BigDecimal,
         val failureReason: String,
-        @Serializable(with = UUIDSerializer::class)
-        override val eventId: UUID = UUID.randomUUID(),
-        @Serializable(with = InstantSerializer::class)
-        override val occurredAt: Instant,
-    ) : PaymentEvent()
-
-    /**
-     * 결제 수단 등록 이벤트 (Payment 애그리거트 내부에서 발행)
-     */
-    @Serializable
-    @SerialName("PaymentMethodRegistered")
-    data class PaymentMethodRegistered(
-        override val id: PaymentId,
-        val userId: String,
-        val paymentMethodId: PaymentMethodId,
-        val paymentMethodType: String,
-        val alias: String?,
-        val isDefault: Boolean,
         @Serializable(with = UUIDSerializer::class)
         override val eventId: UUID = UUID.randomUUID(),
         @Serializable(with = InstantSerializer::class)

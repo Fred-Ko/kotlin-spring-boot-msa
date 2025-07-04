@@ -9,5 +9,5 @@ interface ProcessPaymentUseCase {
     /**
      * 결제를 처리합니다.
      */
-    suspend fun execute(command: ProcessPaymentCommand): String
+    fun execute(command: ProcessPaymentCommand): String
 }

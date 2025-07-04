@@ -2,7 +2,6 @@ package com.restaurant.payment.presentation.v1.command.controller
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
 import com.restaurant.payment.application.command.usecase.RegisterPaymentMethodUseCase
-import com.restaurant.payment.domain.vo.UserId
 import com.restaurant.payment.presentation.v1.command.dto.request.RegisterPaymentMethodRequest
 import com.restaurant.payment.presentation.v1.command.extensions.dto.request.toCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -66,26 +65,27 @@ class PaymentMethodController(
             ),
         ],
     )
-    suspend fun registerPaymentMethod(
+    fun registerPaymentMethod(
         @Parameter(description = "사용자 ID", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef")
         @PathVariable userId: UUID,
         @Parameter(description = "결제 수단 등록 요청 정보", required = true, schema = Schema(implementation = RegisterPaymentMethodRequest::class))
         @Valid
         @RequestBody request: RegisterPaymentMethodRequest,
     ): ResponseEntity<CommandResultResponse> {
-        log.info { "Registering payment method for user: $userId, type: ${request.type}" }
+        log.info { "Registering payment method for user: $userId" }
 
-        val command = request.toCommand(UserId(userId))
-        val paymentMethodId = registerPaymentMethodUseCase.registerPaymentMethod(command)
+        val command = request.toCommand(userId.toString())
+        val paymentMethodId = registerPaymentMethodUseCase.execute(command)
 
-        val location = URI.create("/api/v1/users/$userId/payment-methods/${paymentMethodId.value}")
+        val location = URI.create("/api/v1/users/$userId/payment-methods/$paymentMethodId")
 
         log.info { "Payment method registered successfully, paymentMethodId: $paymentMethodId" }
 
         return ResponseEntity.created(location).body(
             CommandResultResponse(
-                id = paymentMethodId.value.toString(),
+                status = "SUCCESS",
                 message = "Payment method registered successfully.",
+                resourceId = paymentMethodId,
             ),
         )
     }
@@ -125,7 +125,7 @@ class PaymentMethodController(
             ),
         ],
     )
-    suspend fun updatePaymentMethod(
+    fun updatePaymentMethod(
         @Parameter(description = "사용자 ID", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef")
         @PathVariable userId: UUID,
         @Parameter(description = "결제 수단 ID", required = true, example = "b2c3d4e5-f6g7-8901-2345-678901bcdefg")
@@ -146,6 +146,7 @@ class PaymentMethodController(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Payment method updated successfully.",
+                resourceId = paymentMethodId.toString(),
             ),
         )
     }
@@ -180,7 +181,7 @@ class PaymentMethodController(
             ),
         ],
     )
-    suspend fun deletePaymentMethod(
+    fun deletePaymentMethod(
         @Parameter(description = "사용자 ID", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef")
         @PathVariable userId: UUID,
         @Parameter(description = "결제 수단 ID", required = true, example = "b2c3d4e5-f6g7-8901-2345-678901bcdefg")
@@ -198,6 +199,7 @@ class PaymentMethodController(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Payment method deleted successfully.",
+                resourceId = paymentMethodId.toString(),
             ),
         )
     }

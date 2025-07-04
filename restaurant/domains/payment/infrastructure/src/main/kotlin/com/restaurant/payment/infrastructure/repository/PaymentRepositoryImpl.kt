@@ -6,11 +6,13 @@ import com.restaurant.payment.domain.event.PaymentEvent
 import com.restaurant.payment.domain.repository.PaymentRepository
 import com.restaurant.payment.domain.vo.OrderId
 import com.restaurant.payment.domain.vo.PaymentId
+import com.restaurant.payment.domain.vo.PaymentStatus
 import com.restaurant.payment.domain.vo.UserId
 import com.restaurant.payment.infrastructure.mapper.DomainEventToOutboxMessageConverter
 import com.restaurant.payment.infrastructure.mapper.toDomain
 import com.restaurant.payment.infrastructure.mapper.toEntity
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * PaymentRepository 구현체 (Rule 138, 139)
@@ -18,62 +20,68 @@ import org.springframework.stereotype.Repository
  */
 @Repository
 class PaymentRepositoryImpl(
-    private val springDataJpaPaymentRepository: SpringDataJpaPaymentRepository,
+    private val jpaRepository: SpringDataJpaPaymentRepository,
     private val outboxMessageRepository: OutboxMessageRepository,
-    private val domainEventToOutboxMessageConverter: DomainEventToOutboxMessageConverter,
+    private val domainEventConverter: DomainEventToOutboxMessageConverter,
 ) : PaymentRepository {
-    override suspend fun findById(paymentId: PaymentId): Payment? =
-        springDataJpaPaymentRepository.findByDomainId(paymentId.value)?.toDomain()
+    @Transactional
+    override fun save(payment: Payment): Payment {
+        val entity = payment.toEntity()
+        val savedEntity = jpaRepository.save(entity)
 
-    override suspend fun findByOrderId(orderId: OrderId): Payment? = springDataJpaPaymentRepository.findByOrderId(orderId.value)?.toDomain()
-
-    override suspend fun findByUserId(userId: UserId): List<Payment> =
-        springDataJpaPaymentRepository
-            .findByUserIdOrderByCreatedAtDesc(userId.value)
-            .map { it.toDomain() }
-
-    override suspend fun findByUserIdWithPagination(
-        userId: UserId,
-        offset: Int,
-        limit: Int,
-    ): List<Payment> =
-        springDataJpaPaymentRepository
-            .findByUserIdOrderByCreatedAtDesc(userId.value)
-            .drop(offset)
-            .take(limit)
-            .map { it.toDomain() }
-
-    override suspend fun existsById(paymentId: PaymentId): Boolean = springDataJpaPaymentRepository.existsByDomainId(paymentId.value)
-
-    override suspend fun existsByOrderId(orderId: OrderId): Boolean = springDataJpaPaymentRepository.existsByOrderId(orderId.value)
-
-    override suspend fun save(payment: Payment): Payment {
-        val paymentEntity = payment.toEntity()
-
-        val savedEntity = springDataJpaPaymentRepository.save(paymentEntity)
-
-        // 도메인 이벤트 처리 (Rule 85)
+        // 도메인 이벤트를 Outbox 메시지로 변환하여 저장
         val domainEvents = payment.getDomainEvents()
-        if (domainEvents.isNotEmpty()) {
-            val outboxMessages =
-                domainEvents.map {
-                    domainEventToOutboxMessageConverter.convert(it as PaymentEvent)
-                }
-
-            if (outboxMessages.isNotEmpty()) {
-                outboxMessageRepository.saveAll(outboxMessages)
-            }
-
-            payment.clearDomainEvents()
+        domainEvents.forEach { event ->
+            val outboxMessage = domainEventConverter.convert(event as PaymentEvent)
+            outboxMessageRepository.save(outboxMessage)
         }
 
-        return savedEntity.toDomain()
+        // Payment 애그리거트 반환 (PaymentMethod 컬렉션 없이)
+        val savedPayment = savedEntity.toDomain()
+
+        // 도메인 이벤트 초기화
+        savedPayment.clearDomainEvents()
+
+        return savedPayment
     }
 
-    override suspend fun delete(paymentId: PaymentId) {
-        val payment = findById(paymentId)
-        if (payment != null) {
-            springDataJpaPaymentRepository.delete(payment.toEntity())
+    override fun findById(paymentId: PaymentId): Payment? {
+        val entity = jpaRepository.findByDomainId(paymentId.value) ?: return null
+        return entity.toDomain()
+    }
+
+    override fun findByOrderId(orderId: OrderId): Payment? {
+        val entity = jpaRepository.findByOrderId(orderId.value) ?: return null
+        return entity.toDomain()
+    }
+
+    override fun findByUserId(userId: UserId): List<Payment> {
+        val entities = jpaRepository.findByUserId(userId.value)
+        return entities.map { entity -> entity.toDomain() }
+    }
+
+    override fun findByStatus(status: PaymentStatus): List<Payment> {
+        val entities = jpaRepository.findByStatus(status.name)
+        return entities.map { entity -> entity.toDomain() }
+    }
+
+    override fun findByUserIdAndStatus(
+        userId: UserId,
+        status: PaymentStatus,
+    ): List<Payment> {
+        val entities = jpaRepository.findByUserIdAndStatus(userId.value, status.name)
+        return entities.map { entity -> entity.toDomain() }
+    }
+
+    override fun delete(payment: Payment) {
+        jpaRepository.findByDomainId(payment.id.value)?.let { entity ->
+            jpaRepository.delete(entity)
+        }
+    }
+
+    override fun deleteById(paymentId: PaymentId) {
+        jpaRepository.findByDomainId(paymentId.value)?.let { entity ->
+            jpaRepository.delete(entity)
         }
     }
 }

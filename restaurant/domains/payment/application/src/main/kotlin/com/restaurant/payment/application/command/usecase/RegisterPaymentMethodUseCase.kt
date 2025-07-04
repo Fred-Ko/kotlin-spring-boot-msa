@@ -9,5 +9,5 @@ interface RegisterPaymentMethodUseCase {
     /**
      * 결제 수단을 등록합니다.
      */
-    suspend fun execute(command: RegisterPaymentMethodCommand): String
+    fun execute(command: RegisterPaymentMethodCommand): String
 }

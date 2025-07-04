@@ -1,8 +1,8 @@
 package com.restaurant.payment.infrastructure.mapper
 
-import com.restaurant.payment.domain.entity.BankTransfer
-import com.restaurant.payment.domain.entity.CreditCard
-import com.restaurant.payment.domain.entity.PaymentMethod
+import com.restaurant.payment.domain.aggregate.BankTransfer
+import com.restaurant.payment.domain.aggregate.CreditCard
+import com.restaurant.payment.domain.aggregate.PaymentMethod
 import com.restaurant.payment.domain.vo.AccountNumber
 import com.restaurant.payment.domain.vo.BankName
 import com.restaurant.payment.domain.vo.CardCvv
