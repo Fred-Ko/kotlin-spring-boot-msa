@@ -81,6 +81,13 @@ sealed class PaymentDomainException(
                 PaymentDomainErrorCodes.INVALID_TRANSACTION_ID_FORMAT,
                 "Invalid transaction ID format: $value",
             )
+
+        class InvalidAccountNumberFormat(
+            message: String,
+        ) : Validation(
+                PaymentDomainErrorCodes.INVALID_ACCOUNT_NUMBER_FORMAT,
+                message,
+            )
     }
 
     /**

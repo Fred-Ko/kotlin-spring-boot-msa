@@ -17,7 +17,7 @@ value class AccountNumber private constructor(
         fun of(value: String): AccountNumber {
             val trimmedValue = value.trim()
             if (trimmedValue.length < MIN_LENGTH || trimmedValue.length > MAX_LENGTH || !REGEX.matches(trimmedValue)) {
-                throw PaymentDomainException.Validation.InvalidAmountFormat(
+                throw PaymentDomainException.Validation.InvalidAccountNumberFormat(
                     "Account number must be between $MIN_LENGTH and $MAX_LENGTH characters and contain only digits and hyphens.",
                 )
             }

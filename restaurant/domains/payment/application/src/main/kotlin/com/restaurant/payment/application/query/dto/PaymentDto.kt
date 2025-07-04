@@ -5,6 +5,8 @@ import java.time.Instant
 
 /**
  * DTO representing payment information
+ * Rule 2, 3: Payment와 PaymentMethod는 별도의 애그리거트로 관리되므로
+ * PaymentDto는 Payment 애그리거트의 정보만 포함합니다.
  */
 data class PaymentDto(
     val id: String,
@@ -16,7 +18,6 @@ data class PaymentDto(
     val transactionId: String?,
     val failureReason: String?,
     val refundedAmount: BigDecimal?,
-    val paymentMethods: List<PaymentMethodDto>,
     val createdAt: Instant,
     val updatedAt: Instant,
 )

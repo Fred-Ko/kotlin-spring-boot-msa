@@ -1,7 +1,11 @@
 package com.restaurant.payment.presentation.v1.command.controller
 
 import com.restaurant.common.presentation.dto.response.CommandResultResponse
+import com.restaurant.payment.application.command.dto.DeletePaymentMethodCommand
+import com.restaurant.payment.application.command.dto.UpdatePaymentMethodCommand
+import com.restaurant.payment.application.command.usecase.DeletePaymentMethodUseCase
 import com.restaurant.payment.application.command.usecase.RegisterPaymentMethodUseCase
+import com.restaurant.payment.application.command.usecase.UpdatePaymentMethodUseCase
 import com.restaurant.payment.presentation.v1.command.dto.request.RegisterPaymentMethodRequest
 import com.restaurant.payment.presentation.v1.command.extensions.dto.request.toCommand
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -33,7 +37,8 @@ private val log = KotlinLogging.logger {}
 @RequestMapping("/api/v1/users/{userId}/payment-methods")
 class PaymentMethodController(
     private val registerPaymentMethodUseCase: RegisterPaymentMethodUseCase,
-    // TODO: UpdatePaymentMethodUseCase, DeletePaymentMethodUseCase 추가 필요
+    private val updatePaymentMethodUseCase: UpdatePaymentMethodUseCase,
+    private val deletePaymentMethodUseCase: DeletePaymentMethodUseCase,
 ) {
     @PostMapping
     @Operation(
@@ -136,17 +141,21 @@ class PaymentMethodController(
     ): ResponseEntity<CommandResultResponse> {
         log.info { "Updating payment method: $paymentMethodId for user: $userId" }
 
-        // TODO: UpdatePaymentMethodCommand 및 UseCase 구현 필요
-        // val command = request.toCommand(UserId.of(userId), PaymentMethodId.of(paymentMethodId))
-        // updatePaymentMethodUseCase.execute(command)
+        val command =
+            UpdatePaymentMethodCommand(
+                paymentMethodId = paymentMethodId.toString(),
+                alias = request.alias,
+                isDefault = request.isDefault,
+            )
+        val updatedPaymentMethodId = updatePaymentMethodUseCase.execute(command)
 
-        log.info { "Payment method updated successfully, paymentMethodId: $paymentMethodId" }
+        log.info { "Payment method updated successfully, paymentMethodId: $updatedPaymentMethodId" }
 
         return ResponseEntity.ok(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Payment method updated successfully.",
-                resourceId = paymentMethodId.toString(),
+                resourceId = updatedPaymentMethodId,
             ),
         )
     }
@@ -189,17 +198,20 @@ class PaymentMethodController(
     ): ResponseEntity<CommandResultResponse> {
         log.info { "Deleting payment method: $paymentMethodId for user: $userId" }
 
-        // TODO: DeletePaymentMethodCommand 및 UseCase 구현 필요
-        // val command = DeletePaymentMethodCommand(UserId.of(userId), PaymentMethodId.of(paymentMethodId))
-        // deletePaymentMethodUseCase.execute(command)
+        val command =
+            DeletePaymentMethodCommand(
+                paymentMethodId = paymentMethodId.toString(),
+                userId = userId.toString(),
+            )
+        val deletedPaymentMethodId = deletePaymentMethodUseCase.execute(command)
 
-        log.info { "Payment method deleted successfully, paymentMethodId: $paymentMethodId" }
+        log.info { "Payment method deleted successfully, paymentMethodId: $deletedPaymentMethodId" }
 
         return ResponseEntity.ok(
             CommandResultResponse(
                 status = "SUCCESS",
                 message = "Payment method deleted successfully.",
-                resourceId = paymentMethodId.toString(),
+                resourceId = deletedPaymentMethodId,
             ),
         )
     }

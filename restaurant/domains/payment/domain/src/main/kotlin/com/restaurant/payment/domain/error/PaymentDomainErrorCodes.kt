@@ -35,6 +35,7 @@ enum class PaymentDomainErrorCodes(
     INVALID_CARD_EXPIRY_FORMAT("PAYMENT-DOMAIN-107", "잘못된 카드 유효기간 형식입니다."),
     INVALID_CARD_CVV_FORMAT("PAYMENT-DOMAIN-108", "잘못된 카드 CVV 형식입니다."),
     INVALID_TRANSACTION_ID_FORMAT("PAYMENT-DOMAIN-109", "잘못된 거래 ID 형식입니다."),
+    INVALID_ACCOUNT_NUMBER_FORMAT("PAYMENT-DOMAIN-110", "잘못된 계좌번호 형식입니다."),
 
     // 비즈니스 로직 관련 에러 코드
     PAYMENT_METHOD_ID_MISMATCH("PAYMENT-DOMAIN-201", "결제 수단 ID가 일치하지 않습니다."),
