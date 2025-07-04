@@ -23,7 +23,12 @@ enum class PaymentApplicationErrorCodes(
     PAYMENT_GATEWAY_UNAVAILABLE("PAYMENT-APPLICATION-103", "Payment gateway is currently unavailable."),
     PAYMENT_PROCESSING_FAILED("PAYMENT-APPLICATION-104", "Payment processing failed due to technical error."),
     PAYMENT_NOT_FOUND("PAYMENT-APPLICATION-105", "Payment not found."),
-    PAYMENT_METHOD_NOT_FOUND("PAYMENT-APPLICATION-106", "Payment method not found."),
+    PAYMENT_CREATION_FAILED("PAYMENT-APPLICATION-106", "결제 생성에 실패했습니다."),
+    PAYMENT_APPROVAL_FAILED("PAYMENT-APPLICATION-107", "결제 승인에 실패했습니다."),
+    INSUFFICIENT_FUNDS("PAYMENT-APPLICATION-108", "잔액이 부족합니다."),
+    PAYMENT_CANCEL_FAILED("PAYMENT-APPLICATION-109", "결제 취소에 실패했습니다."),
+    PAYMENT_STATUS_INVALID("PAYMENT-APPLICATION-110", "유효하지 않은 결제 상태입니다."),
+    EXTERNAL_PAYMENT_SERVICE_ERROR("PAYMENT-APPLICATION-111", "외부 결제 서비스 오류."),
 
     // 외부 서비스 연동 오류 (PAYMENT-APPLICATION-201~299)
     ORDER_SERVICE_ERROR("PAYMENT-APPLICATION-201", "Order service communication error."),
@@ -41,6 +46,8 @@ enum class PaymentApplicationErrorCodes(
     PAYMENT_METHOD_VALIDATION_ERROR("PAYMENT-APPLICATION-401", "Payment method validation failed."),
     PAYMENT_METHOD_ENCRYPTION_ERROR("PAYMENT-APPLICATION-402", "Payment method encryption failed."),
     PAYMENT_METHOD_DECRYPTION_ERROR("PAYMENT-APPLICATION-403", "Payment method decryption failed."),
+    PAYMENT_METHOD_NOT_FOUND("PAYMENT-APPLICATION-404", "결제 수단을 찾을 수 없습니다."),
+    DUPLICATE_PAYMENT_METHOD("PAYMENT-APPLICATION-405", "이미 등록된 결제 수단입니다."),
 
     // 동시성 및 트랜잭션 오류 (PAYMENT-APPLICATION-501~599)
     OPTIMISTIC_LOCK_ERROR("PAYMENT-APPLICATION-501", "Optimistic lock conflict occurred."),

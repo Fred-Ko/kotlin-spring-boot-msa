@@ -74,7 +74,6 @@ class DomainEventToOutboxMessageConverter(
             is PaymentEvent.PaymentFailed -> "PaymentEvent.PaymentFailed"
             is PaymentEvent.PaymentRefunded -> "PaymentEvent.PaymentRefunded"
             is PaymentEvent.PaymentRefundFailed -> "PaymentEvent.PaymentRefundFailed"
-            is PaymentEvent.PaymentMethodRegistered -> "PaymentEvent.PaymentMethodRegistered"
             else -> event::class.simpleName ?: "UnknownEvent"
         }
 }

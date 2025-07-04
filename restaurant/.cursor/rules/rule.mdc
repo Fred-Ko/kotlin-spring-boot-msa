@@ -1,6 +1,5 @@
 ---
-globs: *.kt,*.kts
-alwaysApply: false
+alwaysApply: true
 ---
 ## 프로젝트 기술 문서 규칙
 
